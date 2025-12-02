@@ -22,18 +22,18 @@
     "start:backend": "cd packages/backend && bun run start"
   },
   "devDependencies": {
-    "husky": "^8.0.3",
-    "lint-staged": "^15.2.10",
-    "prettier": "^3.7.3",
-    "rimraf": "^5.0.5",
-    "textlint": "^14.0.5",
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.3",
+    "rimraf": "^6.1.2",
+    "textlint": "^15.4.0",
     "textlint-rule-ja-no-abusage": "^3.0.0",
     "textlint-rule-ja-no-inappropriate-words": "^2.0.0",
     "textlint-rule-no-double-negative-ja": "^2.0.1",
     "textlint-rule-no-dropping-the-ra": "^3.0.0",
     "textlint-rule-prefer-tari-tari": "^1.0.3",
-    "textlint-rule-preset-ja-spacing": "^2.2.0",
+    "textlint-rule-preset-ja-spacing": "^2.4.3",
     "textlint-rule-preset-ja-technical-writing": "^10.0.1",
     "textlint-rule-spellcheck-tech-word": "^5.0.0"
   }
