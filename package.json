@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.1",
-    "husky": "^8.0.3",
+    "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.3",
     "rimraf": "^6.1.2",
