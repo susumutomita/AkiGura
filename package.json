@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.1",
-    "husky": "^8.0.3",
+    "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.3",
     "rimraf": "^6.1.2",
@@ -34,7 +34,7 @@
     "textlint-rule-no-dropping-the-ra": "^3.0.0",
     "textlint-rule-prefer-tari-tari": "^1.0.3",
     "textlint-rule-preset-ja-spacing": "^2.4.3",
-    "textlint-rule-preset-ja-technical-writing": "^10.0.1",
+    "textlint-rule-preset-ja-technical-writing": "^12.0.2",
     "textlint-rule-spellcheck-tech-word": "^5.0.0"
   }
 }
