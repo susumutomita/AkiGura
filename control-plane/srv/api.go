@@ -90,6 +90,21 @@ func (s *Server) HandleCreateTeam(w http.ResponseWriter, r *http.Request) {
 	s.jsonResponse(w, team)
 }
 
+// Get Team by Email
+func (s *Server) HandleGetTeamByEmail(w http.ResponseWriter, r *http.Request) {
+	email := r.URL.Query().Get("email")
+	if email == "" {
+		s.jsonError(w, "email required", http.StatusBadRequest)
+		return
+	}
+	team, err := s.Queries.GetTeamByEmail(r.Context(), email)
+	if err != nil {
+		s.jsonError(w, "team not found", http.StatusNotFound)
+		return
+	}
+	s.jsonResponse(w, team)
+}
+
 // Facilities API
 func (s *Server) HandleListFacilities(w http.ResponseWriter, r *http.Request) {
 	facilities, err := s.Queries.ListFacilities(r.Context(), dbgen.ListFacilitiesParams{Limit: 100, Offset: 0})
@@ -123,6 +138,81 @@ func (s *Server) HandleCreateFacility(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.jsonResponse(w, facility)
+}
+
+// Watch Conditions API
+func (s *Server) HandleListConditions(w http.ResponseWriter, r *http.Request) {
+	teamID := r.URL.Query().Get("team_id")
+	if teamID == "" {
+		s.jsonError(w, "team_id required", http.StatusBadRequest)
+		return
+	}
+	conditions, err := s.Queries.ListWatchConditionsByTeam(r.Context(), teamID)
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	s.jsonResponse(w, conditions)
+}
+
+func (s *Server) HandleCreateCondition(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		TeamID     string `json:"team_id"`
+		FacilityID string `json:"facility_id"`
+		DaysOfWeek string `json:"days_of_week"`
+		TimeFrom   string `json:"time_from"`
+		TimeTo     string `json:"time_to"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.jsonError(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+	condition, err := s.Queries.CreateWatchCondition(r.Context(), dbgen.CreateWatchConditionParams{
+		ID:         uuid.New().String(),
+		TeamID:     req.TeamID,
+		FacilityID: req.FacilityID,
+		DaysOfWeek: req.DaysOfWeek,
+		TimeFrom:   req.TimeFrom,
+		TimeTo:     req.TimeTo,
+	})
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	s.jsonResponse(w, condition)
+}
+
+func (s *Server) HandleDeleteCondition(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		s.jsonError(w, "id required", http.StatusBadRequest)
+		return
+	}
+	err := s.Queries.DeleteWatchCondition(r.Context(), id)
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	s.jsonResponse(w, map[string]bool{"success": true})
+}
+
+// Notifications API (for users)
+func (s *Server) HandleListNotifications(w http.ResponseWriter, r *http.Request) {
+	teamID := r.URL.Query().Get("team_id")
+	if teamID == "" {
+		s.jsonError(w, "team_id required", http.StatusBadRequest)
+		return
+	}
+	notifications, err := s.Queries.ListNotificationsByTeam(r.Context(), dbgen.ListNotificationsByTeamParams{
+		TeamID: teamID,
+		Limit:  50,
+		Offset: 0,
+	})
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	s.jsonResponse(w, notifications)
 }
 
 // Support Tickets API

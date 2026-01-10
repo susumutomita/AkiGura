@@ -58,6 +58,13 @@ func (s *Server) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) HandleUserPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := s.renderTemplate(w, "user.html", nil); err != nil {
+		slog.Warn("render template", "url", r.URL.Path, "error", err)
+	}
+}
+
 func (s *Server) renderTemplate(w http.ResponseWriter, name string, data any) error {
 	path := filepath.Join(s.TemplatesDir, name)
 	tmpl, err := template.ParseFiles(path)
@@ -88,13 +95,19 @@ func (s *Server) Serve(addr string) error {
 	mux := http.NewServeMux()
 	// Pages
 	mux.HandleFunc("GET /{$}", s.HandleRoot)
+	mux.HandleFunc("GET /user", s.HandleUserPage)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.StaticDir))))
 	// API endpoints
 	mux.HandleFunc("GET /api/dashboard", s.HandleDashboard)
 	mux.HandleFunc("GET /api/teams", s.HandleListTeams)
 	mux.HandleFunc("POST /api/teams", s.HandleCreateTeam)
+	mux.HandleFunc("GET /api/teams/by-email", s.HandleGetTeamByEmail)
 	mux.HandleFunc("GET /api/facilities", s.HandleListFacilities)
 	mux.HandleFunc("POST /api/facilities", s.HandleCreateFacility)
+	mux.HandleFunc("GET /api/conditions", s.HandleListConditions)
+	mux.HandleFunc("POST /api/conditions", s.HandleCreateCondition)
+	mux.HandleFunc("DELETE /api/conditions/{id}", s.HandleDeleteCondition)
+	mux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
 	mux.HandleFunc("GET /api/tickets", s.HandleListTickets)
 	mux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
 	mux.HandleFunc("POST /api/chat", s.HandleAIChat)
