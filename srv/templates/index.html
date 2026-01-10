@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkiGura - グラウンド監視SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="app()" x-init="init()">
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">🏈 AkiGura Control Plane</h1>
+            <nav class="flex space-x-4">
+                <button @click="currentTab = 'dashboard'" :class="{'bg-indigo-700': currentTab === 'dashboard'}" class="px-3 py-2 rounded hover:bg-indigo-500">ダッシュボード</button>
+                <button @click="currentTab = 'teams'" :class="{'bg-indigo-700': currentTab === 'teams'}" class="px-3 py-2 rounded hover:bg-indigo-500">チーム管理</button>
+                <button @click="currentTab = 'facilities'" :class="{'bg-indigo-700': currentTab === 'facilities'}" class="px-3 py-2 rounded hover:bg-indigo-500">施設管理</button>
+                <button @click="currentTab = 'support'" :class="{'bg-indigo-700': currentTab === 'support'}" class="px-3 py-2 rounded hover:bg-indigo-500">AIサポート</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Dashboard -->
+        <div x-show="currentTab === 'dashboard'" x-cloak>
+            <h2 class="text-2xl font-bold mb-6">ダッシュボード</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="text-gray-500 text-sm">登録チーム数</div>
+                    <div class="text-3xl font-bold text-indigo-600" x-text="dashboard.TeamCount">0</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="text-gray-500 text-sm">対応施設数</div>
+                    <div class="text-3xl font-bold text-green-600" x-text="dashboard.FacilityCount">0</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="text-gray-500 text-sm">監視条件数</div>
+                    <div class="text-3xl font-bold text-blue-600" x-text="dashboard.WatchConditionCount">0</div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="text-gray-500 text-sm">未対応チケット</div>
+                    <div class="text-3xl font-bold text-red-600" x-text="dashboard.OpenTicketCount">0</div>
+                </div>
+            </div>
+            <!-- Plan Distribution -->
+            <div class="bg-white rounded-lg shadow p-6 mb-8">
+                <h3 class="text-lg font-semibold mb-4">プラン別チーム数</h3>
+                <div class="flex space-x-4">
+                    <template x-for="plan in dashboard.TeamsByPlan" :key="plan.plan">
+                        <div class="flex-1 bg-gray-50 rounded p-4 text-center">
+                            <div class="text-sm text-gray-500" x-text="plan.plan"></div>
+                            <div class="text-2xl font-bold" x-text="plan.count"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teams -->
+        <div x-show="currentTab === 'teams'" x-cloak>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">チーム管理</h2>
+                <button @click="showTeamModal = true" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">新規チーム追加</button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">チーム名</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">メール</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">プラン</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ステータス</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="team in teams" :key="team.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="team.name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="team.email"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded" :class="{'bg-gray-100': team.plan === 'free', 'bg-blue-100': team.plan === 'personal', 'bg-purple-100': team.plan === 'pro', 'bg-yellow-100': team.plan === 'org'}" x-text="team.plan"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded" :class="{'bg-green-100 text-green-800': team.status === 'active', 'bg-red-100 text-red-800': team.status !== 'active'}" x-text="team.status"></span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Facilities -->
+        <div x-show="currentTab === 'facilities'" x-cloak>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">施設管理</h2>
+                <button @click="showFacilityModal = true" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">新規施設追加</button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">施設名</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">自治体</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">スクレイパー</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ステータス</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="f in facilities" :key="f.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="f.name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="f.municipality"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="f.scraper_type"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs rounded" :class="{'bg-green-100 text-green-800': f.enabled, 'bg-red-100 text-red-800': !f.enabled}" x-text="f.enabled ? '有効' : '無効'"></span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI Support -->
+        <div x-show="currentTab === 'support'" x-cloak>
+            <h2 class="text-2xl font-bold mb-6">AIサポート</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chat -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">🤖 AIチャット</h3>
+                    <div class="h-64 overflow-y-auto border rounded p-4 mb-4 bg-gray-50">
+                        <template x-for="(msg, i) in chatMessages" :key="i">
+                            <div class="mb-2" :class="{'text-right': msg.role === 'user'}">
+                                <span class="inline-block px-3 py-2 rounded-lg" :class="{'bg-indigo-600 text-white': msg.role === 'user', 'bg-gray-200': msg.role === 'ai'}" x-text="msg.content" style="white-space: pre-wrap;"></span>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="flex space-x-2">
+                        <input type="text" x-model="chatInput" @keyup.enter="sendChat()" placeholder="質問を入力..." class="flex-1 border rounded px-4 py-2">
+                        <button @click="sendChat()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">送信</button>
+                    </div>
+                </div>
+                <!-- Tickets -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">🎟️ サポートチケット</h3>
+                    <div class="space-y-2 max-h-80 overflow-y-auto">
+                        <template x-for="ticket in tickets" :key="ticket.id">
+                            <div class="border rounded p-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium" x-text="ticket.subject"></span>
+                                    <span class="px-2 py-1 text-xs rounded" :class="{'bg-red-100 text-red-800': ticket.status === 'open', 'bg-yellow-100': ticket.status === 'escalated', 'bg-green-100 text-green-800': ticket.status === 'resolved'}" x-text="ticket.status"></span>
+                                </div>
+                                <div class="text-sm text-gray-500" x-text="ticket.email"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Team Modal -->
+    <div x-show="showTeamModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">新規チーム追加</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">チーム名</label>
+                    <input type="text" x-model="newTeam.name" class="mt-1 block w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
+                    <input type="email" x-model="newTeam.email" class="mt-1 block w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">プラン</label>
+                    <select x-model="newTeam.plan" class="mt-1 block w-full border rounded px-3 py-2">
+                        <option value="free">Free</option>
+                        <option value="personal">Personal</option>
+                        <option value="pro">Pro</option>
+                        <option value="org">Org</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showTeamModal = false" class="px-4 py-2 border rounded">キャンセル</button>
+                <button @click="createTeam()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">追加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facility Modal -->
+    <div x-show="showFacilityModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">新規施設追加</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">施設名</label>
+                    <input type="text" x-model="newFacility.name" class="mt-1 block w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">自治体</label>
+                    <input type="text" x-model="newFacility.municipality" class="mt-1 block w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">スクレイパータイプ</label>
+                    <input type="text" x-model="newFacility.scraper_type" class="mt-1 block w-full border rounded px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">URL</label>
+                    <input type="url" x-model="newFacility.url" class="mt-1 block w-full border rounded px-3 py-2">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showFacilityModal = false" class="px-4 py-2 border rounded">キャンセル</button>
+                <button @click="createFacility()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">追加</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function app() {
+        return {
+            currentTab: 'dashboard',
+            dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [] },
+            teams: [],
+            facilities: [],
+            tickets: [],
+            chatMessages: [],
+            chatInput: '',
+            showTeamModal: false,
+            showFacilityModal: false,
+            newTeam: { name: '', email: '', plan: 'free' },
+            newFacility: { name: '', municipality: '', scraper_type: '', url: '' },
+
+            async init() {
+                await this.loadDashboard();
+                await this.loadTeams();
+                await this.loadFacilities();
+                await this.loadTickets();
+            },
+
+            async loadDashboard() {
+                const res = await fetch('/api/dashboard');
+                this.dashboard = await res.json();
+            },
+
+            async loadTeams() {
+                const res = await fetch('/api/teams');
+                this.teams = await res.json();
+            },
+
+            async loadFacilities() {
+                const res = await fetch('/api/facilities');
+                this.facilities = await res.json();
+            },
+
+            async loadTickets() {
+                const res = await fetch('/api/tickets');
+                this.tickets = await res.json();
+            },
+
+            async createTeam() {
+                await fetch('/api/teams', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.newTeam)
+                });
+                this.showTeamModal = false;
+                this.newTeam = { name: '', email: '', plan: 'free' };
+                await this.loadTeams();
+                await this.loadDashboard();
+            },
+
+            async createFacility() {
+                await fetch('/api/facilities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.newFacility)
+                });
+                this.showFacilityModal = false;
+                this.newFacility = { name: '', municipality: '', scraper_type: '', url: '' };
+                await this.loadFacilities();
+                await this.loadDashboard();
+            },
+
+            async sendChat() {
+                if (!this.chatInput.trim()) return;
+                const msg = this.chatInput;
+                this.chatMessages.push({ role: 'user', content: msg });
+                this.chatInput = '';
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                this.chatMessages.push({ role: 'ai', content: data.response });
+            }
+        }
+    }
+    </script>
+</body>
+</html>
