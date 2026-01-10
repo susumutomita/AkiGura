@@ -1,0 +1,103 @@
+package srv
+
+import (
+	"database/sql"
+	"fmt"
+	"html/template"
+	"log/slog"
+	"net/http"
+	"path/filepath"
+	"runtime"
+
+	"srv.exe.dev/db"
+	"srv.exe.dev/db/dbgen"
+)
+
+type Server struct {
+	DB           *sql.DB
+	Queries      *dbgen.Queries
+	Hostname     string
+	TemplatesDir string
+	StaticDir    string
+}
+
+type DashboardData struct {
+	TeamCount           int64
+	FacilityCount       int64
+	WatchConditionCount int64
+	NotificationCount   int64
+	OpenTicketCount     int64
+	TeamsByPlan         []PlanCount
+	RecentJobs          []dbgen.ScrapeJob
+}
+
+type PlanCount struct {
+	Plan  string `json:"plan"`
+	Count int64  `json:"count"`
+}
+
+func New(dbPath, hostname string) (*Server, error) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	baseDir := filepath.Dir(thisFile)
+	srv := &Server{
+		Hostname:     hostname,
+		TemplatesDir: filepath.Join(baseDir, "templates"),
+		StaticDir:    filepath.Join(baseDir, "static"),
+	}
+	if err := srv.setUpDatabase(dbPath); err != nil {
+		return nil, err
+	}
+	srv.Queries = dbgen.New(srv.DB)
+	return srv, nil
+}
+
+func (s *Server) HandleRoot(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := s.renderTemplate(w, "index.html", nil); err != nil {
+		slog.Warn("render template", "url", r.URL.Path, "error", err)
+	}
+}
+
+func (s *Server) renderTemplate(w http.ResponseWriter, name string, data any) error {
+	path := filepath.Join(s.TemplatesDir, name)
+	tmpl, err := template.ParseFiles(path)
+	if err != nil {
+		return fmt.Errorf("parse template %q: %w", name, err)
+	}
+	if err := tmpl.Execute(w, data); err != nil {
+		return fmt.Errorf("execute template %q: %w", name, err)
+	}
+	return nil
+}
+
+// SetupDatabase initializes the database connection and runs migrations
+func (s *Server) setUpDatabase(dbPath string) error {
+	wdb, err := db.Open(dbPath)
+	if err != nil {
+		return fmt.Errorf("failed to open db: %w", err)
+	}
+	s.DB = wdb
+	if err := db.RunMigrations(wdb); err != nil {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+	return nil
+}
+
+// Serve starts the HTTP server with the configured routes
+func (s *Server) Serve(addr string) error {
+	mux := http.NewServeMux()
+	// Pages
+	mux.HandleFunc("GET /{$}", s.HandleRoot)
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.StaticDir))))
+	// API endpoints
+	mux.HandleFunc("GET /api/dashboard", s.HandleDashboard)
+	mux.HandleFunc("GET /api/teams", s.HandleListTeams)
+	mux.HandleFunc("POST /api/teams", s.HandleCreateTeam)
+	mux.HandleFunc("GET /api/facilities", s.HandleListFacilities)
+	mux.HandleFunc("POST /api/facilities", s.HandleCreateFacility)
+	mux.HandleFunc("GET /api/tickets", s.HandleListTickets)
+	mux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
+	mux.HandleFunc("POST /api/chat", s.HandleAIChat)
+	slog.Info("starting server", "addr", addr)
+	return http.ListenAndServe(addr, mux)
+}
