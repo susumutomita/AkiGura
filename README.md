@@ -1,57 +1,76 @@
-# Go Shelley Template
+# AkiGura SaaS - グラウンド監視サービス
 
-This is a starter template for building Go web applications on exe.dev. It demonstrates end-to-end usage including HTTP handlers, authentication, database integration, and deployment.
+草野球チーム向けのグラウンド空き枠監視・通知SaaSのコントロールプレーン
 
-Use this as a foundation to build your own service.
+## 機能
 
-## Building and Running
+### ダッシュボード
+- チーム数・施設数・監視条件数のリアルタイム表示
+- プラン別チーム分布
+- 未対応サポートチケット数
 
-Build with `make build`, then run `./srv`. The server listens on port 8000 by default.
+### チーム管理
+- チームの登録・編集・削除
+- プラン管理 (Free/Personal/Pro/Org)
+- ステータス管理 (active/paused/cancelled)
 
-## Running as a systemd service
+### 施設管理
+- 施設の登録・編集
+- 自治体別管理
+- スクレイパー設定
 
-To run the server as a systemd service:
+### AIサポート
+- FAQ自動応答チャット
+- サポートチケット管理
+- 自動エスカレーション
+
+## 技術スタック
+
+- **Backend**: Go 1.24
+- **Database**: SQLite (WAL mode)
+- **ORM**: sqlc
+- **Frontend**: Alpine.js + Tailwind CSS
+- **Deployment**: systemd
+
+## セットアップ
 
 ```bash
-# Install the service file
-sudo cp srv.service /etc/systemd/system/srv.service
+# ビルド
+go build -o akigura-srv ./cmd/srv
 
-# Reload systemd and enable the service
+# 起動
+./akigura-srv -listen :8001
+
+# systemdサービスとしてインストール
+sudo cp srv.service /etc/systemd/system/akigura.service
 sudo systemctl daemon-reload
-sudo systemctl enable srv.service
-
-# Start the service
-sudo systemctl start srv
-
-# Check status
-systemctl status srv
-
-# View logs
-journalctl -u srv -f
+sudo systemctl enable akigura.service
+sudo systemctl start akigura.service
 ```
 
-To restart after code changes:
+## APIエンドポイント
 
-```bash
-make build
-sudo systemctl restart srv
-```
+| Method | Endpoint | 説明 |
+|--------|----------|------|
+| GET | /api/dashboard | ダッシュボードデータ |
+| GET | /api/teams | チーム一覧 |
+| POST | /api/teams | チーム作成 |
+| GET | /api/facilities | 施設一覧 |
+| POST | /api/facilities | 施設作成 |
+| GET | /api/tickets | チケット一覧 |
+| POST | /api/tickets | チケット作成 |
+| POST | /api/chat | AIチャット |
 
-## Authorization
+## データモデル
 
-exe.dev provides authorization headers and login/logout links
-that this template uses.
+- **teams**: チーム情報
+- **facilities**: 施設情報
+- **watch_conditions**: 監視条件
+- **slots**: 空き枠情報
+- **notifications**: 通知履歴
+- **support_tickets**: サポートチケット
+- **support_messages**: チケットメッセージ
 
-When proxied through exed, requests will include `X-ExeDev-UserID` and
-`X-ExeDev-Email` if the user is authenticated via exe.dev.
+## ライセンス
 
-## Database
-
-This template uses sqlite (`db.sqlite3`). SQL queries are managed with sqlc.
-
-## Code layout
-
-- `cmd/srv`: main package (binary entrypoint)
-- `srv`: HTTP server logic (handlers)
-- `srv/templates`: Go HTML templates
-- `db`: SQLite open + migrations (001-base.sql)
+Apache License 2.0
