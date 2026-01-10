@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkiGura - グラウンド空き監視</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen" x-data="userApp()" x-init="init()">
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold">🏈 AkiGura</h1>
+            <div x-show="team" class="text-sm">
+                <span x-text="team?.name"></span>
+                <span class="ml-2 px-2 py-1 bg-indigo-500 rounded text-xs" x-text="team?.plan"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Form -->
+    <div x-show="!team" x-cloak class="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">ログイン / 新規登録</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
+                <input type="email" x-model="loginEmail" class="mt-1 block w-full border rounded px-3 py-2" placeholder="team@example.com">
+            </div>
+            <div x-show="isRegister">
+                <label class="block text-sm font-medium text-gray-700">チーム名</label>
+                <input type="text" x-model="loginName" class="mt-1 block w-full border rounded px-3 py-2" placeholder="東京ファイターズ">
+            </div>
+            <button @click="login()" class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+                <span x-text="isRegister ? '新規登録' : 'ログイン'"></span>
+            </button>
+            <p class="text-center text-sm text-gray-500">
+                <a href="#" @click.prevent="isRegister = !isRegister" class="text-indigo-600 hover:underline" x-text="isRegister ? 'ログインはこちら' : '新規登録はこちら'"></a>
+            </p>
+            <p x-show="loginError" class="text-red-500 text-sm" x-text="loginError"></p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main x-show="team" x-cloak class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Tabs -->
+        <div class="flex space-x-4 border-b mb-6">
+            <button @click="tab = 'conditions'" :class="{'border-indigo-600 text-indigo-600': tab === 'conditions'}" class="pb-2 px-1 border-b-2 border-transparent">監視条件</button>
+            <button @click="tab = 'notifications'" :class="{'border-indigo-600 text-indigo-600': tab === 'notifications'}" class="pb-2 px-1 border-b-2 border-transparent">通知履歴</button>
+            <button @click="tab = 'settings'" :class="{'border-indigo-600 text-indigo-600': tab === 'settings'}" class="pb-2 px-1 border-b-2 border-transparent">設定</button>
+        </div>
+
+        <!-- Watch Conditions -->
+        <div x-show="tab === 'conditions'">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">監視条件</h2>
+                <button @click="showConditionModal = true" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm">新規追加</button>
+            </div>
+            <div class="space-y-3">
+                <template x-for="c in conditions" :key="c.id">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-medium" x-text="getFacilityName(c.facility_id)"></p>
+                                <p class="text-sm text-gray-500">
+                                    <span x-text="formatDays(c.days_of_week)"></span>
+                                    <span x-text="c.time_from + ' - ' + c.time_to"></span>
+                                </p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 text-xs rounded" :class="c.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100'" x-text="c.enabled ? '有効' : '無効'"></span>
+                                <button @click="deleteCondition(c.id)" class="text-red-500 hover:text-red-700 text-sm">削除</button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <p x-show="conditions.length === 0" class="text-gray-500 text-center py-8">監視条件がありません</p>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div x-show="tab === 'notifications'">
+            <h2 class="text-lg font-bold mb-4">通知履歴</h2>
+            <div class="space-y-3">
+                <template x-for="n in notifications" :key="n.id">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium" x-text="n.facility_name || '施設'"></p>
+                                <p class="text-sm text-gray-500" x-text="n.slot_date + ' ' + n.slot_time"></p>
+                            </div>
+                            <span class="px-2 py-1 text-xs rounded" :class="{'bg-green-100 text-green-800': n.status === 'sent', 'bg-yellow-100': n.status === 'pending', 'bg-red-100 text-red-800': n.status === 'failed'}" x-text="n.status"></span>
+                        </div>
+                    </div>
+                </template>
+                <p x-show="notifications.length === 0" class="text-gray-500 text-center py-8">通知履歴がありません</p>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div x-show="tab === 'settings'">
+            <h2 class="text-lg font-bold mb-4">設定</h2>
+            <div class="bg-white rounded-lg shadow p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">チーム名</label>
+                    <input type="text" x-model="team.name" class="mt-1 block w-full border rounded px-3 py-2" disabled>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
+                    <input type="email" x-model="team.email" class="mt-1 block w-full border rounded px-3 py-2" disabled>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">プラン</label>
+                    <div class="mt-2 grid grid-cols-2 gap-2">
+                        <template x-for="p in ['free', 'personal', 'pro', 'org']" :key="p">
+                            <div class="border rounded p-3 cursor-pointer" :class="team.plan === p ? 'border-indigo-600 bg-indigo-50' : ''" @click="team.plan = p">
+                                <p class="font-medium" x-text="p.charAt(0).toUpperCase() + p.slice(1)"></p>
+                                <p class="text-xs text-gray-500" x-text="planPrices[p]"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <button @click="logout()" class="text-red-500 hover:underline text-sm">ログアウト</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Condition Modal -->
+    <div x-show="showConditionModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold mb-4">監視条件追加</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">施設</label>
+                    <select x-model="newCondition.facility_id" class="mt-1 block w-full border rounded px-3 py-2">
+                        <option value="">選択してください</option>
+                        <template x-for="f in facilities" :key="f.id">
+                            <option :value="f.id" x-text="f.name + ' (' + f.municipality + ')'"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">曜日</label>
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        <template x-for="(day, i) in ['日', '月', '火', '水', '木', '金', '土']" :key="i">
+                            <button type="button" @click="toggleDay(i)" class="px-3 py-1 border rounded" :class="newCondition.days_of_week.includes(i) ? 'bg-indigo-600 text-white border-indigo-600' : ''" x-text="day"></button>
+                        </template>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">開始時刻</label>
+                        <input type="time" x-model="newCondition.time_from" class="mt-1 block w-full border rounded px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">終了時刻</label>
+                        <input type="time" x-model="newCondition.time_to" class="mt-1 block w-full border rounded px-3 py-2">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showConditionModal = false" class="px-4 py-2 border rounded">キャンセル</button>
+                <button @click="createCondition()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">追加</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function userApp() {
+        return {
+            team: null,
+            tab: 'conditions',
+            conditions: [],
+            notifications: [],
+            facilities: [],
+            loginEmail: '',
+            loginName: '',
+            loginError: '',
+            isRegister: false,
+            showConditionModal: false,
+            newCondition: { facility_id: '', days_of_week: [6, 0], time_from: '09:00', time_to: '17:00' },
+            planPrices: { free: '無料 / 1施設', personal: '¥500/月 / 5施設', pro: '¥2,000/月 / 20施設', org: '¥10,000/月 / 無制限' },
+
+            async init() {
+                const saved = localStorage.getItem('akigura_team');
+                if (saved) {
+                    this.team = JSON.parse(saved);
+                    await this.loadData();
+                }
+                await this.loadFacilities();
+            },
+
+            async login() {
+                this.loginError = '';
+                if (!this.loginEmail) {
+                    this.loginError = 'メールアドレスを入力してください';
+                    return;
+                }
+                if (this.isRegister) {
+                    if (!this.loginName) {
+                        this.loginError = 'チーム名を入力してください';
+                        return;
+                    }
+                    const res = await fetch('/api/teams', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: this.loginName, email: this.loginEmail, plan: 'free' })
+                    });
+                    if (!res.ok) {
+                        this.loginError = '登録に失敗しました';
+                        return;
+                    }
+                    this.team = await res.json();
+                } else {
+                    const res = await fetch('/api/teams/by-email?email=' + encodeURIComponent(this.loginEmail));
+                    if (!res.ok) {
+                        this.loginError = 'チームが見つかりません';
+                        return;
+                    }
+                    this.team = await res.json();
+                }
+                localStorage.setItem('akigura_team', JSON.stringify(this.team));
+                await this.loadData();
+            },
+
+            logout() {
+                this.team = null;
+                localStorage.removeItem('akigura_team');
+            },
+
+            async loadData() {
+                if (!this.team) return;
+                const [condRes, notifRes] = await Promise.all([
+                    fetch('/api/conditions?team_id=' + this.team.id),
+                    fetch('/api/notifications?team_id=' + this.team.id)
+                ]);
+                this.conditions = await condRes.json() || [];
+                this.notifications = await notifRes.json() || [];
+            },
+
+            async loadFacilities() {
+                const res = await fetch('/api/facilities');
+                this.facilities = await res.json() || [];
+            },
+
+            getFacilityName(id) {
+                const f = this.facilities.find(f => f.id === id);
+                return f ? f.name : '不明な施設';
+            },
+
+            formatDays(days) {
+                const names = ['日', '月', '火', '水', '木', '金', '土'];
+                if (!days || !Array.isArray(days)) return '';
+                return days.map(d => names[d]).join(', ');
+            },
+
+            toggleDay(day) {
+                const idx = this.newCondition.days_of_week.indexOf(day);
+                if (idx >= 0) {
+                    this.newCondition.days_of_week.splice(idx, 1);
+                } else {
+                    this.newCondition.days_of_week.push(day);
+                }
+            },
+
+            async createCondition() {
+                if (!this.newCondition.facility_id) return;
+                await fetch('/api/conditions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        team_id: this.team.id,
+                        facility_id: this.newCondition.facility_id,
+                        days_of_week: JSON.stringify(this.newCondition.days_of_week),
+                        time_from: this.newCondition.time_from,
+                        time_to: this.newCondition.time_to
+                    })
+                });
+                this.showConditionModal = false;
+                this.newCondition = { facility_id: '', days_of_week: [6, 0], time_from: '09:00', time_to: '17:00' };
+                await this.loadData();
+            },
+
+            async deleteCondition(id) {
+                if (!confirm('この監視条件を削除しますか？')) return;
+                await fetch('/api/conditions/' + id, { method: 'DELETE' });
+                await this.loadData();
+            }
+        }
+    }
+    </script>
+</body>
+</html>
