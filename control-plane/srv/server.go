@@ -111,6 +111,11 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("GET /api/tickets", s.HandleListTickets)
 	mux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
 	mux.HandleFunc("POST /api/chat", s.HandleAIChat)
+	// Billing API
+	mux.HandleFunc("GET /api/plans", s.HandlePlans)
+	mux.HandleFunc("POST /api/billing/checkout", s.HandleCreateCheckout)
+	mux.HandleFunc("POST /api/billing/portal", s.HandleBillingPortal)
+	mux.HandleFunc("POST /api/billing/webhook", s.HandleStripeWebhook)
 	slog.Info("starting server", "addr", addr)
 	return http.ListenAndServe(addr, mux)
 }
