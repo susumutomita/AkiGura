@@ -11,7 +11,10 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 # Add ground-reservation to path
-sys.path.insert(0, '../ground-reservation')
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+ground_reservation_path = os.path.join(script_dir, '..', '..', 'ground-reservation')
+sys.path.insert(0, ground_reservation_path)
 
 try:
     from app.facilities.yokohama.yokohama_facility import YokohamaFacility

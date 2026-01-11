@@ -1,0 +1,15 @@
+[Unit]
+Description=AkiGura Scraper Worker
+After=network.target akigura.service
+
+[Service]
+Type=simple
+User=exedev
+WorkingDirectory=/home/exedev/akigura-saas/worker
+Environment="PATH=/home/exedev/ground-reservation/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/exedev/akigura-saas/worker/akigura-worker -db /home/exedev/akigura-saas/db.sqlite3 -scraper /home/exedev/akigura-saas/worker/scraper_wrapper.py -interval 15m -notify-interval 1m
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
