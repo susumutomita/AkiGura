@@ -21,21 +21,39 @@ type AIClient struct {
 
 // NewAIClient creates a new AI client based on available API keys
 func NewAIClient() *AIClient {
-	// Try Anthropic (Claude) first
+	// Try Ollama (local, free) first
+	if host := os.Getenv("OLLAMA_HOST"); host != "" {
+		return &AIClient{
+			Provider:     "ollama",
+			APIKey:       host, // Store host URL in APIKey field
+			Model:        getEnvOrDefault("OLLAMA_MODEL", "qwen2.5:1.5b"),
+			SystemPrompt: akiguraSystemPrompt,
+		}
+	}
+	// Default Ollama on localhost
+	if _, err := http.Get("http://localhost:11434/api/tags"); err == nil {
+		return &AIClient{
+			Provider:     "ollama",
+			APIKey:       "http://localhost:11434",
+			Model:        getEnvOrDefault("OLLAMA_MODEL", "qwen2.5:1.5b"),
+			SystemPrompt: akiguraSystemPrompt,
+		}
+	}
+	// Try Anthropic (Claude)
 	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
 		return &AIClient{
-			Provider: "anthropic",
-			APIKey:   key,
-			Model:    getEnvOrDefault("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
+			Provider:     "anthropic",
+			APIKey:       key,
+			Model:        getEnvOrDefault("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
 			SystemPrompt: akiguraSystemPrompt,
 		}
 	}
 	// Try OpenAI
 	if key := os.Getenv("OPENAI_API_KEY"); key != "" {
 		return &AIClient{
-			Provider: "openai",
-			APIKey:   key,
-			Model:    getEnvOrDefault("OPENAI_MODEL", "gpt-4o-mini"),
+			Provider:     "openai",
+			APIKey:       key,
+			Model:        getEnvOrDefault("OPENAI_MODEL", "gpt-4o-mini"),
 			SystemPrompt: akiguraSystemPrompt,
 		}
 	}
@@ -79,6 +97,8 @@ AkiGuraは草野球チーム向けのグラウンド空き枠監視・通知サ�
 // Chat sends a message to the AI and returns the response
 func (c *AIClient) Chat(ctx context.Context, userMessage string, conversationHistory []ChatMessage) (string, error) {
 	switch c.Provider {
+	case "ollama":
+		return c.chatOllama(ctx, userMessage, conversationHistory)
 	case "anthropic":
 		return c.chatAnthropic(ctx, userMessage, conversationHistory)
 	case "openai":
@@ -86,6 +106,55 @@ func (c *AIClient) Chat(ctx context.Context, userMessage string, conversationHis
 	default:
 		return "", fmt.Errorf("unknown provider: %s", c.Provider)
 	}
+}
+
+// Ollama API (local LLM)
+func (c *AIClient) chatOllama(ctx context.Context, userMessage string, history []ChatMessage) (string, error) {
+	messages := make([]map[string]string, 0, len(history)+2)
+	messages = append(messages, map[string]string{"role": "system", "content": c.SystemPrompt})
+	for _, m := range history {
+		role := m.Role
+		if role == "ai" {
+			role = "assistant"
+		}
+		messages = append(messages, map[string]string{"role": role, "content": m.Content})
+	}
+	messages = append(messages, map[string]string{"role": "user", "content": userMessage})
+
+	reqBody := map[string]interface{}{
+		"model":    c.Model,
+		"messages": messages,
+		"stream":   false,
+	}
+
+	jsonBody, _ := json.Marshal(reqBody)
+	req, err := http.NewRequestWithContext(ctx, "POST", c.APIKey+"/api/chat", bytes.NewReader(jsonBody))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("ollama API error %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
+
+	return result.Message.Content, nil
 }
 
 type ChatMessage struct {
