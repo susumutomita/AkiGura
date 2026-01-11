@@ -259,19 +259,38 @@ func (s *Server) HandleCreateTicket(w http.ResponseWriter, r *http.Request) {
 // AI Chat Handler
 func (s *Server) HandleAIChat(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Message string `json:"message"`
+		Message string        `json:"message"`
+		History []ChatMessage `json:"history"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.jsonError(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	// AI response (builtin FAQ for now)
-	response := s.generateAIResponse(req.Message)
-	s.jsonResponse(w, map[string]string{"response": response})
+	// Try real AI first
+	aiClient := NewAIClient()
+	if aiClient != nil && aiClient.IsConfigured() {
+		response, err := aiClient.Chat(r.Context(), req.Message, req.History)
+		if err != nil {
+			slog.Warn("AI chat error, falling back to FAQ", "error", err)
+			response = s.generateFallbackResponse(req.Message)
+		}
+		s.jsonResponse(w, map[string]interface{}{
+			"response": response,
+			"ai_powered": true,
+		})
+		return
+	}
+
+	// Fallback to simple FAQ
+	response := s.generateFallbackResponse(req.Message)
+	s.jsonResponse(w, map[string]interface{}{
+		"response": response,
+		"ai_powered": false,
+	})
 }
 
-func (s *Server) generateAIResponse(message string) string {
+func (s *Server) generateFallbackResponse(message string) string {
 	// Simple FAQ-based response
 	faqs := map[string]string{
 		"料金":     "AkiGuraには4つのプランがあります:\n- Free: 無料、1施設まで\n- Personal: ¥500/月、5施設まで\n- Pro: ¥2,000/月、20施設まで\n- Org: ¥10,000/月、無制限",
