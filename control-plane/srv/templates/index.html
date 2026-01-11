@@ -141,7 +141,7 @@
                         </template>
                     </div>
                     <div class="flex space-x-2">
-                        <input type="text" x-model="chatInput" @keyup.enter="sendChat()" placeholder="質問を入力..." class="flex-1 border rounded px-4 py-2">
+                        <input type="text" x-model="chatInput" @keydown.enter.prevent="handleChatKeydown($event)" @compositionstart="isComposing = true" @compositionend="isComposing = false" placeholder="質問を入力... (Shift+Enterで送信)" class="flex-1 border rounded px-4 py-2">
                         <button @click="sendChat()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">送信</button>
                     </div>
                 </div>
@@ -233,6 +233,7 @@
             tickets: [],
             chatMessages: [],
             chatInput: '',
+            isComposing: false,
             showTeamModal: false,
             showFacilityModal: false,
             newTeam: { name: '', email: '', plan: 'free' },
@@ -287,6 +288,15 @@
                 this.newFacility = { name: '', municipality: '', scraper_type: '', url: '' };
                 await this.loadFacilities();
                 await this.loadDashboard();
+            },
+
+            handleChatKeydown(event) {
+                // IME変換中は送信しない
+                if (this.isComposing) return;
+                // Shift+Enterで送信
+                if (event.shiftKey) {
+                    this.sendChat();
+                }
             },
 
             async sendChat() {
