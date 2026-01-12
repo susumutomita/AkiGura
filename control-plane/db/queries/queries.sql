@@ -25,7 +25,39 @@ UPDATE teams SET name = ?2, email = ?3, plan = ?4, status = ?5, updated_at = CUR
 -- name: DeleteTeam :exec
 DELETE FROM teams WHERE id = ?;
 
--- Facilities
+-- Municipalities (自治体)
+-- name: ListMunicipalities :many
+SELECT * FROM municipalities WHERE enabled = 1 ORDER BY name;
+
+-- name: GetMunicipality :one
+SELECT * FROM municipalities WHERE id = ?;
+
+-- name: GetMunicipalityByScraperType :one
+SELECT * FROM municipalities WHERE scraper_type = ?;
+
+-- Grounds (グラウンド)
+-- name: ListGrounds :many
+SELECT g.*, m.name as municipality_name, m.scraper_type
+FROM grounds g
+JOIN municipalities m ON g.municipality_id = m.id
+WHERE g.enabled = 1
+ORDER BY m.name, g.name;
+
+-- name: ListGroundsByMunicipality :many
+SELECT * FROM grounds WHERE municipality_id = ? AND enabled = 1 ORDER BY name;
+
+-- name: GetGround :one
+SELECT g.*, m.name as municipality_name, m.scraper_type
+FROM grounds g
+JOIN municipalities m ON g.municipality_id = m.id
+WHERE g.id = ?;
+
+-- name: MatchGroundByCourtName :one
+SELECT g.id FROM grounds g
+WHERE g.municipality_id = ?1 AND instr(?2, g.court_pattern) > 0
+LIMIT 1;
+
+-- Facilities (legacy - 互換性のため)
 -- name: CreateFacility :one
 INSERT INTO facilities (id, name, municipality, scraper_type, url, enabled, created_at)
 VALUES (?1, ?2, ?3, ?4, ?5, 1, CURRENT_TIMESTAMP)
@@ -48,6 +80,10 @@ UPDATE facilities SET name = ?2, municipality = ?3, scraper_type = ?4, url = ?5,
 
 -- name: DeleteFacility :exec
 DELETE FROM facilities WHERE id = ?;
+
+-- Plan Limits
+-- name: GetPlanLimits :one
+SELECT * FROM plan_limits WHERE plan = ?;
 
 -- Watch Conditions
 -- name: CreateWatchCondition :one
