@@ -105,6 +105,71 @@ func (s *Server) HandleGetTeamByEmail(w http.ResponseWriter, r *http.Request) {
 	s.jsonResponse(w, team)
 }
 
+// Slots API
+func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
+	facilityID := r.URL.Query().Get("facility_id")
+	if facilityID != "" {
+		slots, err := s.Queries.ListSlotsByFacility(r.Context(), facilityID)
+		if err != nil {
+			s.jsonError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		s.jsonResponse(w, slots)
+		return
+	}
+	// Return all recent slots
+	rows, err := s.DB.QueryContext(r.Context(), `
+		SELECT s.id, s.facility_id, f.name as facility_name, f.municipality,
+		       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
+		FROM slots s
+		JOIN facilities f ON s.facility_id = f.id
+		WHERE s.slot_date >= date('now')
+		ORDER BY s.slot_date, s.time_from
+		LIMIT 100
+	`)
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type SlotWithFacility struct {
+		ID           string `json:"id"`
+		FacilityID   string `json:"facility_id"`
+		FacilityName string `json:"facility_name"`
+		Municipality string `json:"municipality"`
+		SlotDate     string `json:"slot_date"`
+		TimeFrom     string `json:"time_from"`
+		TimeTo       string `json:"time_to"`
+		CourtName    string `json:"court_name"`
+		ScrapedAt    string `json:"scraped_at"`
+	}
+	var slots []SlotWithFacility
+	for rows.Next() {
+		var slot SlotWithFacility
+		var courtName *string
+		if err := rows.Scan(&slot.ID, &slot.FacilityID, &slot.FacilityName, &slot.Municipality,
+			&slot.SlotDate, &slot.TimeFrom, &slot.TimeTo, &courtName, &slot.ScrapedAt); err != nil {
+			continue
+		}
+		if courtName != nil {
+			slot.CourtName = *courtName
+		}
+		slots = append(slots, slot)
+	}
+	s.jsonResponse(w, slots)
+}
+
+// Scrape Jobs API
+func (s *Server) HandleListJobs(w http.ResponseWriter, r *http.Request) {
+	jobs, err := s.Queries.ListRecentScrapeJobs(r.Context(), 50)
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	s.jsonResponse(w, jobs)
+}
+
 // Facilities API
 func (s *Server) HandleListFacilities(w http.ResponseWriter, r *http.Request) {
 	facilities, err := s.Queries.ListFacilities(r.Context(), dbgen.ListFacilitiesParams{Limit: 100, Offset: 0})

@@ -108,6 +108,8 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("POST /api/conditions", s.HandleCreateCondition)
 	mux.HandleFunc("DELETE /api/conditions/{id}", s.HandleDeleteCondition)
 	mux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
+	mux.HandleFunc("GET /api/slots", s.HandleListSlots)
+	mux.HandleFunc("GET /api/jobs", s.HandleListJobs)
 	mux.HandleFunc("GET /api/tickets", s.HandleListTickets)
 	mux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
 	mux.HandleFunc("POST /api/chat", s.HandleAIChat)
