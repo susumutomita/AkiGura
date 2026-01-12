@@ -69,7 +69,8 @@ func (w *Worker) RunScraper(ctx context.Context, facilityType string) (*ScraperR
 }
 
 // SaveSlots saves scraped slots to the database
-func (w *Worker) SaveSlots(ctx context.Context, facilityID string, slots []Slot) (int, error) {
+// municipalityID is used to match slots to grounds via court_pattern
+func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []Slot) (int, error) {
 	saved := 0
 	for _, slot := range slots {
 		if slot.Date == nil {
@@ -90,11 +91,23 @@ func (w *Worker) SaveSlots(ctx context.Context, facilityID string, slots []Slot)
 			courtName = *slot.CourtName
 		}
 
-		_, err := w.DB.ExecContext(ctx, `
-			INSERT INTO slots (id, facility_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+		// Match slot to ground by court_pattern
+		var groundID *string
+		err := w.DB.QueryRowContext(ctx, `
+			SELECT id FROM grounds 
+			WHERE municipality_id = ? AND instr(?, court_pattern) > 0
+			LIMIT 1
+		`, municipalityID, courtName).Scan(&groundID)
+		if err != nil && err != sql.ErrNoRows {
+			slog.Warn("failed to match ground", "error", err, "court_name", courtName)
+		}
+
+		// Insert slot with ground_id and municipality_id
+		_, err = w.DB.ExecContext(ctx, `
+			INSERT INTO slots (id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 			ON CONFLICT DO NOTHING
-		`, id, facilityID, *slot.Date, timeFrom, timeTo, courtName, slot.RawText)
+		`, id, municipalityID, municipalityID, groundID, *slot.Date, timeFrom, timeTo, courtName, slot.RawText)
 		if err != nil {
 			slog.Warn("failed to save slot", "error", err)
 			continue
@@ -131,10 +144,10 @@ func (w *Worker) UpdateJob(ctx context.Context, jobID, status string, slotsFound
 	return err
 }
 
-// ProcessFacility runs the full scrape process for a facility
-func (w *Worker) ProcessFacility(ctx context.Context, facilityID, scraperType string) error {
+// ProcessMunicipality runs the full scrape process for a municipality
+func (w *Worker) ProcessMunicipality(ctx context.Context, municipalityID, scraperType string) error {
 	// Create job
-	jobID, err := w.CreateJob(ctx, facilityID)
+	jobID, err := w.CreateJob(ctx, municipalityID)
 	if err != nil {
 		return fmt.Errorf("create job: %w", err)
 	}
@@ -157,7 +170,7 @@ func (w *Worker) ProcessFacility(ctx context.Context, facilityID, scraperType st
 	}
 
 	// Save slots
-	saved, err := w.SaveSlots(ctx, facilityID, result.Slots)
+	saved, err := w.SaveSlots(ctx, municipalityID, result.Slots)
 	if err != nil {
 		w.UpdateJob(ctx, jobID, "failed", saved, err.Error())
 		return fmt.Errorf("save slots: %w", err)
@@ -168,42 +181,47 @@ func (w *Worker) ProcessFacility(ctx context.Context, facilityID, scraperType st
 		return fmt.Errorf("update job completed: %w", err)
 	}
 
-	slog.Info("scrape completed", "facility_id", facilityID, "slots_found", len(result.Slots), "slots_saved", saved)
+	slog.Info("scrape completed", "municipality_id", municipalityID, "slots_found", len(result.Slots), "slots_saved", saved)
 	return nil
 }
 
-// ProcessAllFacilities processes all enabled facilities
-func (w *Worker) ProcessAllFacilities(ctx context.Context) error {
+// ProcessAllMunicipalities processes all enabled municipalities
+func (w *Worker) ProcessAllMunicipalities(ctx context.Context) error {
 	rows, err := w.DB.QueryContext(ctx, `
-		SELECT id, scraper_type FROM facilities WHERE enabled = 1
+		SELECT id, scraper_type FROM municipalities WHERE enabled = 1
 	`)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
-	var facilities []struct {
+	var municipalities []struct {
 		ID          string
 		ScraperType string
 	}
 	for rows.Next() {
-		var f struct {
+		var m struct {
 			ID          string
 			ScraperType string
 		}
-		if err := rows.Scan(&f.ID, &f.ScraperType); err != nil {
+		if err := rows.Scan(&m.ID, &m.ScraperType); err != nil {
 			continue
 		}
-		facilities = append(facilities, f)
+		municipalities = append(municipalities, m)
 	}
 
-	for _, f := range facilities {
-		if err := w.ProcessFacility(ctx, f.ID, f.ScraperType); err != nil {
-			slog.Error("failed to process facility", "facility_id", f.ID, "error", err)
+	for _, m := range municipalities {
+		if err := w.ProcessMunicipality(ctx, m.ID, m.ScraperType); err != nil {
+			slog.Error("failed to process municipality", "municipality_id", m.ID, "scraper_type", m.ScraperType, "error", err)
 		}
 	}
 
 	return nil
+}
+
+// ProcessAllFacilities is an alias for ProcessAllMunicipalities (backward compatibility)
+func (w *Worker) ProcessAllFacilities(ctx context.Context) error {
+	return w.ProcessAllMunicipalities(ctx)
 }
 
 // StartScheduler starts a periodic scraping loop
