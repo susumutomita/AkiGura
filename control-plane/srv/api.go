@@ -107,53 +107,73 @@ func (s *Server) HandleGetTeamByEmail(w http.ResponseWriter, r *http.Request) {
 
 // Slots API
 func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
-	facilityID := r.URL.Query().Get("facility_id")
-	if facilityID != "" {
-		slots, err := s.Queries.ListSlotsByFacility(r.Context(), facilityID)
-		if err != nil {
-			s.jsonError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		s.jsonResponse(w, slots)
-		return
+	groundID := r.URL.Query().Get("ground_id")
+	municipalityID := r.URL.Query().Get("municipality_id")
+	
+	var query string
+	var args []interface{}
+	
+	if groundID != "" {
+		query = `
+			SELECT s.id, s.ground_id, g.name as ground_name, m.name as municipality_name,
+			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
+			FROM slots s
+			LEFT JOIN grounds g ON s.ground_id = g.id
+			LEFT JOIN municipalities m ON s.municipality_id = m.id
+			WHERE s.ground_id = ? AND s.slot_date >= date('now')
+			ORDER BY s.slot_date, s.time_from
+			LIMIT 100
+		`
+		args = []interface{}{groundID}
+	} else if municipalityID != "" {
+		query = `
+			SELECT s.id, s.ground_id, g.name as ground_name, m.name as municipality_name,
+			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
+			FROM slots s
+			LEFT JOIN grounds g ON s.ground_id = g.id
+			LEFT JOIN municipalities m ON s.municipality_id = m.id
+			WHERE s.municipality_id = ? AND s.slot_date >= date('now')
+			ORDER BY s.slot_date, s.time_from
+			LIMIT 100
+		`
+		args = []interface{}{municipalityID}
+	} else {
+		query = `
+			SELECT s.id, s.ground_id, g.name as ground_name, m.name as municipality_name,
+			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
+			FROM slots s
+			LEFT JOIN grounds g ON s.ground_id = g.id
+			LEFT JOIN municipalities m ON s.municipality_id = m.id
+			WHERE s.slot_date >= date('now')
+			ORDER BY s.slot_date, s.time_from
+			LIMIT 100
+		`
 	}
-	// Return all recent slots
-	rows, err := s.DB.QueryContext(r.Context(), `
-		SELECT s.id, s.facility_id, f.name as facility_name, f.municipality,
-		       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
-		FROM slots s
-		JOIN facilities f ON s.facility_id = f.id
-		WHERE s.slot_date >= date('now')
-		ORDER BY s.slot_date, s.time_from
-		LIMIT 100
-	`)
+	
+	rows, err := s.DB.QueryContext(r.Context(), query, args...)
 	if err != nil {
 		s.jsonError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	type SlotWithFacility struct {
-		ID           string `json:"id"`
-		FacilityID   string `json:"facility_id"`
-		FacilityName string `json:"facility_name"`
-		Municipality string `json:"municipality"`
-		SlotDate     string `json:"slot_date"`
-		TimeFrom     string `json:"time_from"`
-		TimeTo       string `json:"time_to"`
-		CourtName    string `json:"court_name"`
-		ScrapedAt    string `json:"scraped_at"`
+	type SlotWithGround struct {
+		ID               string  `json:"id"`
+		GroundID         *string `json:"ground_id"`
+		GroundName       *string `json:"ground_name"`
+		MunicipalityName *string `json:"municipality_name"`
+		SlotDate         string  `json:"slot_date"`
+		TimeFrom         string  `json:"time_from"`
+		TimeTo           string  `json:"time_to"`
+		CourtName        *string `json:"court_name"`
+		ScrapedAt        string  `json:"scraped_at"`
 	}
-	var slots []SlotWithFacility
+	var slots []SlotWithGround
 	for rows.Next() {
-		var slot SlotWithFacility
-		var courtName *string
-		if err := rows.Scan(&slot.ID, &slot.FacilityID, &slot.FacilityName, &slot.Municipality,
-			&slot.SlotDate, &slot.TimeFrom, &slot.TimeTo, &courtName, &slot.ScrapedAt); err != nil {
+		var slot SlotWithGround
+		if err := rows.Scan(&slot.ID, &slot.GroundID, &slot.GroundName, &slot.MunicipalityName,
+			&slot.SlotDate, &slot.TimeFrom, &slot.TimeTo, &slot.CourtName, &slot.ScrapedAt); err != nil {
 			continue
-		}
-		if courtName != nil {
-			slot.CourtName = *courtName
 		}
 		slots = append(slots, slot)
 	}
@@ -170,7 +190,129 @@ func (s *Server) HandleListJobs(w http.ResponseWriter, r *http.Request) {
 	s.jsonResponse(w, jobs)
 }
 
-// Facilities API
+// Municipalities API
+func (s *Server) HandleListMunicipalities(w http.ResponseWriter, r *http.Request) {
+	rows, err := s.DB.QueryContext(r.Context(), `
+		SELECT id, name, scraper_type, url, enabled, created_at
+		FROM municipalities
+		WHERE enabled = 1
+		ORDER BY name
+	`)
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type Municipality struct {
+		ID          string `json:"id"`
+		Name        string `json:"name"`
+		ScraperType string `json:"scraper_type"`
+		URL         string `json:"url"`
+		Enabled     bool   `json:"enabled"`
+		CreatedAt   string `json:"created_at"`
+	}
+	var municipalities []Municipality
+	for rows.Next() {
+		var m Municipality
+		var enabled int
+		if err := rows.Scan(&m.ID, &m.Name, &m.ScraperType, &m.URL, &enabled, &m.CreatedAt); err != nil {
+			continue
+		}
+		m.Enabled = enabled == 1
+		municipalities = append(municipalities, m)
+	}
+	s.jsonResponse(w, municipalities)
+}
+
+// Grounds API
+func (s *Server) HandleListGrounds(w http.ResponseWriter, r *http.Request) {
+	municipalityID := r.URL.Query().Get("municipality_id")
+	
+	var query string
+	var args []interface{}
+	
+	if municipalityID != "" {
+		query = `
+			SELECT g.id, g.municipality_id, m.name as municipality_name, g.name, g.court_pattern, g.enabled, g.created_at
+			FROM grounds g
+			JOIN municipalities m ON g.municipality_id = m.id
+			WHERE g.municipality_id = ? AND g.enabled = 1
+			ORDER BY g.name
+		`
+		args = []interface{}{municipalityID}
+	} else {
+		query = `
+			SELECT g.id, g.municipality_id, m.name as municipality_name, g.name, g.court_pattern, g.enabled, g.created_at
+			FROM grounds g
+			JOIN municipalities m ON g.municipality_id = m.id
+			WHERE g.enabled = 1
+			ORDER BY m.name, g.name
+		`
+	}
+	
+	rows, err := s.DB.QueryContext(r.Context(), query, args...)
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type Ground struct {
+		ID               string  `json:"id"`
+		MunicipalityID   string  `json:"municipality_id"`
+		MunicipalityName string  `json:"municipality_name"`
+		Name             string  `json:"name"`
+		CourtPattern     *string `json:"court_pattern"`
+		Enabled          bool    `json:"enabled"`
+		CreatedAt        string  `json:"created_at"`
+	}
+	var grounds []Ground
+	for rows.Next() {
+		var g Ground
+		var enabled int
+		if err := rows.Scan(&g.ID, &g.MunicipalityID, &g.MunicipalityName, &g.Name, &g.CourtPattern, &enabled, &g.CreatedAt); err != nil {
+			continue
+		}
+		g.Enabled = enabled == 1
+		grounds = append(grounds, g)
+	}
+	s.jsonResponse(w, grounds)
+}
+
+// Plan Limits API
+func (s *Server) HandleGetPlanLimits(w http.ResponseWriter, r *http.Request) {
+	rows, err := s.DB.QueryContext(r.Context(), `
+		SELECT plan, max_grounds, weekend_only, max_conditions_per_ground, notification_priority
+		FROM plan_limits
+	`)
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type PlanLimit struct {
+		Plan                   string `json:"plan"`
+		MaxGrounds             int    `json:"max_grounds"`
+		WeekendOnly            bool   `json:"weekend_only"`
+		MaxConditionsPerGround int    `json:"max_conditions_per_ground"`
+		NotificationPriority   int    `json:"notification_priority"`
+	}
+	var limits []PlanLimit
+	for rows.Next() {
+		var l PlanLimit
+		var weekendOnly int
+		if err := rows.Scan(&l.Plan, &l.MaxGrounds, &weekendOnly, &l.MaxConditionsPerGround, &l.NotificationPriority); err != nil {
+			continue
+		}
+		l.WeekendOnly = weekendOnly == 1
+		limits = append(limits, l)
+	}
+	s.jsonResponse(w, limits)
+}
+
+// Facilities API (legacy)
 func (s *Server) HandleListFacilities(w http.ResponseWriter, r *http.Request) {
 	facilities, err := s.Queries.ListFacilities(r.Context(), dbgen.ListFacilitiesParams{Limit: 100, Offset: 0})
 	if err != nil {
