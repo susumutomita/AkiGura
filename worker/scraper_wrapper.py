@@ -23,6 +23,13 @@ try:
     from app.facilities.kanagawa_system.kanagawa.kanagawa_facility import KanagawaFacility
     from app.facilities.kanagawa_system.kamakura.kamakura_facility import KamakuraFacility
     from app.facilities.kanagawa_system.fujisawa.fujisawa_facility import FujisawaFacility
+    
+    # Disable time filtering in parsers to get all available slots
+    import app.facilities.ayase.ayase_htmlparser as ayase_parser
+    import app.facilities.hiratsuka.hiratsuka_htmlparser as hiratsuka_parser
+    ayase_parser.AyaseHTMLParser.is_time_within_range = lambda self, x: True
+    hiratsuka_parser.HiratsukaHTMLParser.is_time_within_range = lambda self, x: True
+    
     SCRAPERS_AVAILABLE = True
 except ImportError:
     SCRAPERS_AVAILABLE = False
@@ -35,8 +42,26 @@ def parse_slot_string(slot_str: str, facility_type: str) -> Dict[str, Any]:
     """
     slot_str = slot_str.strip()
     
+    # Try to parse Japanese date format: "01/17(土) 13:00 ～ 15:00 施設名"
+    jp_slash_pattern = r'(\d+)/(\d+)\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)'
+    match = re.match(jp_slash_pattern, slot_str)
+    if match:
+        month, day, time_from, time_to, court_name = match.groups()
+        year = datetime.now().year
+        # If the month is less than current month, it's next year
+        if int(month) < datetime.now().month:
+            year += 1
+        return {
+            "date": f"{year}-{int(month):02d}-{int(day):02d}",
+            "time_from": time_from,
+            "time_to": time_to,
+            "court_name": court_name.strip(),
+            "raw_text": slot_str,
+            "facility_type": facility_type
+        }
+    
     # Try to parse Japanese date format: "1月15日(土) 09:00-12:00 ..."
-    jp_pattern = r'(\d+)月(\d+)日\([^​)]+\)\s+(\d+:\d+)-(\d+:\d+)\s+(.+)'
+    jp_pattern = r'(\d+)月(\d+)日\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)'
     match = re.match(jp_pattern, slot_str)
     if match:
         month, day, time_from, time_to, court_name = match.groups()

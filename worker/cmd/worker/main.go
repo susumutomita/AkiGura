@@ -18,6 +18,7 @@ import (
 var (
 	flagDBPath       = flag.String("db", "../control-plane/db.sqlite3", "database path")
 	flagScraperPath  = flag.String("scraper", "./scraper_wrapper.py", "scraper wrapper path")
+	flagPythonPath   = flag.String("python", "python3", "python interpreter path")
 	flagInterval     = flag.Duration("interval", 15*time.Minute, "scrape interval")
 	flagNotifyInterval = flag.Duration("notify-interval", 1*time.Minute, "notification check interval")
 	flagOnce         = flag.Bool("once", false, "run once and exit")
@@ -60,7 +61,7 @@ func run() error {
 		return err
 	}
 
-	w := worker.NewWorker(db, *flagScraperPath, "python3")
+	w := worker.NewWorker(db, *flagScraperPath, *flagPythonPath)
 
 	if *flagOnce {
 		// Run scraper once
