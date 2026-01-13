@@ -37,11 +37,11 @@ func (s *Sender) ProcessPending(ctx context.Context) (sent, failed int, err erro
 		SELECT n.id, n.team_id, n.channel, n.slot_id,
 		       t.name as team_name, t.email as team_email,
 		       sl.slot_date, sl.time_from, sl.time_to, sl.court_name,
-		       f.name as facility_name
+		       g.name as facility_name
 		FROM notifications n
 		JOIN teams t ON n.team_id = t.id
 		JOIN slots sl ON n.slot_id = sl.id
-		JOIN facilities f ON sl.facility_id = f.id
+		JOIN grounds g ON sl.ground_id = g.id
 		WHERE n.status = 'pending'
 		ORDER BY n.created_at ASC
 		LIMIT 100
