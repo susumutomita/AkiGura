@@ -5,26 +5,18 @@ This wraps the ground-reservation scrapers and outputs structured JSON.
 """
 
 import json
-import sys
-import re
-from datetime import datetime
-from typing import List, Dict, Any
-
-# Add ground-reservation to path
 import os
+import re
+import sys
+from datetime import datetime
+from typing import Dict, Any
 
-# Set environment variables for wide time range BEFORE importing scrapers
-# This allows all time slots to be returned (00:00 - 23:59)
-os.environ.setdefault("HIRATSUKA_TIME_FROM", "0000")
-os.environ.setdefault("HIRATSUKA_TIME_TO", "2359")
-os.environ.setdefault("AYASE_TIME_FROM", "0000")
-os.environ.setdefault("AYASE_TIME_TO", "2359")
-os.environ.setdefault("YOKOHAMA_TIME_FROM", "0000")
-os.environ.setdefault("YOKOHAMA_TIME_TO", "2359")
-# Search all days of the week (Japanese weekday names)
-os.environ.setdefault("HIRATSUKA_SELECTED_WEEK_DAYS", "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日")
-os.environ.setdefault("AYASE_SELECTED_WEEK_DAYS", "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日")
-os.environ.setdefault("YOKOHAMA_SELECTED_WEEK_DAYS", "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日")
+# Configure all scrapers with wide time range (00:00 - 23:59) and all weekdays
+ALL_WEEKDAYS = "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日"
+for prefix in ("HIRATSUKA", "AYASE", "YOKOHAMA"):
+    os.environ.setdefault(f"{prefix}_TIME_FROM", "0000")
+    os.environ.setdefault(f"{prefix}_TIME_TO", "2359")
+    os.environ.setdefault(f"{prefix}_SELECTED_WEEK_DAYS", ALL_WEEKDAYS)
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 ground_reservation_path = os.path.join(script_dir, '..', '..', 'ground-reservation')
@@ -43,88 +35,57 @@ except ImportError:
     SCRAPERS_AVAILABLE = False
 
 
-def parse_slot_string(slot_str: str, facility_type: str) -> Dict[str, Any]:
-    """
-    Parse a slot string like "\n2024-01-15 09:00-12:00 新横浜公園野球場"
-    into a structured dict.
-    """
-    slot_str = slot_str.strip()
-
-    # Try to parse Japanese era date format: "令和08年02月28日(土) 06:00 ～ 08:00 施設名"
-    jp_era_pattern = r'令和(\d+)年(\d+)月(\d+)日\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)'
-    match = re.match(jp_era_pattern, slot_str)
-    if match:
-        era_year, month, day, time_from, time_to, court_name = match.groups()
-        # 令和元年 = 2019, so 令和N年 = 2018 + N
-        year = 2018 + int(era_year)
-        return {
-            "date": f"{year}-{int(month):02d}-{int(day):02d}",
-            "time_from": time_from,
-            "time_to": time_to,
-            "court_name": court_name.strip(),
-            "raw_text": slot_str,
-            "facility_type": facility_type
-        }
-
-    # Try to parse Japanese date format: "01/17(土) 13:00 ～ 15:00 施設名"
-    jp_slash_pattern = r'(\d+)/(\d+)\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)'
-    match = re.match(jp_slash_pattern, slot_str)
-    if match:
-        month, day, time_from, time_to, court_name = match.groups()
-        year = datetime.now().year
-        # If the month is less than current month, it's next year
-        if int(month) < datetime.now().month:
-            year += 1
-        return {
-            "date": f"{year}-{int(month):02d}-{int(day):02d}",
-            "time_from": time_from,
-            "time_to": time_to,
-            "court_name": court_name.strip(),
-            "raw_text": slot_str,
-            "facility_type": facility_type
-        }
-    
-    # Try to parse Japanese date format: "1月15日(土) 09:00-12:00 ..."
-    jp_pattern = r'(\d+)月(\d+)日\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)'
-    match = re.match(jp_pattern, slot_str)
-    if match:
-        month, day, time_from, time_to, court_name = match.groups()
-        year = datetime.now().year
-        # If the month is less than current month, it's next year
-        if int(month) < datetime.now().month:
-            year += 1
-        return {
-            "date": f"{year}-{int(month):02d}-{int(day):02d}",
-            "time_from": time_from,
-            "time_to": time_to,
-            "court_name": court_name.strip(),
-            "raw_text": slot_str,
-            "facility_type": facility_type
-        }
-    
-    # Try ISO date format: "2024-01-15 09:00-12:00 ..."
-    iso_pattern = r'(\d{4}-\d{2}-\d{2})\s+(\d+:\d+)-(\d+:\d+)\s+(.+)'
-    match = re.match(iso_pattern, slot_str)
-    if match:
-        date, time_from, time_to, court_name = match.groups()
-        return {
-            "date": date,
-            "time_from": time_from,
-            "time_to": time_to,
-            "court_name": court_name.strip(),
-            "raw_text": slot_str,
-            "facility_type": facility_type
-        }
-    
-    # Fallback: return raw string
+def _make_slot(date: str, time_from: str, time_to: str, court_name: str,
+                raw_text: str, facility_type: str) -> Dict[str, Any]:
+    """Create a slot dict with parsed values."""
     return {
-        "date": None,
-        "time_from": None,
-        "time_to": None,
-        "court_name": None,
-        "raw_text": slot_str,
+        "date": date,
+        "time_from": time_from,
+        "time_to": time_to,
+        "court_name": court_name.strip() if court_name else None,
+        "raw_text": raw_text,
         "facility_type": facility_type
     }
+
+
+def _infer_year(month: int) -> int:
+    """Infer year from month - if month is past, assume next year."""
+    now = datetime.now()
+    return now.year + 1 if month < now.month else now.year
+
+
+def parse_slot_string(slot_str: str, facility_type: str) -> Dict[str, Any]:
+    """Parse slot string into structured dict. Supports multiple date formats."""
+    slot_str = slot_str.strip()
+
+    # Japanese era format: "令和08年02月28日(土) 06:00 ～ 08:00 施設名"
+    if match := re.match(r'令和(\d+)年(\d+)月(\d+)日\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)', slot_str):
+        era_year, month, day, time_from, time_to, court_name = match.groups()
+        year = 2018 + int(era_year)  # 令和元年 = 2019
+        return _make_slot(f"{year}-{int(month):02d}-{int(day):02d}",
+                          time_from, time_to, court_name, slot_str, facility_type)
+
+    # Slash format: "01/17(土) 13:00 ～ 15:00 施設名"
+    if match := re.match(r'(\d+)/(\d+)\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)', slot_str):
+        month, day, time_from, time_to, court_name = match.groups()
+        year = _infer_year(int(month))
+        return _make_slot(f"{year}-{int(month):02d}-{int(day):02d}",
+                          time_from, time_to, court_name, slot_str, facility_type)
+
+    # Kanji format: "1月15日(土) 09:00-12:00 施設名"
+    if match := re.match(r'(\d+)月(\d+)日\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)', slot_str):
+        month, day, time_from, time_to, court_name = match.groups()
+        year = _infer_year(int(month))
+        return _make_slot(f"{year}-{int(month):02d}-{int(day):02d}",
+                          time_from, time_to, court_name, slot_str, facility_type)
+
+    # ISO format: "2024-01-15 09:00-12:00 施設名"
+    if match := re.match(r'(\d{4}-\d{2}-\d{2})\s+(\d+:\d+)-(\d+:\d+)\s+(.+)', slot_str):
+        date, time_from, time_to, court_name = match.groups()
+        return _make_slot(date, time_from, time_to, court_name, slot_str, facility_type)
+
+    # Fallback: unparseable
+    return _make_slot(None, None, None, None, slot_str, facility_type)
 
 
 def search_facility(facility_type: str) -> Dict[str, Any]:

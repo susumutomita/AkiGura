@@ -287,6 +287,8 @@
     </div>
 
     <script>
+    const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+
     function userApp() {
         return {
             team: null,
@@ -369,25 +371,15 @@
                 return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
             },
 
-            prevMonth() {
-                if (this.calendarMonth === 0) {
-                    this.calendarMonth = 11;
-                    this.calendarYear--;
-                } else {
-                    this.calendarMonth--;
-                }
+            changeMonth(delta) {
+                const d = new Date(this.calendarYear, this.calendarMonth + delta, 1);
+                this.calendarYear = d.getFullYear();
+                this.calendarMonth = d.getMonth();
                 this.selectedDate = null;
             },
 
-            nextMonth() {
-                if (this.calendarMonth === 11) {
-                    this.calendarMonth = 0;
-                    this.calendarYear++;
-                } else {
-                    this.calendarMonth++;
-                }
-                this.selectedDate = null;
-            },
+            prevMonth() { this.changeMonth(-1); },
+            nextMonth() { this.changeMonth(1); },
 
             selectDate(dateStr) {
                 this.selectedDate = this.selectedDate === dateStr ? null : dateStr;
@@ -403,8 +395,7 @@
             formatDateFull(dateStr) {
                 if (!dateStr) return '';
                 const d = new Date(dateStr);
-                const days = ['日', '月', '火', '水', '木', '金', '土'];
-                return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${days[d.getDay()]})`;
+                return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${DAY_NAMES[d.getDay()]})`;
             },
 
             async login() {
@@ -515,17 +506,15 @@
             formatDate(dateStr) {
                 if (!dateStr) return '';
                 const d = new Date(dateStr);
-                const days = ['日', '月', '火', '水', '木', '金', '土'];
-                return `${d.getMonth() + 1}/${d.getDate()}(${days[d.getDay()]})`;
+                return `${d.getMonth() + 1}/${d.getDate()}(${DAY_NAMES[d.getDay()]})`;
             },
 
             formatDays(days) {
-                const names = ['日', '月', '火', '水', '木', '金', '土'];
                 if (!days) return '';
                 try {
                     const arr = typeof days === 'string' ? JSON.parse(days) : days;
                     if (!Array.isArray(arr)) return '';
-                    return arr.map(d => names[d]).join(', ');
+                    return arr.map(d => DAY_NAMES[d]).join(', ');
                 } catch {
                     return '';
                 }
