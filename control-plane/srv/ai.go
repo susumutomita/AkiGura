@@ -13,9 +13,9 @@ import (
 
 // AIClient handles AI API interactions
 type AIClient struct {
-	Provider   string // "openai" or "anthropic"
-	APIKey     string
-	Model      string
+	Provider     string // "openai" or "anthropic"
+	APIKey       string
+	Model        string
 	SystemPrompt string
 }
 

@@ -13,10 +13,10 @@ import (
 
 // Plan represents a subscription plan
 type Plan struct {
-	ID           string
-	Name         string
-	PriceID      string // Stripe Price ID
-	MonthlyPrice int    // in JPY
+	ID            string
+	Name          string
+	PriceID       string // Stripe Price ID
+	MonthlyPrice  int    // in JPY
 	MaxFacilities int
 }
 
@@ -29,9 +29,9 @@ var Plans = map[string]Plan{
 
 // StripeClient handles Stripe API interactions
 type StripeClient struct {
-	SecretKey  string
+	SecretKey     string
 	WebhookSecret string
-	BaseURL    string
+	BaseURL       string
 }
 
 // NewStripeClient creates a new Stripe client
@@ -133,10 +133,10 @@ func (s *StripeClient) CancelSubscription(ctx context.Context, subscriptionID st
 }
 
 type Subscription struct {
-	ID                 string `json:"id"`
-	Status             string `json:"status"`
-	CurrentPeriodEnd   int64  `json:"current_period_end"`
-	CancelAtPeriodEnd  bool   `json:"cancel_at_period_end"`
+	ID                string `json:"id"`
+	Status            string `json:"status"`
+	CurrentPeriodEnd  int64  `json:"current_period_end"`
+	CancelAtPeriodEnd bool   `json:"cancel_at_period_end"`
 }
 
 func (s *StripeClient) post(ctx context.Context, path string, data url.Values) ([]byte, error) {
@@ -208,8 +208,8 @@ func (s *StripeClient) VerifyWebhookSignature(payload []byte, signature string) 
 
 // WebhookEvent represents a Stripe webhook event
 type WebhookEvent struct {
-	ID   string          `json:"id"`
-	Type string          `json:"type"`
+	ID   string           `json:"id"`
+	Type string           `json:"type"`
 	Data WebhookEventData `json:"data"`
 }
 

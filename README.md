@@ -1,6 +1,6 @@
 # AkiGura
 
-野球場の空き枠監視・通知システム
+野球場の空き枠監視・通知システムです。
 
 ## アーキテクチャ
 
@@ -66,7 +66,7 @@ go build -o akigura-srv ./cmd/srv
 ./akigura-srv -listen :8000
 ```
 
-ブラウザで http://localhost:8000 にアクセス
+ブラウザで http://localhost:8000 にアクセスします。
 
 ### 4. Worker の起動 (別ターミナル)
 
@@ -83,7 +83,7 @@ go build -o akigura-worker ./cmd/worker
 
 ## 起動スクリプト
 
-両方を一度に起動するには:
+両方を一度に起動する場合は、以下のスクリプトを実行します。
 
 ```bash
 ./start.sh
@@ -117,7 +117,7 @@ AkiGura/
 | `TURSO_AUTH_TOKEN` | Turso 認証トークン | (Turso使用時は必須) |
 | `DATABASE_PATH` | ローカルSQLiteパス | `./db.sqlite3` |
 
-**注意**: `TURSO_DATABASE_URL` が設定されている場合は Turso に接続し、未設定の場合はローカル SQLite を使用します。
+`TURSO_DATABASE_URL` が設定されている場合は Turso に接続し、未設定の場合はローカル SQLite を使用します。
 
 ### Control Plane
 

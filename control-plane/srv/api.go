@@ -109,10 +109,10 @@ func (s *Server) HandleGetTeamByEmail(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 	groundID := r.URL.Query().Get("ground_id")
 	municipalityID := r.URL.Query().Get("municipality_id")
-	
+
 	var query string
 	var args []interface{}
-	
+
 	if groundID != "" {
 		query = `
 			SELECT s.id, s.ground_id, g.name as ground_name, m.name as municipality_name,
@@ -149,7 +149,7 @@ func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 			LIMIT 100
 		`
 	}
-	
+
 	rows, err := s.DB.QueryContext(r.Context(), query, args...)
 	if err != nil {
 		s.jsonError(w, err.Error(), http.StatusInternalServerError)
@@ -228,10 +228,10 @@ func (s *Server) HandleListMunicipalities(w http.ResponseWriter, r *http.Request
 // Grounds API
 func (s *Server) HandleListGrounds(w http.ResponseWriter, r *http.Request) {
 	municipalityID := r.URL.Query().Get("municipality_id")
-	
+
 	var query string
 	var args []interface{}
-	
+
 	if municipalityID != "" {
 		query = `
 			SELECT g.id, g.municipality_id, m.name as municipality_name, g.name, g.court_pattern, g.enabled, g.created_at
@@ -250,7 +250,7 @@ func (s *Server) HandleListGrounds(w http.ResponseWriter, r *http.Request) {
 			ORDER BY m.name, g.name
 		`
 	}
-	
+
 	rows, err := s.DB.QueryContext(r.Context(), query, args...)
 	if err != nil {
 		s.jsonError(w, err.Error(), http.StatusInternalServerError)
@@ -483,7 +483,7 @@ func (s *Server) HandleAIChat(w http.ResponseWriter, r *http.Request) {
 			response = s.generateFallbackResponse(req.Message)
 		}
 		s.jsonResponse(w, map[string]interface{}{
-			"response": response,
+			"response":   response,
 			"ai_powered": true,
 		})
 		return
@@ -492,7 +492,7 @@ func (s *Server) HandleAIChat(w http.ResponseWriter, r *http.Request) {
 	// Fallback to simple FAQ
 	response := s.generateFallbackResponse(req.Message)
 	s.jsonResponse(w, map[string]interface{}{
-		"response": response,
+		"response":   response,
 		"ai_powered": false,
 	})
 }
@@ -500,12 +500,12 @@ func (s *Server) HandleAIChat(w http.ResponseWriter, r *http.Request) {
 func (s *Server) generateFallbackResponse(message string) string {
 	// Simple FAQ-based response
 	faqs := map[string]string{
-		"料金":     "AkiGuraには4つのプランがあります:\n- Free: 無料、1施設まで\n- Personal: ¥500/月、5施設まで\n- Pro: ¥2,000/月、20施設まで\n- Org: ¥10,000/月、無制限",
-		"プラン":    "AkiGuraには4つのプランがあります:\n- Free: 無料、1施設まで\n- Personal: ¥500/月、5施設まで\n- Pro: ¥2,000/月、20施設まで\n- Org: ¥10,000/月、無制限",
-		"通知":     "空き枠が見つかると、メールまたはLINEで即座に通知します。通知設定は監視条件ごとに変更できます。",
-		"監視":     "監視条件では、施設・曜日・時間帯を指定できます。条件にマッチする空きが出た時点で通知されます。",
-		"解約":     "解約はいつでも可能です。設定画面から「プラン変更」→「解約」を選択してください。",
-		"施設追加":   "新しい施設のサポートをご希望の場合は、施設名と予約サイトのURLをお知らせください。",
+		"料金":   "AkiGuraには4つのプランがあります:\n- Free: 無料、1施設まで\n- Personal: ¥500/月、5施設まで\n- Pro: ¥2,000/月、20施設まで\n- Org: ¥10,000/月、無制限",
+		"プラン":  "AkiGuraには4つのプランがあります:\n- Free: 無料、1施設まで\n- Personal: ¥500/月、5施設まで\n- Pro: ¥2,000/月、20施設まで\n- Org: ¥10,000/月、無制限",
+		"通知":   "空き枠が見つかると、メールまたはLINEで即座に通知します。通知設定は監視条件ごとに変更できます。",
+		"監視":   "監視条件では、施設・曜日・時間帯を指定できます。条件にマッチする空きが出た時点で通知されます。",
+		"解約":   "解約はいつでも可能です。設定画面から「プラン変更」→「解約」を選択してください。",
+		"施設追加": "新しい施設のサポートをご希望の場合は、施設名と予約サイトのURLをお知らせください。",
 	}
 
 	for keyword, response := range faqs {

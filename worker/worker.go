@@ -33,9 +33,9 @@ type Slot struct {
 
 // Worker handles scraping jobs
 type Worker struct {
-	DB            *sql.DB
-	ScraperPath   string
-	PythonPath    string
+	DB          *sql.DB
+	ScraperPath string
+	PythonPath  string
 }
 
 // NewWorker creates a new Worker instance

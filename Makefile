@@ -1,42 +1,39 @@
 .PHONY: install
 install:
 	bun install
-	cd packages/frontend && bun install
-	cd packages/backend && bun install
+	cd control-plane && go mod download
+	cd worker && go mod download
 
 .PHONY: install_ci
 install_ci:
 	bun install --frozen-lockfile
-	cd packages/frontend && bun install --frozen-lockfile
-	cd packages/backend && bun install --frozen-lockfile
+	cd control-plane && go mod download
+	cd worker && go mod download
 
 .PHONY: build
 build:
-	bun run build
+	cd control-plane && go build -o akigura-srv ./cmd/srv
+	cd worker && go build -o akigura-worker ./cmd/worker
 
 .PHONY: clean
 clean:
-	bun run clean
+	cd control-plane && go clean
+	cd worker && go clean
 
 .PHONY: test
 test:
-	bun run test
+	cd control-plane && go test ./...
+	cd worker && go test ./...
 
 .PHONY: test_coverage
 test_coverage:
-	bun run test:coverage
-
-.PHONY: test_debug
-test_debug:
-	bun run test:debug
-
-.PHONY: test_watch
-test_watch:
-	bun run test:watch
+	cd control-plane && go test -coverprofile=coverage.out ./...
+	cd worker && go test -coverprofile=coverage.out ./...
 
 .PHONY: lint
 lint:
-	bun run lint
+	cd control-plane && go vet ./...
+	cd worker && go vet ./...
 
 .PHONY: lint_text
 lint_text:
@@ -44,19 +41,21 @@ lint_text:
 
 .PHONY: format
 format:
-	bun run format
+	cd control-plane && go fmt ./...
+	cd worker && go fmt ./...
 
 .PHONY: format_check
 format_check:
-	bun run format:check
+	@cd control-plane && test -z "$$(gofmt -l .)" || (echo "control-plane: Files need formatting:" && gofmt -l . && exit 1)
+	@cd worker && test -z "$$(gofmt -l .)" || (echo "worker: Files need formatting:" && gofmt -l . && exit 1)
 
 .PHONY: before-commit
 before-commit: lint_text format_check test build
 
-.PHONY: run_frontend
-run_frontend:
-	bun run start:frontend
+.PHONY: run_control_plane
+run_control_plane:
+	cd control-plane && go run ./cmd/srv
 
-.PHONY: run_backend
-run_backend:
-	bun run start:backend
+.PHONY: run_worker
+run_worker:
+	cd worker && go run ./cmd/worker
