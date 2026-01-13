@@ -19,6 +19,7 @@
                 <button @click="currentTab = 'dashboard'" :class="{'bg-indigo-700': currentTab === 'dashboard'}" class="px-3 py-2 rounded hover:bg-indigo-500">ダッシュボード</button>
                 <button @click="currentTab = 'teams'" :class="{'bg-indigo-700': currentTab === 'teams'}" class="px-3 py-2 rounded hover:bg-indigo-500">チーム管理</button>
                 <button @click="currentTab = 'facilities'" :class="{'bg-indigo-700': currentTab === 'facilities'}" class="px-3 py-2 rounded hover:bg-indigo-500">施設管理</button>
+                <button @click="currentTab = 'slots'" :class="{'bg-indigo-700': currentTab === 'slots'}" class="px-3 py-2 rounded hover:bg-indigo-500">空き状況</button>
                 <button @click="currentTab = 'support'" :class="{'bg-indigo-700': currentTab === 'support'}" class="px-3 py-2 rounded hover:bg-indigo-500">AIサポート</button>
             </nav>
         </div>
@@ -126,6 +127,53 @@
             </div>
         </div>
 
+        <!-- Slots (空き状況) -->
+        <div x-show="currentTab === 'slots'" x-cloak>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">空き状況</h2>
+                <div class="flex items-center space-x-4">
+                    <select x-model="slotFilter.municipalityId" @change="loadSlots()" class="border rounded px-3 py-2">
+                        <option value="">全ての自治体</option>
+                        <template x-for="m in municipalities" :key="m.id">
+                            <option :value="m.id" x-text="m.name"></option>
+                        </template>
+                    </select>
+                    <button @click="loadSlots()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">更新</button>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div x-show="slots.length === 0" class="p-8 text-center text-gray-500">
+                    <p>空き枠データがありません</p>
+                    <p class="text-sm mt-2">スクレイピングが実行されると、ここに空き状況が表示されます</p>
+                </div>
+                <table x-show="slots.length > 0" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">日付</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">時間</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">施設</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">自治体</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">コート</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="slot in slots" :key="slot.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="formatDate(slot.slot_date)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.time_from + ' - ' + slot.time_to"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.ground_name || '-'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.municipality_name || '-'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.court_name || '-'"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <div x-show="slots.length > 0" class="mt-4 text-sm text-gray-500">
+                <span x-text="slots.length"></span>件の空き枠を表示中
+            </div>
+        </div>
+
         <!-- AI Support -->
         <div x-show="currentTab === 'support'" x-cloak>
             <h2 class="text-2xl font-bold mb-6">AIサポート</h2>
@@ -230,6 +278,9 @@
             dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [] },
             teams: [],
             facilities: [],
+            slots: [],
+            municipalities: [],
+            slotFilter: { municipalityId: '' },
             tickets: [],
             chatMessages: [],
             chatInput: '',
@@ -243,6 +294,8 @@
                 await this.loadDashboard();
                 await this.loadTeams();
                 await this.loadFacilities();
+                await this.loadMunicipalities();
+                await this.loadSlots();
                 await this.loadTickets();
             },
 
@@ -267,6 +320,30 @@
                     scraper_type: g.court_pattern,
                     enabled: g.enabled
                 }));
+            },
+
+            async loadMunicipalities() {
+                const res = await fetch('/api/municipalities');
+                this.municipalities = await res.json();
+            },
+
+            async loadSlots() {
+                let url = '/api/slots';
+                if (this.slotFilter.municipalityId) {
+                    url += '?municipality_id=' + this.slotFilter.municipalityId;
+                }
+                const res = await fetch(url);
+                this.slots = await res.json() || [];
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '-';
+                const d = new Date(dateStr);
+                const days = ['日', '月', '火', '水', '木', '金', '土'];
+                const month = d.getMonth() + 1;
+                const day = d.getDate();
+                const dow = days[d.getDay()];
+                return `${month}/${day}(${dow})`;
             },
 
             async loadTickets() {
