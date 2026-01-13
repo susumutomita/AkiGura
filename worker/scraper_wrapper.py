@@ -12,6 +12,20 @@ from typing import List, Dict, Any
 
 # Add ground-reservation to path
 import os
+
+# Set environment variables for wide time range BEFORE importing scrapers
+# This allows all time slots to be returned (00:00 - 23:59)
+os.environ.setdefault("HIRATSUKA_TIME_FROM", "0000")
+os.environ.setdefault("HIRATSUKA_TIME_TO", "2359")
+os.environ.setdefault("AYASE_TIME_FROM", "0000")
+os.environ.setdefault("AYASE_TIME_TO", "2359")
+os.environ.setdefault("YOKOHAMA_TIME_FROM", "0000")
+os.environ.setdefault("YOKOHAMA_TIME_TO", "2359")
+# Search all days of the week (Japanese weekday names)
+os.environ.setdefault("HIRATSUKA_SELECTED_WEEK_DAYS", "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日")
+os.environ.setdefault("AYASE_SELECTED_WEEK_DAYS", "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日")
+os.environ.setdefault("YOKOHAMA_SELECTED_WEEK_DAYS", "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日")
+
 script_dir = os.path.dirname(os.path.abspath(__file__))
 ground_reservation_path = os.path.join(script_dir, '..', '..', 'ground-reservation')
 sys.path.insert(0, ground_reservation_path)
@@ -23,13 +37,7 @@ try:
     from app.facilities.kanagawa_system.kanagawa.kanagawa_facility import KanagawaFacility
     from app.facilities.kanagawa_system.kamakura.kamakura_facility import KamakuraFacility
     from app.facilities.kanagawa_system.fujisawa.fujisawa_facility import FujisawaFacility
-    
-    # Disable time filtering in parsers to get all available slots
-    import app.facilities.ayase.ayase_htmlparser as ayase_parser
-    import app.facilities.hiratsuka.hiratsuka_htmlparser as hiratsuka_parser
-    ayase_parser.AyaseHTMLParser.is_time_within_range = lambda self, x: True
-    hiratsuka_parser.HiratsukaHTMLParser.is_time_within_range = lambda self, x: True
-    
+
     SCRAPERS_AVAILABLE = True
 except ImportError:
     SCRAPERS_AVAILABLE = False
@@ -41,7 +49,23 @@ def parse_slot_string(slot_str: str, facility_type: str) -> Dict[str, Any]:
     into a structured dict.
     """
     slot_str = slot_str.strip()
-    
+
+    # Try to parse Japanese era date format: "令和08年02月28日(土) 06:00 ～ 08:00 施設名"
+    jp_era_pattern = r'令和(\d+)年(\d+)月(\d+)日\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)'
+    match = re.match(jp_era_pattern, slot_str)
+    if match:
+        era_year, month, day, time_from, time_to, court_name = match.groups()
+        # 令和元年 = 2019, so 令和N年 = 2018 + N
+        year = 2018 + int(era_year)
+        return {
+            "date": f"{year}-{int(month):02d}-{int(day):02d}",
+            "time_from": time_from,
+            "time_to": time_to,
+            "court_name": court_name.strip(),
+            "raw_text": slot_str,
+            "facility_type": facility_type
+        }
+
     # Try to parse Japanese date format: "01/17(土) 13:00 ～ 15:00 施設名"
     jp_slash_pattern = r'(\d+)/(\d+)\([^)]+\)\s+(\d+:\d+)\s*[～~-]\s*(\d+:\d+)\s+(.+)'
     match = re.match(jp_slash_pattern, slot_str)
