@@ -1,11 +1,5 @@
 name: ci
 
-# Supply Chain Security:
-# - All actions pinned to full SHA for immutable references
-# - Safe Chain runs before dependency installation
-# - Lifecycle scripts disabled during install
-# - Minimal permissions following principle of least privilege
-
 permissions:
   contents: read
   packages: read
@@ -20,28 +14,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
-        # actions/checkout v4.3.1
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
-          submodules: true
+          go-version-file: control-plane/go.mod
+          cache-dependency-path: |
+            control-plane/go.sum
+            worker/go.sum
 
       - name: Setup Bun
-        # oven-sh/setup-bun v2.0.2
-        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
 
-      # Supply Chain Security: Setup safe-chain before dependency installation
-      - name: Setup safe-chain
-        run: |
-          bun add -g @aikidosec/safe-chain
-          safe-chain setup-ci
-
-      # Supply Chain Security: Disable lifecycle scripts during install
-      - name: Install packages via packages.json
-        env:
-          npm_config_ignore_scripts: "true"
-          CI: "true"
+      - name: Install dependencies
         run: make install_ci
 
-      - name: lint test format
-        run: |
-          make before-commit
+      - name: Lint, test, and build
+        run: make before-commit

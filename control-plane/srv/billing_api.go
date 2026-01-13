@@ -12,8 +12,8 @@ import (
 // HandleCreateCheckout creates a Stripe checkout session
 func (s *Server) HandleCreateCheckout(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TeamID  string `json:"team_id"`
-		Plan    string `json:"plan"`
+		TeamID string `json:"team_id"`
+		Plan   string `json:"plan"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.jsonError(w, "invalid request", http.StatusBadRequest)
@@ -139,9 +139,9 @@ func (s *Server) HandlePlans(w http.ResponseWriter, r *http.Request) {
 	plans := make([]map[string]interface{}, 0)
 	for _, p := range billing.Plans {
 		plans = append(plans, map[string]interface{}{
-			"id":            p.ID,
-			"name":          p.Name,
-			"monthly_price": p.MonthlyPrice,
+			"id":             p.ID,
+			"name":           p.Name,
+			"monthly_price":  p.MonthlyPrice,
 			"max_facilities": p.MaxFacilities,
 		})
 	}

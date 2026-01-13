@@ -94,7 +94,7 @@ func (l *LINEMessagingNotifier) Send(ctx context.Context, n *Notification) error
 		"to": lineUserID,
 		"messages": []map[string]interface{}{
 			{
-				"type": "flex",
+				"type":    "flex",
 				"altText": fmt.Sprintf("空き枠通知 - %s", n.FacilityName),
 				"contents": map[string]interface{}{
 					"type": "bubble",

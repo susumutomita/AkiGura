@@ -124,3 +124,31 @@ func (s *Server) Serve(addr string) error {
 	slog.Info("starting server", "addr", addr)
 	return http.ListenAndServe(addr, mux)
 }
+
+// mainDomainFromHost extracts the main domain from a host string by removing the first subdomain.
+// For example: "example.exe.cloud:8080" returns "exe.cloud:8080"
+func mainDomainFromHost(host string) string {
+	// Split host and port
+	hostPart := host
+	portPart := ""
+	if idx := len(host) - 1; idx > 0 {
+		for i := idx; i >= 0; i-- {
+			if host[i] == ':' {
+				hostPart = host[:i]
+				portPart = host[i:]
+				break
+			}
+			if host[i] == '.' {
+				break
+			}
+		}
+	}
+
+	// Find the first dot and return everything after it
+	for i := 0; i < len(hostPart); i++ {
+		if hostPart[i] == '.' {
+			return hostPart[i+1:] + portPart
+		}
+	}
+	return host
+}

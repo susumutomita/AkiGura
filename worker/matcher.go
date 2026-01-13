@@ -207,8 +207,8 @@ func (m *Matcher) ProcessMatches(ctx context.Context, facilityID string, since t
 					continue
 				}
 				matches++
-				slog.Info("match found", 
-					"team", cond.TeamName, 
+				slog.Info("match found",
+					"team", cond.TeamName,
 					"slot_date", slot.Date,
 					"time", slot.TimeFrom+"-"+slot.TimeTo,
 					"court", slot.CourtName)

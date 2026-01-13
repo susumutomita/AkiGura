@@ -33,9 +33,9 @@ type Slot struct {
 
 // Worker handles scraping jobs
 type Worker struct {
-	DB            *sql.DB
-	ScraperPath   string
-	PythonPath    string
+	DB          *sql.DB
+	ScraperPath string
+	PythonPath  string
 }
 
 // NewWorker creates a new Worker instance
@@ -118,12 +118,12 @@ func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []S
 }
 
 // CreateJob creates a scrape job record
-func (w *Worker) CreateJob(ctx context.Context, facilityID string) (string, error) {
+func (w *Worker) CreateJob(ctx context.Context, municipalityID string) (string, error) {
 	id := uuid.New().String()
 	_, err := w.DB.ExecContext(ctx, `
-		INSERT INTO scrape_jobs (id, facility_id, status, created_at)
+		INSERT INTO scrape_jobs (id, municipality_id, status, created_at)
 		VALUES (?, ?, 'pending', CURRENT_TIMESTAMP)
-	`, id, facilityID)
+	`, id, municipalityID)
 	if err != nil {
 		return "", err
 	}

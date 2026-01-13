@@ -7,14 +7,14 @@ import (
 
 // Notification represents a notification to be sent
 type Notification struct {
-	ID          string
-	TeamID      string
-	TeamName    string
-	TeamEmail   string
-	Channel     string // email, line, slack
-	SlotDate    string
-	SlotTime    string
-	CourtName   string
+	ID           string
+	TeamID       string
+	TeamName     string
+	TeamEmail    string
+	Channel      string // email, line, slack
+	SlotDate     string
+	SlotTime     string
+	CourtName    string
 	FacilityName string
 }
 

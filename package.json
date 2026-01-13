@@ -1,0 +1,23 @@
+{
+  "name": "akigura",
+  "version": "1.0.0",
+  "author": "Susumu Tomita <oyster880@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "lint:text": "bunx textlint ./README.md ./CLAUDE.md ./Plan.md",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.1",
+    "husky": "^9.1.7",
+    "textlint": "^15.4.0",
+    "textlint-rule-ja-no-abusage": "^3.0.0",
+    "textlint-rule-ja-no-inappropriate-words": "^2.0.0",
+    "textlint-rule-no-double-negative-ja": "^2.0.1",
+    "textlint-rule-no-dropping-the-ra": "^3.0.0",
+    "textlint-rule-prefer-tari-tari": "^1.0.3",
+    "textlint-rule-preset-ja-spacing": "^2.4.3",
+    "textlint-rule-preset-ja-technical-writing": "^12.0.2",
+    "textlint-rule-spellcheck-tech-word": "^5.0.0"
+  }
+}
