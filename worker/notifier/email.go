@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/smtp"
 	"os"
+	"strings"
 )
 
 // EmailNotifier sends notifications via email
@@ -38,13 +39,20 @@ func (e *EmailNotifier) Channel() string {
 }
 
 func (e *EmailNotifier) Send(ctx context.Context, n *Notification) error {
-	if e.SMTPUser == "" || e.SMTPPassword == "" {
-		// Fall back to logging if SMTP not configured
-		fmt.Printf("[EMAIL] To: %s, Subject: 空き枠通知 - %s\n", n.TeamEmail, n.FacilityName)
+	if len(n.Slots) == 0 {
 		return nil
 	}
 
-	subject := fmt.Sprintf("【AkiGura】空き枠が見つかりました - %s", n.FacilityName)
+	if e.SMTPUser == "" || e.SMTPPassword == "" {
+		// Fall back to logging if SMTP not configured
+		fmt.Printf("[EMAIL] To: %s, Subject: 空き枠通知 (%d件)\n", n.TeamEmail, len(n.Slots))
+		for _, slot := range n.Slots {
+			fmt.Printf("  - %s: %s %s (%s)\n", slot.FacilityName, slot.SlotDate, slot.SlotTime, slot.CourtName)
+		}
+		return nil
+	}
+
+	subject := fmt.Sprintf("【AkiGura】空き枠が見つかりました（%d件）", len(n.Slots))
 	body, err := e.renderTemplate(n)
 	if err != nil {
 		return fmt.Errorf("render template: %w", err)
@@ -74,12 +82,14 @@ func (e *EmailNotifier) renderTemplate(n *Notification) (string, error) {
   </div>
   <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
     <p>{{.TeamName}} 様</p>
-    <p>ご登録いただいた条件にマッチする空き枠が見つかりました。</p>
-    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+    <p>ご登録いただいた条件にマッチする空き枠が <strong>{{len .Slots}}件</strong> 見つかりました。</p>
+    {{range .Slots}}
+    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
       <p style="margin: 5px 0;"><strong>施設:</strong> {{.FacilityName}}</p>
       <p style="margin: 5px 0;"><strong>日時:</strong> {{.SlotDate}} {{.SlotTime}}</p>
       <p style="margin: 5px 0;"><strong>場所:</strong> {{.CourtName}}</p>
     </div>
+    {{end}}
     <p>お早めにご予約ください。</p>
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
     <p style="color: #6b7280; font-size: 12px;">このメールは AkiGura から自動送信されています。</p>
@@ -124,13 +134,28 @@ func (s *SendGridNotifier) Send(ctx context.Context, n *Notification) error {
 		return fmt.Errorf("SENDGRID_API_KEY not set")
 	}
 
+	if len(n.Slots) == 0 {
+		return nil
+	}
+
+	// Build plain text body with all slots
+	var bodyLines []string
+	bodyLines = append(bodyLines, fmt.Sprintf("%s様\n", n.TeamName))
+	bodyLines = append(bodyLines, fmt.Sprintf("空き枠が%d件見つかりました。\n", len(n.Slots)))
+	for i, slot := range n.Slots {
+		bodyLines = append(bodyLines, fmt.Sprintf("\n【%d】%s", i+1, slot.FacilityName))
+		bodyLines = append(bodyLines, fmt.Sprintf("日時: %s %s", slot.SlotDate, slot.SlotTime))
+		bodyLines = append(bodyLines, fmt.Sprintf("場所: %s", slot.CourtName))
+	}
+	bodyLines = append(bodyLines, "\nお早めにご予約ください。")
+
 	payload := map[string]interface{}{
 		"personalizations": []map[string]interface{}{
 			{
 				"to": []map[string]string{
 					{"email": n.TeamEmail, "name": n.TeamName},
 				},
-				"subject": fmt.Sprintf("【AkiGura】空き枠が見つかりました - %s", n.FacilityName),
+				"subject": fmt.Sprintf("【AkiGura】空き枠が見つかりました（%d件）", len(n.Slots)),
 			},
 		},
 		"from": map[string]string{
@@ -140,7 +165,7 @@ func (s *SendGridNotifier) Send(ctx context.Context, n *Notification) error {
 		"content": []map[string]string{
 			{
 				"type":  "text/plain",
-				"value": fmt.Sprintf("%s様\n\n空き枠が見つかりました。\n\n施設: %s\n日時: %s %s\n場所: %s\n\nお早めにご予約ください。", n.TeamName, n.FacilityName, n.SlotDate, n.SlotTime, n.CourtName),
+				"value": strings.Join(bodyLines, "\n"),
 			},
 		},
 	}

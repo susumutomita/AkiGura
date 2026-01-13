@@ -30,32 +30,52 @@ func (s *SlackNotifier) Send(ctx context.Context, n *Notification) error {
 		return fmt.Errorf("SLACK_WEBHOOK_URL not set")
 	}
 
-	payload := map[string]interface{}{
-		"blocks": []map[string]interface{}{
-			{
-				"type": "header",
-				"text": map[string]string{
-					"type":  "plain_text",
-					"text":  "🏈 AkiGura 空き枠通知",
-					"emoji": "true",
-				},
-			},
-			{
-				"type": "section",
-				"fields": []map[string]string{
-					{"type": "mrkdwn", "text": fmt.Sprintf("*チーム:*\n%s", n.TeamName)},
-					{"type": "mrkdwn", "text": fmt.Sprintf("*施設:*\n%s", n.FacilityName)},
-					{"type": "mrkdwn", "text": fmt.Sprintf("*日時:*\n%s %s", n.SlotDate, n.SlotTime)},
-					{"type": "mrkdwn", "text": fmt.Sprintf("*場所:*\n%s", n.CourtName)},
-				},
-			},
-			{
-				"type": "context",
-				"elements": []map[string]string{
-					{"type": "mrkdwn", "text": "お早めにご予約ください。"},
-				},
+	if len(n.Slots) == 0 {
+		return nil
+	}
+
+	// Build blocks with all slots
+	blocks := []map[string]interface{}{
+		{
+			"type": "header",
+			"text": map[string]string{
+				"type":  "plain_text",
+				"text":  fmt.Sprintf("🏈 AkiGura 空き枠通知（%d件）", len(n.Slots)),
+				"emoji": "true",
 			},
 		},
+		{
+			"type": "section",
+			"text": map[string]string{
+				"type": "mrkdwn",
+				"text": fmt.Sprintf("*%s* 様\nご登録いただいた条件にマッチする空き枠が見つかりました。", n.TeamName),
+			},
+		},
+		{
+			"type": "divider",
+		},
+	}
+
+	for _, slot := range n.Slots {
+		blocks = append(blocks, map[string]interface{}{
+			"type": "section",
+			"fields": []map[string]string{
+				{"type": "mrkdwn", "text": fmt.Sprintf("*施設:*\n%s", slot.FacilityName)},
+				{"type": "mrkdwn", "text": fmt.Sprintf("*日時:*\n%s %s", slot.SlotDate, slot.SlotTime)},
+				{"type": "mrkdwn", "text": fmt.Sprintf("*場所:*\n%s", slot.CourtName)},
+			},
+		})
+	}
+
+	blocks = append(blocks, map[string]interface{}{
+		"type": "context",
+		"elements": []map[string]string{
+			{"type": "mrkdwn", "text": "お早めにご予約ください。"},
+		},
+	})
+
+	payload := map[string]interface{}{
+		"blocks": blocks,
 	}
 
 	body, _ := json.Marshal(payload)
