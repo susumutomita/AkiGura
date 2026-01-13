@@ -23,9 +23,11 @@ var (
 	flagScraperPath    = flag.String("scraper", "./scraper_wrapper.py", "scraper wrapper path")
 	flagPythonPath     = flag.String("python", "python3", "python interpreter path")
 	flagInterval       = flag.Duration("interval", 15*time.Minute, "scrape interval")
+	flagJobInterval    = flag.Duration("job-interval", 30*time.Second, "pending job check interval")
 	flagNotifyInterval = flag.Duration("notify-interval", 1*time.Minute, "notification check interval")
 	flagOnce           = flag.Bool("once", false, "run once and exit")
 	flagNotifyOnly     = flag.Bool("notify-only", false, "only process notifications")
+	flagJobMode        = flag.Bool("job-mode", false, "process pending jobs from database")
 )
 
 func main() {
@@ -67,7 +69,7 @@ func run() error {
 	w := worker.NewWorker(db, *flagScraperPath, *flagPythonPath)
 
 	if *flagOnce {
-		// Run scraper once
+		// Run scraper once for all municipalities
 		if err := w.ProcessAllFacilities(ctx); err != nil {
 			return err
 		}
@@ -77,7 +79,31 @@ func run() error {
 		return nil
 	}
 
-	// Start notification sender in background
+	if *flagJobMode {
+		// Job mode: process pending jobs from database
+		slog.Info("starting job processor", "job_interval", *flagJobInterval, "notify_interval", *flagNotifyInterval)
+		
+		// Start notification sender in background
+		go sender.StartSender(ctx, *flagNotifyInterval)
+		
+		// Process pending jobs periodically
+		ticker := time.NewTicker(*flagJobInterval)
+		defer ticker.Stop()
+		
+		for {
+			select {
+			case <-ctx.Done():
+				slog.Info("job processor stopped")
+				return nil
+			case <-ticker.C:
+				if err := w.ProcessPendingJobs(ctx); err != nil {
+					slog.Error("failed to process pending jobs", "error", err)
+				}
+			}
+		}
+	}
+
+	// Default: Start notification sender in background
 	go sender.StartSender(ctx, *flagNotifyInterval)
 
 	// Run scraper scheduler (blocks)

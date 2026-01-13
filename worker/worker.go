@@ -253,3 +253,81 @@ func (w *Worker) StartScheduler(ctx context.Context, interval time.Duration) {
 		}
 	}
 }
+
+// ProcessPendingJobs processes all pending scrape jobs from the database
+func (w *Worker) ProcessPendingJobs(ctx context.Context) error {
+	rows, err := w.DB.QueryContext(ctx, `
+		SELECT j.id, j.municipality_id, m.scraper_type
+		FROM scrape_jobs j
+		JOIN municipalities m ON j.municipality_id = m.id
+		WHERE j.status = 'pending'
+		ORDER BY j.created_at ASC
+		LIMIT 10
+	`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var jobs []struct {
+		JobID          string
+		MunicipalityID string
+		ScraperType    string
+	}
+	for rows.Next() {
+		var j struct {
+			JobID          string
+			MunicipalityID string
+			ScraperType    string
+		}
+		if err := rows.Scan(&j.JobID, &j.MunicipalityID, &j.ScraperType); err != nil {
+			continue
+		}
+		jobs = append(jobs, j)
+	}
+	rows.Close()
+
+	for _, job := range jobs {
+		slog.Info("processing pending job", "job_id", job.JobID, "scraper_type", job.ScraperType)
+		
+		// Mark as running
+		w.DB.ExecContext(ctx, `
+			UPDATE scrape_jobs SET status = 'running', started_at = CURRENT_TIMESTAMP WHERE id = ?
+		`, job.JobID)
+
+		// Run scraper
+		result, err := w.RunScraper(ctx, job.ScraperType)
+		if err != nil {
+			w.DB.ExecContext(ctx, `
+				UPDATE scrape_jobs SET status = 'failed', error_message = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?
+			`, err.Error(), job.JobID)
+			slog.Error("scraper failed", "job_id", job.JobID, "error", err)
+			continue
+		}
+
+		if !result.Success {
+			w.DB.ExecContext(ctx, `
+				UPDATE scrape_jobs SET status = 'failed', error_message = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?
+			`, result.Error, job.JobID)
+			slog.Error("scraper returned error", "job_id", job.JobID, "error", result.Error)
+			continue
+		}
+
+		// Save slots
+		saved, _ := w.SaveSlots(ctx, job.MunicipalityID, result.Slots)
+
+		// Mark as completed
+		w.DB.ExecContext(ctx, `
+			UPDATE scrape_jobs SET status = 'completed', slots_found = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?
+		`, saved, job.JobID)
+
+		slog.Info("job completed", "job_id", job.JobID, "slots_saved", saved)
+
+		// Run matcher
+		matcher := NewMatcher(w.DB)
+		since := time.Now().Add(-24 * time.Hour)
+		matcher.ProcessMatchesForMunicipality(ctx, job.MunicipalityID, since)
+	}
+
+	return nil
+}

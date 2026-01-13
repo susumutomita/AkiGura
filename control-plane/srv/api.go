@@ -1,11 +1,11 @@
 package srv
 
 import (
-	"fmt"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"srv.exe.dev/db/dbgen"
@@ -111,45 +111,53 @@ func (s *Server) HandleGetTeamByEmail(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 	groundID := r.URL.Query().Get("ground_id")
 	municipalityID := r.URL.Query().Get("municipality_id")
+	limitStr := r.URL.Query().Get("limit")
+	limit := 100
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 10000 {
+			limit = l
+		}
+	}
 
 	var query string
 	var args []interface{}
 
 	if groundID != "" {
 		query = `
-			SELECT s.id, s.ground_id, g.name as ground_name, m.name as municipality_name,
+			SELECT s.id, s.ground_id, s.municipality_id, g.name as ground_name, m.name as municipality_name,
 			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
 			FROM slots s
 			LEFT JOIN grounds g ON s.ground_id = g.id
 			LEFT JOIN municipalities m ON s.municipality_id = m.id
 			WHERE s.ground_id = ? AND s.slot_date >= date('now')
 			ORDER BY s.slot_date, s.time_from
-			LIMIT 100
+			LIMIT ?
 		`
-		args = []interface{}{groundID}
+		args = []interface{}{groundID, limit}
 	} else if municipalityID != "" {
 		query = `
-			SELECT s.id, s.ground_id, g.name as ground_name, m.name as municipality_name,
+			SELECT s.id, s.ground_id, s.municipality_id, g.name as ground_name, m.name as municipality_name,
 			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
 			FROM slots s
 			LEFT JOIN grounds g ON s.ground_id = g.id
 			LEFT JOIN municipalities m ON s.municipality_id = m.id
 			WHERE s.municipality_id = ? AND s.slot_date >= date('now')
 			ORDER BY s.slot_date, s.time_from
-			LIMIT 100
+			LIMIT ?
 		`
-		args = []interface{}{municipalityID}
+		args = []interface{}{municipalityID, limit}
 	} else {
 		query = `
-			SELECT s.id, s.ground_id, g.name as ground_name, m.name as municipality_name,
+			SELECT s.id, s.ground_id, s.municipality_id, g.name as ground_name, m.name as municipality_name,
 			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
 			FROM slots s
 			LEFT JOIN grounds g ON s.ground_id = g.id
 			LEFT JOIN municipalities m ON s.municipality_id = m.id
 			WHERE s.slot_date >= date('now')
 			ORDER BY s.slot_date, s.time_from
-			LIMIT 100
+			LIMIT ?
 		`
+		args = []interface{}{limit}
 	}
 
 	rows, err := s.DB.QueryContext(r.Context(), query, args...)
@@ -162,6 +170,7 @@ func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 	type SlotWithGround struct {
 		ID               string  `json:"id"`
 		GroundID         *string `json:"ground_id"`
+		MunicipalityID   *string `json:"municipality_id"`
 		GroundName       *string `json:"ground_name"`
 		MunicipalityName *string `json:"municipality_name"`
 		SlotDate         string  `json:"slot_date"`
@@ -173,7 +182,7 @@ func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 	var slots []SlotWithGround
 	for rows.Next() {
 		var slot SlotWithGround
-		if err := rows.Scan(&slot.ID, &slot.GroundID, &slot.GroundName, &slot.MunicipalityName,
+		if err := rows.Scan(&slot.ID, &slot.GroundID, &slot.MunicipalityID, &slot.GroundName, &slot.MunicipalityName,
 			&slot.SlotDate, &slot.TimeFrom, &slot.TimeTo, &slot.CourtName, &slot.ScrapedAt); err != nil {
 			continue
 		}
