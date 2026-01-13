@@ -257,8 +257,16 @@
             },
 
             async loadFacilities() {
-                const res = await fetch('/api/facilities');
-                this.facilities = await res.json();
+                const res = await fetch('/api/grounds');
+                const grounds = await res.json();
+                // Map grounds to facilities format
+                this.facilities = grounds.map(g => ({
+                    id: g.id,
+                    name: g.name,
+                    municipality: g.municipality_name,
+                    scraper_type: g.court_pattern,
+                    enabled: g.enabled
+                }));
             },
 
             async loadTickets() {
