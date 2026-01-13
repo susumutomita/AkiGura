@@ -130,92 +130,145 @@
 
         <!-- Slots (空き状況) - Calendar View -->
         <div x-show="currentTab === 'slots'" x-cloak>
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                <h2 class="text-2xl font-bold">空き状況カレンダー</h2>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <select x-model="slotFilter.municipalityId" @change="loadSlots()" class="border rounded px-3 py-2">
-                        <option value="">全ての自治体</option>
-                        <template x-for="m in municipalities" :key="m.id">
-                            <option :value="m.id" x-text="m.name"></option>
-                        </template>
-                    </select>
-                    <button @click="loadSlots()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">更新</button>
-                </div>
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-2 mb-4 text-sm">
+                <button @click="slotView = 'municipalities'; selectedMunicipality = null; selectedGround = null" 
+                        class="text-indigo-600 hover:underline" :class="{'font-bold': slotView === 'municipalities'}">自治体一覧</button>
+                <template x-if="selectedMunicipality">
+                    <span class="flex items-center gap-2">
+                        <span class="text-gray-400">/</span>
+                        <button @click="slotView = 'grounds'; selectedGround = null" 
+                                class="text-indigo-600 hover:underline" :class="{'font-bold': slotView === 'grounds'}" x-text="selectedMunicipality.name"></button>
+                    </span>
+                </template>
+                <template x-if="selectedGround">
+                    <span class="flex items-center gap-2">
+                        <span class="text-gray-400">/</span>
+                        <span class="font-bold" x-text="selectedGround.name"></span>
+                    </span>
+                </template>
             </div>
 
-            <!-- Calendar Navigation -->
-            <div class="flex justify-between items-center mb-4">
-                <button @click="prevMonth()" class="px-4 py-2 hover:bg-gray-100 rounded">&larr; 前月</button>
-                <h3 class="text-lg font-semibold" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
-                <button @click="nextMonth()" class="px-4 py-2 hover:bg-gray-100 rounded">翌月 &rarr;</button>
-            </div>
-
-            <!-- Calendar Grid -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="grid grid-cols-7 bg-gray-50 border-b">
-                    <template x-for="day in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
-                        <div class="py-2 text-center text-sm font-medium" :class="day === '日' ? 'text-red-500' : day === '土' ? 'text-blue-500' : 'text-gray-700'" x-text="day"></div>
-                    </template>
+            <!-- 自治体一覧 -->
+            <div x-show="slotView === 'municipalities'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">自治体別空き状況</h2>
+                    <button @click="loadSlots(); loadGrounds()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">更新</button>
                 </div>
-                <div class="grid grid-cols-7">
-                    <template x-for="(day, idx) in calendarDays" :key="idx">
-                        <div
-                            class="min-h-[100px] border-b border-r p-1 cursor-pointer transition-colors"
-                            :class="{
-                                'bg-gray-50': !day.currentMonth,
-                                'hover:bg-indigo-50': day.currentMonth,
-                                'bg-indigo-100': selectedDate === day.dateStr,
-                                'border-l': idx % 7 === 0
-                            }"
-                            @click="day.currentMonth && selectDate(day.dateStr)"
-                        >
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="m in municipalities" :key="m.id">
+                        <div @click="selectMunicipality(m)" 
+                             class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow">
                             <div class="flex justify-between items-start">
-                                <span
-                                    class="text-sm font-medium"
-                                    :class="{
-                                        'text-gray-400': !day.currentMonth,
-                                        'text-red-500': day.currentMonth && day.dayOfWeek === 0,
-                                        'text-blue-500': day.currentMonth && day.dayOfWeek === 6,
-                                        'text-gray-900': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
-                                    }"
-                                    x-text="day.day"
-                                ></span>
-                                <template x-if="day.currentMonth && getSlotsForDate(day.dateStr).length > 0">
-                                    <span class="px-1.5 py-0.5 text-xs font-bold rounded-full bg-green-500 text-white" x-text="getSlotsForDate(day.dateStr).length"></span>
-                                </template>
+                                <h3 class="text-lg font-semibold" x-text="m.name"></h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800" 
+                                      x-text="getSlotsForMunicipality(m.id).length + '件'"></span>
                             </div>
-                            <div class="mt-1 space-y-0.5 overflow-hidden max-h-[60px]">
-                                <template x-for="slot in getSlotsForDate(day.dateStr).slice(0, 3)" :key="slot.id">
-                                    <div class="text-xs px-1 py-0.5 bg-green-100 text-green-800 rounded truncate" x-text="slot.time_from + ' ' + (slot.ground_name || '').substring(0, 8)"></div>
-                                </template>
-                            </div>
+                            <p class="text-sm text-gray-500 mt-1" x-text="getGroundsForMunicipality(m.id).length + '施設'"></p>
                         </div>
                     </template>
                 </div>
             </div>
 
-            <!-- Selected Date Detail -->
-            <div x-show="selectedDate" class="mt-6 bg-white rounded-lg shadow p-4">
-                <h3 class="text-lg font-bold mb-4" x-text="formatDateFull(selectedDate) + ' の空き枠'"></h3>
-                <div x-show="getSlotsForDate(selectedDate).length === 0" class="text-gray-500 text-center py-4">
-                    この日の空き枠はありません
+            <!-- グラウンド一覧 -->
+            <div x-show="slotView === 'grounds' && selectedMunicipality">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold" x-text="selectedMunicipality.name + ' の施設'"></h2>
                 </div>
-                <div class="space-y-2">
-                    <template x-for="slot in getSlotsForDate(selectedDate)" :key="slot.id">
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-                            <div>
-                                <span class="font-medium" x-text="slot.time_from + ' - ' + slot.time_to"></span>
-                                <span class="ml-2 text-gray-600" x-text="slot.ground_name || slot.court_name"></span>
-                                <span class="ml-2 text-sm text-gray-400" x-text="'(' + (slot.municipality_name || '') + ')'"></span>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="g in getGroundsForMunicipality(selectedMunicipality.id)" :key="g.id">
+                        <div @click="selectGround(g)" 
+                             class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-lg font-semibold" x-text="g.name"></h3>
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800" 
+                                      x-text="getSlotsForGround(g.id).length + '件'"></span>
                             </div>
+                            <p class="text-sm text-gray-500 mt-1" x-text="g.court_pattern || ''"></p>
                         </div>
                     </template>
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div class="mt-4 text-sm text-gray-500">
-                <span x-text="slots.length"></span>件の空き枠を表示中
+            <!-- カレンダー表示 -->
+            <div x-show="slotView === 'calendar' && selectedGround">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold" x-text="selectedGround.name + ' の空き状況'"></h2>
+                </div>
+
+                <!-- Calendar Navigation -->
+                <div class="flex justify-between items-center mb-4">
+                    <button @click="prevMonth()" class="px-4 py-2 hover:bg-gray-100 rounded">&larr; 前月</button>
+                    <h3 class="text-lg font-semibold" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
+                    <button @click="nextMonth()" class="px-4 py-2 hover:bg-gray-100 rounded">翌月 &rarr;</button>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="grid grid-cols-7 bg-gray-50 border-b">
+                        <template x-for="day in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
+                            <div class="py-2 text-center text-sm font-medium" :class="day === '日' ? 'text-red-500' : day === '土' ? 'text-blue-500' : 'text-gray-700'" x-text="day"></div>
+                        </template>
+                    </div>
+                    <div class="grid grid-cols-7">
+                        <template x-for="(day, idx) in calendarDays" :key="idx">
+                            <div
+                                class="min-h-[80px] border-b border-r p-1 cursor-pointer transition-colors"
+                                :class="{
+                                    'bg-gray-50': !day.currentMonth,
+                                    'hover:bg-indigo-50': day.currentMonth,
+                                    'bg-indigo-100': selectedDate === day.dateStr,
+                                    'border-l': idx % 7 === 0
+                                }"
+                                @click="day.currentMonth && selectDate(day.dateStr)"
+                            >
+                                <div class="flex justify-between items-start">
+                                    <span class="text-sm font-medium"
+                                        :class="{
+                                            'text-gray-400': !day.currentMonth,
+                                            'text-red-500': day.currentMonth && day.dayOfWeek === 0,
+                                            'text-blue-500': day.currentMonth && day.dayOfWeek === 6,
+                                            'text-gray-900': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
+                                        }"
+                                        x-text="day.day"
+                                    ></span>
+                                    <template x-if="day.currentMonth && getSlotsForGroundDate(selectedGround.id, day.dateStr).length > 0">
+                                        <span class="px-1.5 py-0.5 text-xs font-bold rounded-full bg-green-500 text-white" 
+                                              x-text="getSlotsForGroundDate(selectedGround.id, day.dateStr).length"></span>
+                                    </template>
+                                </div>
+                                <div class="mt-1 space-y-0.5 overflow-hidden max-h-[40px]">
+                                    <template x-for="slot in getSlotsForGroundDate(selectedGround.id, day.dateStr).slice(0, 2)" :key="slot.id">
+                                        <div class="text-xs px-1 py-0.5 bg-green-100 text-green-800 rounded truncate" x-text="slot.time_from + '-' + slot.time_to"></div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Selected Date Detail -->
+                <div x-show="selectedDate" class="mt-6 bg-white rounded-lg shadow p-4">
+                    <h3 class="text-lg font-bold mb-4" x-text="formatDateFull(selectedDate) + ' の空き枠'"></h3>
+                    <div x-show="getSlotsForGroundDate(selectedGround.id, selectedDate).length === 0" class="text-gray-500 text-center py-4">
+                        この日の空き枠はありません
+                    </div>
+                    <div class="space-y-2">
+                        <template x-for="slot in getSlotsForGroundDate(selectedGround.id, selectedDate)" :key="slot.id">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                                <div>
+                                    <span class="font-medium" x-text="slot.time_from + ' - ' + slot.time_to"></span>
+                                    <span class="ml-2 text-gray-600" x-text="slot.court_name || ''"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="mt-4 text-sm text-gray-500">
+                    <span x-text="getSlotsForGround(selectedGround.id).length"></span>件の空き枠
+                </div>
             </div>
         </div>
 
@@ -431,8 +484,13 @@
             dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [] },
             teams: [],
             facilities: [],
+            grounds: [],
             slots: [],
             municipalities: [],
+            // Drilldown state
+            slotView: 'municipalities',  // municipalities -> grounds -> calendar
+            selectedMunicipality: null,
+            selectedGround: null,
             slotFilter: { municipalityId: '' },
             // Calendar state
             calendarYear: new Date().getFullYear(),
@@ -459,6 +517,7 @@
                 await this.loadTeams();
                 await this.loadFacilities();
                 await this.loadMunicipalities();
+                await this.loadGrounds();
                 await this.loadSlots();
                 await this.loadJobs();
                 await this.loadTickets();
@@ -492,12 +551,14 @@
                 this.municipalities = await res.json();
             },
 
+            async loadGrounds() {
+                const res = await fetch('/api/grounds');
+                this.grounds = await res.json() || [];
+            },
+
             async loadSlots() {
-                let url = '/api/slots';
-                if (this.slotFilter.municipalityId) {
-                    url += '?municipality_id=' + this.slotFilter.municipalityId;
-                }
-                const res = await fetch(url);
+                // Load all slots (increased limit needed in API)
+                const res = await fetch('/api/slots?limit=5000');
                 this.slots = await res.json() || [];
             },
 
@@ -555,6 +616,38 @@
                     const slotDate = s.slot_date.split('T')[0];
                     return slotDate === dateStr;
                 }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
+            // Drilldown methods
+            getGroundsForMunicipality(municipalityId) {
+                return this.grounds.filter(g => g.municipality_id === municipalityId);
+            },
+
+            getSlotsForMunicipality(municipalityId) {
+                return this.slots.filter(s => s.municipality_id === municipalityId);
+            },
+
+            getSlotsForGround(groundId) {
+                return this.slots.filter(s => s.ground_id === groundId);
+            },
+
+            getSlotsForGroundDate(groundId, dateStr) {
+                return this.slots.filter(s => {
+                    const slotDate = s.slot_date.split('T')[0];
+                    return s.ground_id === groundId && slotDate === dateStr;
+                }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
+            selectMunicipality(m) {
+                this.selectedMunicipality = m;
+                this.selectedGround = null;
+                this.slotView = 'grounds';
+            },
+
+            selectGround(g) {
+                this.selectedGround = g;
+                this.selectedDate = null;
+                this.slotView = 'calendar';
             },
 
             formatDate(dateStr) {
