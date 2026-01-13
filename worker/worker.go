@@ -103,11 +103,12 @@ func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []S
 		}
 
 		// Insert slot with ground_id and municipality_id
+		// facility_id is legacy and set to NULL; we use municipality_id now
 		_, err = w.DB.ExecContext(ctx, `
 			INSERT INTO slots (id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+			VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 			ON CONFLICT DO NOTHING
-		`, id, municipalityID, municipalityID, groundID, *slot.Date, timeFrom, timeTo, courtName, slot.RawText)
+		`, id, municipalityID, groundID, *slot.Date, timeFrom, timeTo, courtName, slot.RawText)
 		if err != nil {
 			slog.Warn("failed to save slot", "error", err)
 			continue
