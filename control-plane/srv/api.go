@@ -1,6 +1,7 @@
 package srv
 
 import (
+	"fmt"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -182,10 +183,40 @@ func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 
 // Scrape Jobs API
 func (s *Server) HandleListJobs(w http.ResponseWriter, r *http.Request) {
-	jobs, err := s.Queries.ListRecentScrapeJobs(r.Context(), 50)
+	rows, err := s.DB.QueryContext(r.Context(), `
+		SELECT j.id, j.municipality_id, m.name as municipality_name, j.status, 
+		       j.slots_found, j.error_message, j.started_at, j.completed_at, j.created_at
+		FROM scrape_jobs j
+		LEFT JOIN municipalities m ON j.municipality_id = m.id
+		ORDER BY j.created_at DESC
+		LIMIT 50
+	`)
 	if err != nil {
 		s.jsonError(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	defer rows.Close()
+
+	type Job struct {
+		ID               string  `json:"id"`
+		MunicipalityID   string  `json:"municipality_id"`
+		MunicipalityName *string `json:"municipality_name"`
+		Status           string  `json:"status"`
+		SlotsFound       int     `json:"slots_found"`
+		ErrorMessage     *string `json:"error_message"`
+		StartedAt        *string `json:"started_at"`
+		CompletedAt      *string `json:"completed_at"`
+		CreatedAt        string  `json:"created_at"`
+	}
+
+	var jobs []Job
+	for rows.Next() {
+		var j Job
+		if err := rows.Scan(&j.ID, &j.MunicipalityID, &j.MunicipalityName, &j.Status,
+			&j.SlotsFound, &j.ErrorMessage, &j.StartedAt, &j.CompletedAt, &j.CreatedAt); err != nil {
+			continue
+		}
+		jobs = append(jobs, j)
 	}
 	s.jsonResponse(w, jobs)
 }
@@ -571,4 +602,78 @@ func findSubstring(s, sub string) bool {
 		}
 	}
 	return false
+}
+
+// HandleTriggerScrape triggers a scrape job for a municipality or all municipalities
+func (s *Server) HandleTriggerScrape(w http.ResponseWriter, r *http.Request) {
+	municipalityID := r.URL.Query().Get("municipality_id")
+
+	// Get municipalities to scrape
+	var municipalities []struct {
+		ID          string
+		Name        string
+		ScraperType string
+	}
+
+	if municipalityID != "" {
+		row := s.DB.QueryRowContext(r.Context(), `
+			SELECT id, name, scraper_type FROM municipalities WHERE id = ? AND enabled = 1
+		`, municipalityID)
+		var m struct {
+			ID          string
+			Name        string
+			ScraperType string
+		}
+		if err := row.Scan(&m.ID, &m.Name, &m.ScraperType); err != nil {
+			s.jsonError(w, "Municipality not found", http.StatusNotFound)
+			return
+		}
+		municipalities = append(municipalities, m)
+	} else {
+		rows, err := s.DB.QueryContext(r.Context(), `
+			SELECT id, name, scraper_type FROM municipalities WHERE enabled = 1
+		`)
+		if err != nil {
+			s.jsonError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var m struct {
+				ID          string
+				Name        string
+				ScraperType string
+			}
+			if err := rows.Scan(&m.ID, &m.Name, &m.ScraperType); err != nil {
+				continue
+			}
+			municipalities = append(municipalities, m)
+		}
+	}
+
+	if len(municipalities) == 0 {
+		s.jsonError(w, "No municipalities to scrape", http.StatusBadRequest)
+		return
+	}
+
+	// Create jobs for each municipality
+	jobCount := 0
+	for _, m := range municipalities {
+		jobID := uuid.New().String()
+		_, err := s.DB.ExecContext(r.Context(), `
+			INSERT INTO scrape_jobs (id, municipality_id, status, created_at)
+			VALUES (?, ?, 'pending', CURRENT_TIMESTAMP)
+		`, jobID, m.ID)
+		if err != nil {
+			slog.Warn("Failed to create scrape job", "municipality", m.Name, "error", err)
+			continue
+		}
+		jobCount++
+	}
+
+	s.jsonResponse(w, map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Created %d scrape job(s). Jobs will be processed by the worker.", jobCount),
+		"jobs":    jobCount,
+	})
 }
