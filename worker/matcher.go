@@ -17,8 +17,8 @@ type WatchCondition struct {
 	TeamID     string
 	TeamEmail  string
 	TeamName   string
-	FacilityID string
-	DaysOfWeek []int // 0=Sun, 1=Mon, ..., 6=Sat
+	GroundID   string // facility_id in DB maps to ground
+	DaysOfWeek []int  // 0=Sun, 1=Mon, ..., 6=Sat
 	TimeFrom   string
 	TimeTo     string
 	DateFrom   *string
@@ -27,16 +27,12 @@ type WatchCondition struct {
 
 // MatchedSlot represents a slot that matches a condition
 type MatchedSlot struct {
-	SlotID      string
-	FacilityID  string
-	Date        string
-	TimeFrom    string
-	TimeTo      string
-	CourtName   string
-	ConditionID string
-	TeamID      string
-	TeamEmail   string
-	TeamName    string
+	SlotID    string
+	GroundID  string
+	Date      string
+	TimeFrom  string
+	TimeTo    string
+	CourtName string
 }
 
 // Matcher handles matching slots to watch conditions
@@ -49,15 +45,15 @@ func NewMatcher(db *sql.DB) *Matcher {
 	return &Matcher{DB: db}
 }
 
-// GetActiveConditions retrieves all active watch conditions for a facility
-func (m *Matcher) GetActiveConditions(ctx context.Context, facilityID string) ([]WatchCondition, error) {
+// GetActiveConditions retrieves all active watch conditions for a ground
+func (m *Matcher) GetActiveConditions(ctx context.Context, groundID string) ([]WatchCondition, error) {
 	rows, err := m.DB.QueryContext(ctx, `
 		SELECT wc.id, wc.team_id, t.email, t.name, wc.facility_id, 
 		       wc.days_of_week, wc.time_from, wc.time_to, wc.date_from, wc.date_to
 		FROM watch_conditions wc
 		JOIN teams t ON wc.team_id = t.id
 		WHERE wc.facility_id = ? AND wc.enabled = 1 AND t.status = 'active'
-	`, facilityID)
+	`, groundID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +63,7 @@ func (m *Matcher) GetActiveConditions(ctx context.Context, facilityID string) ([
 	for rows.Next() {
 		var c WatchCondition
 		var daysJSON string
-		if err := rows.Scan(&c.ID, &c.TeamID, &c.TeamEmail, &c.TeamName, &c.FacilityID,
+		if err := rows.Scan(&c.ID, &c.TeamID, &c.TeamEmail, &c.TeamName, &c.GroundID,
 			&daysJSON, &c.TimeFrom, &c.TimeTo, &c.DateFrom, &c.DateTo); err != nil {
 			continue
 		}
@@ -79,12 +75,12 @@ func (m *Matcher) GetActiveConditions(ctx context.Context, facilityID string) ([
 }
 
 // GetNewSlots retrieves slots scraped recently that haven't been notified
-func (m *Matcher) GetNewSlots(ctx context.Context, facilityID string, since time.Time) ([]MatchedSlot, error) {
+func (m *Matcher) GetNewSlots(ctx context.Context, groundID string, since time.Time) ([]MatchedSlot, error) {
 	rows, err := m.DB.QueryContext(ctx, `
-		SELECT id, facility_id, slot_date, time_from, time_to, COALESCE(court_name, '')
+		SELECT id, ground_id, slot_date, time_from, time_to, COALESCE(court_name, '')
 		FROM slots
-		WHERE facility_id = ? AND scraped_at > ? AND slot_date >= date('now')
-	`, facilityID, since)
+		WHERE ground_id = ? AND scraped_at > ? AND slot_date >= date('now')
+	`, groundID, since)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +89,7 @@ func (m *Matcher) GetNewSlots(ctx context.Context, facilityID string, since time
 	var slots []MatchedSlot
 	for rows.Next() {
 		var s MatchedSlot
-		if err := rows.Scan(&s.SlotID, &s.FacilityID, &s.Date, &s.TimeFrom, &s.TimeTo, &s.CourtName); err != nil {
+		if err := rows.Scan(&s.SlotID, &s.GroundID, &s.Date, &s.TimeFrom, &s.TimeTo, &s.CourtName); err != nil {
 			continue
 		}
 		slots = append(slots, s)
@@ -103,8 +99,12 @@ func (m *Matcher) GetNewSlots(ctx context.Context, facilityID string, since time
 
 // MatchSlot checks if a slot matches a condition
 func (m *Matcher) MatchSlot(slot MatchedSlot, cond WatchCondition) bool {
-	// Parse slot date
-	slotDate, err := time.Parse("2006-01-02", slot.Date)
+	// Parse slot date - handle both YYYY-MM-DD and ISO formats
+	dateStr := slot.Date
+	if len(dateStr) > 10 {
+		dateStr = dateStr[:10] // Trim time portion if present
+	}
+	slotDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		return false
 	}
@@ -186,14 +186,14 @@ func (m *Matcher) CreateNotification(ctx context.Context, teamID, conditionID, s
 	return err
 }
 
-// ProcessMatches finds matches and creates notifications
-func (m *Matcher) ProcessMatches(ctx context.Context, facilityID string, since time.Time) (int, error) {
-	conditions, err := m.GetActiveConditions(ctx, facilityID)
+// ProcessMatches finds matches and creates notifications for a ground
+func (m *Matcher) ProcessMatches(ctx context.Context, groundID string, since time.Time) (int, error) {
+	conditions, err := m.GetActiveConditions(ctx, groundID)
 	if err != nil {
 		return 0, err
 	}
 
-	slots, err := m.GetNewSlots(ctx, facilityID, since)
+	slots, err := m.GetNewSlots(ctx, groundID, since)
 	if err != nil {
 		return 0, err
 	}
@@ -217,4 +217,39 @@ func (m *Matcher) ProcessMatches(ctx context.Context, facilityID string, since t
 	}
 
 	return matches, nil
+}
+
+// ProcessMatchesForMunicipality processes all grounds in a municipality
+func (m *Matcher) ProcessMatchesForMunicipality(ctx context.Context, municipalityID string, since time.Time) (int, error) {
+	rows, err := m.DB.QueryContext(ctx, `
+		SELECT id FROM grounds WHERE municipality_id = ? AND enabled = 1
+	`, municipalityID)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var groundIDs []string
+	for rows.Next() {
+		var groundID string
+		if err := rows.Scan(&groundID); err != nil {
+			continue
+		}
+		groundIDs = append(groundIDs, groundID)
+	}
+	rows.Close()
+
+	totalMatches := 0
+	for _, groundID := range groundIDs {
+		matches, err := m.ProcessMatches(ctx, groundID, since)
+		if err != nil {
+			slog.Warn("failed to process matches for ground", "ground_id", groundID, "error", err)
+			continue
+		}
+		totalMatches += matches
+	}
+	if totalMatches > 0 {
+		slog.Info("matches created for municipality", "municipality_id", municipalityID, "matches", totalMatches)
+	}
+	return totalMatches, nil
 }
