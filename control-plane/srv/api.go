@@ -410,14 +410,57 @@ func (s *Server) HandleListNotifications(w http.ResponseWriter, r *http.Request)
 		s.jsonError(w, "team_id required", http.StatusBadRequest)
 		return
 	}
-	notifications, err := s.Queries.ListNotificationsByTeam(r.Context(), dbgen.ListNotificationsByTeamParams{
-		TeamID: teamID,
-		Limit:  50,
-		Offset: 0,
-	})
+
+	// Custom query with slot and ground info
+	rows, err := s.DB.QueryContext(r.Context(), `
+		SELECT 
+			n.id, n.team_id, n.watch_condition_id, n.slot_id, n.channel, n.status, n.sent_at, n.created_at,
+			COALESCE(g.name, '') as facility_name,
+			COALESCE(s.slot_date, '') as slot_date, 
+			COALESCE(s.time_from, '') as slot_time_from, 
+			COALESCE(s.time_to, '') as slot_time_to, 
+			COALESCE(s.court_name, '') as court_name
+		FROM notifications n
+		LEFT JOIN slots s ON n.slot_id = s.id
+		LEFT JOIN grounds g ON s.ground_id = g.id
+		WHERE n.team_id = ?
+		ORDER BY n.created_at DESC
+		LIMIT 50
+	`, teamID)
 	if err != nil {
 		s.jsonError(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	defer rows.Close()
+
+	type NotificationWithSlot struct {
+		ID               string  `json:"id"`
+		TeamID           string  `json:"team_id"`
+		WatchConditionID string  `json:"watch_condition_id"`
+		SlotID           string  `json:"slot_id"`
+		Channel          string  `json:"channel"`
+		Status           string  `json:"status"`
+		SentAt           *string `json:"sent_at"`
+		CreatedAt        string  `json:"created_at"`
+		FacilityName     string  `json:"facility_name"`
+		SlotDate         string  `json:"slot_date"`
+		SlotTime         string  `json:"slot_time"`
+		CourtName        string  `json:"court_name"`
+	}
+
+	var notifications []NotificationWithSlot
+	for rows.Next() {
+		var n NotificationWithSlot
+		var timeFrom, timeTo string
+		if err := rows.Scan(&n.ID, &n.TeamID, &n.WatchConditionID, &n.SlotID, &n.Channel, &n.Status, &n.SentAt, &n.CreatedAt,
+			&n.FacilityName, &n.SlotDate, &timeFrom, &timeTo, &n.CourtName); err != nil {
+			continue
+		}
+		n.SlotTime = timeFrom + " - " + timeTo
+		notifications = append(notifications, n)
+	}
+	if notifications == nil {
+		notifications = []NotificationWithSlot{}
 	}
 	s.jsonResponse(w, notifications)
 }
