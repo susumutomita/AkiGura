@@ -1,4 +1,8 @@
--- Add Fujisawa grounds
+-- Add Fujisawa municipality and grounds
+
+-- Fujisawa municipality
+INSERT OR IGNORE INTO municipalities (id, name, scraper_type, url, enabled, created_at)
+VALUES ('af168e03-6f16-455b-8319-000f6d2e32bf', '藤沢市', 'fujisawa', 'https://www.city.fujisawa.kanagawa.jp', 1, CURRENT_TIMESTAMP);
 
 -- Fujisawa grounds
 INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
