@@ -5,17 +5,25 @@ import (
 	"fmt"
 )
 
+// SlotInfo represents a single slot in a notification
+type SlotInfo struct {
+	SlotID         string
+	SlotDate       string
+	SlotTime       string
+	CourtName      string
+	FacilityName   string // ground name
+	ReservationURL string // URL to the reservation system
+}
+
 // Notification represents a notification to be sent
+// Contains multiple slots for batch notification
 type Notification struct {
-	ID           string
-	TeamID       string
-	TeamName     string
-	TeamEmail    string
-	Channel      string // email, line, slack
-	SlotDate     string
-	SlotTime     string
-	CourtName    string
-	FacilityName string
+	ID        string
+	TeamID    string
+	TeamName  string
+	TeamEmail string
+	Channel   string // email, line, slack
+	Slots     []SlotInfo
 }
 
 // Notifier interface for sending notifications

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 )
 
 // LINENotifier sends notifications via LINE Notify
@@ -30,16 +31,27 @@ func (l *LINENotifier) Send(ctx context.Context, n *Notification) error {
 		return fmt.Errorf("LINE_NOTIFY_TOKEN not set")
 	}
 
-	message := fmt.Sprintf(`🏈 AkiGura 空き枠通知
+	if len(n.Slots) == 0 {
+		return nil
+	}
 
-%s様
+	// Build message with all slots
+	var lines []string
+	lines = append(lines, fmt.Sprintf("🏈 AkiGura 空き枠通知\n"))
+	lines = append(lines, fmt.Sprintf("%s様\n", n.TeamName))
+	lines = append(lines, fmt.Sprintf("空き枠が%d件見つかりました。\n", len(n.Slots)))
 
-施設: %s
-日時: %s %s
-場所: %s
+	for i, slot := range n.Slots {
+		lines = append(lines, fmt.Sprintf("\n【%d】%s", i+1, slot.FacilityName))
+		lines = append(lines, fmt.Sprintf("日時: %s %s", slot.SlotDate, slot.SlotTime))
+		lines = append(lines, fmt.Sprintf("場所: %s", slot.CourtName))
+		if slot.ReservationURL != "" {
+			lines = append(lines, fmt.Sprintf("予約: %s", slot.ReservationURL))
+		}
+	}
+	lines = append(lines, "\nお早めにご予約ください。")
 
-お早めにご予約ください。`,
-		n.TeamName, n.FacilityName, n.SlotDate, n.SlotTime, n.CourtName)
+	message := strings.Join(lines, "\n")
 
 	data := fmt.Sprintf("message=%s", message)
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://notify-api.line.me/api/notify", bytes.NewBufferString(data))
@@ -83,6 +95,10 @@ func (l *LINEMessagingNotifier) Send(ctx context.Context, n *Notification) error
 		return fmt.Errorf("LINE_CHANNEL_ACCESS_TOKEN not set")
 	}
 
+	if len(n.Slots) == 0 {
+		return nil
+	}
+
 	// Note: This requires storing LINE user IDs in the database
 	// For now, we'll use a placeholder
 	lineUserID := "" // Would come from team's LINE registration
@@ -90,12 +106,41 @@ func (l *LINEMessagingNotifier) Send(ctx context.Context, n *Notification) error
 		return fmt.Errorf("LINE user ID not registered for team")
 	}
 
+	// Build body contents for all slots
+	var bodyContents []map[string]interface{}
+	bodyContents = append(bodyContents, map[string]interface{}{
+		"type":   "text",
+		"text":   fmt.Sprintf("空き枠が%d件見つかりました", len(n.Slots)),
+		"weight": "bold",
+		"size":   "lg",
+	})
+
+	for _, slot := range n.Slots {
+		bodyContents = append(bodyContents, map[string]interface{}{
+			"type": "separator", "margin": "md",
+		})
+		bodyContents = append(bodyContents, map[string]interface{}{
+			"type": "text", "text": slot.FacilityName, "weight": "bold", "margin": "md",
+		})
+		bodyContents = append(bodyContents, map[string]interface{}{
+			"type": "text", "text": fmt.Sprintf("日時: %s %s", slot.SlotDate, slot.SlotTime),
+		})
+		bodyContents = append(bodyContents, map[string]interface{}{
+			"type": "text", "text": fmt.Sprintf("場所: %s", slot.CourtName),
+		})
+		if slot.ReservationURL != "" {
+			bodyContents = append(bodyContents, map[string]interface{}{
+				"type": "text", "text": fmt.Sprintf("予約: %s", slot.ReservationURL), "color": "#4F46E5", "action": map[string]string{"type": "uri", "uri": slot.ReservationURL},
+			})
+		}
+	}
+
 	message := map[string]interface{}{
 		"to": lineUserID,
 		"messages": []map[string]interface{}{
 			{
 				"type":    "flex",
-				"altText": fmt.Sprintf("空き枠通知 - %s", n.FacilityName),
+				"altText": fmt.Sprintf("空き枠通知（%d件）", len(n.Slots)),
 				"contents": map[string]interface{}{
 					"type": "bubble",
 					"header": map[string]interface{}{
@@ -107,14 +152,9 @@ func (l *LINEMessagingNotifier) Send(ctx context.Context, n *Notification) error
 						},
 					},
 					"body": map[string]interface{}{
-						"type":   "box",
-						"layout": "vertical",
-						"contents": []map[string]interface{}{
-							{"type": "text", "text": "空き枠が見つかりました", "weight": "bold", "size": "lg"},
-							{"type": "text", "text": fmt.Sprintf("施設: %s", n.FacilityName), "margin": "md"},
-							{"type": "text", "text": fmt.Sprintf("日時: %s %s", n.SlotDate, n.SlotTime)},
-							{"type": "text", "text": fmt.Sprintf("場所: %s", n.CourtName)},
-						},
+						"type":     "box",
+						"layout":   "vertical",
+						"contents": bodyContents,
 					},
 				},
 			},
