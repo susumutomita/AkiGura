@@ -6,10 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	_ "modernc.org/sqlite"
 )
 
@@ -18,13 +21,53 @@ import (
 //go:embed migrations/*.sql
 var migrationFS embed.FS
 
-// Open opens an sqlite database and prepares pragmas suitable for a small web app.
+// Open opens a database connection.
+// If TURSO_DATABASE_URL is set, connects to Turso.
+// Otherwise, opens a local SQLite file at path.
 func Open(path string) (*sql.DB, error) {
+	tursoURL := os.Getenv("TURSO_DATABASE_URL")
+	tursoToken := os.Getenv("TURSO_AUTH_TOKEN")
+
+	if tursoURL != "" {
+		return openTurso(tursoURL, tursoToken)
+	}
+	return openLocalSQLite(path)
+}
+
+// openTurso connects to a Turso database.
+func openTurso(url, token string) (*sql.DB, error) {
+	// libsql driver expects: libsql://host?authToken=xxx
+	connStr := url
+	if token != "" {
+		if strings.Contains(url, "?") {
+			connStr = url + "&authToken=" + token
+		} else {
+			connStr = url + "?authToken=" + token
+		}
+	}
+
+	db, err := sql.Open("libsql", connStr)
+	if err != nil {
+		return nil, fmt.Errorf("open turso: %w", err)
+	}
+
+	// Test connection
+	if err := db.Ping(); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("ping turso: %w", err)
+	}
+
+	slog.Info("db: connected to Turso", "url", url)
+	return db, nil
+}
+
+// openLocalSQLite opens a local SQLite database file.
+func openLocalSQLite(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
 	}
-	// Light pragmas similar
+	// Light pragmas for local SQLite
 	if _, err := db.Exec("PRAGMA foreign_keys=ON;"); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("enable foreign keys: %w", err)
@@ -37,6 +80,7 @@ func Open(path string) (*sql.DB, error) {
 		_ = db.Close()
 		return nil, fmt.Errorf("set busy_timeout: %w", err)
 	}
+	slog.Info("db: connected to local SQLite", "path", path)
 	return db, nil
 }
 

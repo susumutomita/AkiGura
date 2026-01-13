@@ -109,12 +109,21 @@ AkiGura/
 
 ## 環境変数
 
+### データベース (Turso / SQLite)
+
+| 変数 | 説明 | デフォルト |
+|------|------|------------|
+| `TURSO_DATABASE_URL` | Turso データベース URL | (未設定時はローカルSQLite) |
+| `TURSO_AUTH_TOKEN` | Turso 認証トークン | (Turso使用時は必須) |
+| `DATABASE_PATH` | ローカルSQLiteパス | `./db.sqlite3` |
+
+**注意**: `TURSO_DATABASE_URL` が設定されている場合は Turso に接続し、未設定の場合はローカル SQLite を使用します。
+
 ### Control Plane
 
 | 変数 | 説明 | デフォルト |
 |------|------|------------|
 | `PORT` | サーバーポート | 8000 |
-| `DATABASE_PATH` | SQLiteパス | `./db.sqlite3` |
 | `OPENAI_API_KEY` | OpenAI APIキー | (AIチャット用) |
 | `ANTHROPIC_API_KEY` | Claude APIキー | (AIチャット用) |
 | `STRIPE_SECRET_KEY` | Stripe秘密鍵 | (課金用) |

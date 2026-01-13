@@ -5,24 +5,27 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"akigura.dev/worker"
 	"akigura.dev/worker/notifier"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	_ "modernc.org/sqlite"
 )
 
 var (
-	flagDBPath       = flag.String("db", "../control-plane/db.sqlite3", "database path")
-	flagScraperPath  = flag.String("scraper", "./scraper_wrapper.py", "scraper wrapper path")
-	flagPythonPath   = flag.String("python", "python3", "python interpreter path")
-	flagInterval     = flag.Duration("interval", 15*time.Minute, "scrape interval")
+	flagDBPath         = flag.String("db", "../control-plane/db.sqlite3", "database path (for local SQLite)")
+	flagScraperPath    = flag.String("scraper", "./scraper_wrapper.py", "scraper wrapper path")
+	flagPythonPath     = flag.String("python", "python3", "python interpreter path")
+	flagInterval       = flag.Duration("interval", 15*time.Minute, "scrape interval")
 	flagNotifyInterval = flag.Duration("notify-interval", 1*time.Minute, "notification check interval")
-	flagOnce         = flag.Bool("once", false, "run once and exit")
-	flagNotifyOnly   = flag.Bool("notify-only", false, "only process notifications")
+	flagOnce           = flag.Bool("once", false, "run once and exit")
+	flagNotifyOnly     = flag.Bool("notify-only", false, "only process notifications")
 )
 
 func main() {
@@ -35,7 +38,7 @@ func main() {
 }
 
 func run() error {
-	db, err := sql.Open("sqlite", *flagDBPath)
+	db, err := openDB()
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}
@@ -80,4 +83,62 @@ func run() error {
 	// Run scraper scheduler (blocks)
 	w.StartScheduler(ctx, *flagInterval)
 	return nil
+}
+
+// openDB opens a database connection.
+// If TURSO_DATABASE_URL is set, connects to Turso.
+// Otherwise, opens a local SQLite file.
+func openDB() (*sql.DB, error) {
+	tursoURL := os.Getenv("TURSO_DATABASE_URL")
+	tursoToken := os.Getenv("TURSO_AUTH_TOKEN")
+
+	if tursoURL != "" {
+		return openTurso(tursoURL, tursoToken)
+	}
+	return openLocalSQLite(*flagDBPath)
+}
+
+func openTurso(url, token string) (*sql.DB, error) {
+	connStr := url
+	if token != "" {
+		if strings.Contains(url, "?") {
+			connStr = url + "&authToken=" + token
+		} else {
+			connStr = url + "?authToken=" + token
+		}
+	}
+
+	db, err := sql.Open("libsql", connStr)
+	if err != nil {
+		return nil, fmt.Errorf("open turso: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("ping turso: %w", err)
+	}
+
+	slog.Info("db: connected to Turso", "url", url)
+	return db, nil
+}
+
+func openLocalSQLite(path string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := db.Exec("PRAGMA foreign_keys=ON;"); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("enable foreign keys: %w", err)
+	}
+	if _, err := db.Exec("PRAGMA journal_mode=wal;"); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("set WAL: %w", err)
+	}
+	if _, err := db.Exec("PRAGMA busy_timeout=1000;"); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("set busy_timeout: %w", err)
+	}
+	slog.Info("db: connected to local SQLite", "path", path)
+	return db, nil
 }
