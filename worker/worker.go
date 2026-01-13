@@ -183,6 +183,15 @@ func (w *Worker) ProcessMunicipality(ctx context.Context, municipalityID, scrape
 	}
 
 	slog.Info("scrape completed", "municipality_id", municipalityID, "slots_found", len(result.Slots), "slots_saved", saved)
+
+	// Run matcher to find matches and create notifications
+	matcher := NewMatcher(w.DB)
+	since := time.Now().Add(-24 * time.Hour) // Match slots scraped in last 24 hours
+	_, err = matcher.ProcessMatchesForMunicipality(ctx, municipalityID, since)
+	if err != nil {
+		slog.Warn("failed to process matches", "municipality_id", municipalityID, "error", err)
+	}
+
 	return nil
 }
 
