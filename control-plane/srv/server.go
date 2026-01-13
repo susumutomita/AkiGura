@@ -110,6 +110,7 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
 	mux.HandleFunc("GET /api/slots", s.HandleListSlots)
 	mux.HandleFunc("GET /api/jobs", s.HandleListJobs)
+	mux.HandleFunc("POST /api/scrape", s.HandleTriggerScrape)
 	mux.HandleFunc("GET /api/municipalities", s.HandleListMunicipalities)
 	mux.HandleFunc("GET /api/grounds", s.HandleListGrounds)
 	mux.HandleFunc("GET /api/plan-limits", s.HandleGetPlanLimits)

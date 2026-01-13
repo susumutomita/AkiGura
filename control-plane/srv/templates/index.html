@@ -20,6 +20,7 @@
                 <button @click="currentTab = 'teams'" :class="{'bg-indigo-700': currentTab === 'teams'}" class="px-3 py-2 rounded hover:bg-indigo-500">チーム管理</button>
                 <button @click="currentTab = 'facilities'" :class="{'bg-indigo-700': currentTab === 'facilities'}" class="px-3 py-2 rounded hover:bg-indigo-500">施設管理</button>
                 <button @click="currentTab = 'slots'" :class="{'bg-indigo-700': currentTab === 'slots'}" class="px-3 py-2 rounded hover:bg-indigo-500">空き状況</button>
+                <button @click="currentTab = 'worker'" :class="{'bg-indigo-700': currentTab === 'worker'}" class="px-3 py-2 rounded hover:bg-indigo-500">ワーカー</button>
                 <button @click="currentTab = 'support'" :class="{'bg-indigo-700': currentTab === 'support'}" class="px-3 py-2 rounded hover:bg-indigo-500">AIサポート</button>
             </nav>
         </div>
@@ -127,11 +128,11 @@
             </div>
         </div>
 
-        <!-- Slots (空き状況) -->
+        <!-- Slots (空き状況) - Calendar View -->
         <div x-show="currentTab === 'slots'" x-cloak>
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">空き状況</h2>
-                <div class="flex items-center space-x-4">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <h2 class="text-2xl font-bold">空き状況カレンダー</h2>
+                <div class="flex flex-col sm:flex-row gap-2">
                     <select x-model="slotFilter.municipalityId" @change="loadSlots()" class="border rounded px-3 py-2">
                         <option value="">全ての自治体</option>
                         <template x-for="m in municipalities" :key="m.id">
@@ -141,36 +142,188 @@
                     <button @click="loadSlots()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">更新</button>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div x-show="slots.length === 0" class="p-8 text-center text-gray-500">
-                    <p>空き枠データがありません</p>
-                    <p class="text-sm mt-2">スクレイピングが実行されると、ここに空き状況が表示されます</p>
-                </div>
-                <table x-show="slots.length > 0" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">日付</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">時間</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">施設</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">自治体</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">コート</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="slot in slots" :key="slot.id">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap" x-text="formatDate(slot.slot_date)"></td>
-                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.time_from + ' - ' + slot.time_to"></td>
-                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.ground_name || '-'"></td>
-                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.municipality_name || '-'"></td>
-                                <td class="px-6 py-4 whitespace-nowrap" x-text="slot.court_name || '-'"></td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+
+            <!-- Calendar Navigation -->
+            <div class="flex justify-between items-center mb-4">
+                <button @click="prevMonth()" class="px-4 py-2 hover:bg-gray-100 rounded">&larr; 前月</button>
+                <h3 class="text-lg font-semibold" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
+                <button @click="nextMonth()" class="px-4 py-2 hover:bg-gray-100 rounded">翌月 &rarr;</button>
             </div>
-            <div x-show="slots.length > 0" class="mt-4 text-sm text-gray-500">
+
+            <!-- Calendar Grid -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="grid grid-cols-7 bg-gray-50 border-b">
+                    <template x-for="day in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
+                        <div class="py-2 text-center text-sm font-medium" :class="day === '日' ? 'text-red-500' : day === '土' ? 'text-blue-500' : 'text-gray-700'" x-text="day"></div>
+                    </template>
+                </div>
+                <div class="grid grid-cols-7">
+                    <template x-for="(day, idx) in calendarDays" :key="idx">
+                        <div
+                            class="min-h-[100px] border-b border-r p-1 cursor-pointer transition-colors"
+                            :class="{
+                                'bg-gray-50': !day.currentMonth,
+                                'hover:bg-indigo-50': day.currentMonth,
+                                'bg-indigo-100': selectedDate === day.dateStr,
+                                'border-l': idx % 7 === 0
+                            }"
+                            @click="day.currentMonth && selectDate(day.dateStr)"
+                        >
+                            <div class="flex justify-between items-start">
+                                <span
+                                    class="text-sm font-medium"
+                                    :class="{
+                                        'text-gray-400': !day.currentMonth,
+                                        'text-red-500': day.currentMonth && day.dayOfWeek === 0,
+                                        'text-blue-500': day.currentMonth && day.dayOfWeek === 6,
+                                        'text-gray-900': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
+                                    }"
+                                    x-text="day.day"
+                                ></span>
+                                <template x-if="day.currentMonth && getSlotsForDate(day.dateStr).length > 0">
+                                    <span class="px-1.5 py-0.5 text-xs font-bold rounded-full bg-green-500 text-white" x-text="getSlotsForDate(day.dateStr).length"></span>
+                                </template>
+                            </div>
+                            <div class="mt-1 space-y-0.5 overflow-hidden max-h-[60px]">
+                                <template x-for="slot in getSlotsForDate(day.dateStr).slice(0, 3)" :key="slot.id">
+                                    <div class="text-xs px-1 py-0.5 bg-green-100 text-green-800 rounded truncate" x-text="slot.time_from + ' ' + (slot.ground_name || '').substring(0, 8)"></div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Selected Date Detail -->
+            <div x-show="selectedDate" class="mt-6 bg-white rounded-lg shadow p-4">
+                <h3 class="text-lg font-bold mb-4" x-text="formatDateFull(selectedDate) + ' の空き枠'"></h3>
+                <div x-show="getSlotsForDate(selectedDate).length === 0" class="text-gray-500 text-center py-4">
+                    この日の空き枠はありません
+                </div>
+                <div class="space-y-2">
+                    <template x-for="slot in getSlotsForDate(selectedDate)" :key="slot.id">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <div>
+                                <span class="font-medium" x-text="slot.time_from + ' - ' + slot.time_to"></span>
+                                <span class="ml-2 text-gray-600" x-text="slot.ground_name || slot.court_name"></span>
+                                <span class="ml-2 text-sm text-gray-400" x-text="'(' + (slot.municipality_name || '') + ')'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="mt-4 text-sm text-gray-500">
                 <span x-text="slots.length"></span>件の空き枠を表示中
+            </div>
+        </div>
+
+        <!-- Worker -->
+        <div x-show="currentTab === 'worker'" x-cloak>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">ワーカー管理</h2>
+                <div class="flex items-center space-x-4">
+                    <select x-model="selectedMunicipalityForScrape" class="border rounded px-3 py-2">
+                        <option value="">全ての自治体</option>
+                        <template x-for="m in municipalities" :key="m.id">
+                            <option :value="m.id" x-text="m.name"></option>
+                        </template>
+                    </select>
+                    <button @click="triggerScrape()" :disabled="scrapeRunning" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!scrapeRunning">スクレイピング実行</span>
+                        <span x-show="scrapeRunning">実行中...</span>
+                    </button>
+                    <button @click="loadJobs()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">更新</button>
+                </div>
+            </div>
+
+            <!-- Job Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="text-gray-500 text-sm">実行中</div>
+                    <div class="text-2xl font-bold text-yellow-600" x-text="jobs.filter(j => j.status === 'running').length"></div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="text-gray-500 text-sm">完了</div>
+                    <div class="text-2xl font-bold text-green-600" x-text="jobs.filter(j => j.status === 'completed').length"></div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="text-gray-500 text-sm">失敗</div>
+                    <div class="text-2xl font-bold text-red-600" x-text="jobs.filter(j => j.status === 'failed').length"></div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="text-gray-500 text-sm">総スロット数</div>
+                    <div class="text-2xl font-bold text-indigo-600" x-text="jobs.reduce((sum, j) => sum + (j.slots_found || 0), 0)"></div>
+                </div>
+            </div>
+
+            <!-- Recent Jobs -->
+            <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                <div class="px-4 py-3 bg-gray-50 border-b">
+                    <h3 class="font-semibold">最近のジョブ</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">自治体</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ステータス</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">スロット数</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">開始</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">完了</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">エラー</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="job in jobs" :key="job.id">
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap" x-text="job.municipality_name || job.municipality_id"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs rounded" :class="{
+                                            'bg-yellow-100 text-yellow-800': job.status === 'running',
+                                            'bg-green-100 text-green-800': job.status === 'completed',
+                                            'bg-red-100 text-red-800': job.status === 'failed',
+                                            'bg-gray-100 text-gray-800': job.status === 'pending'
+                                        }" x-text="job.status"></span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap" x-text="job.slots_found || 0"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="formatDateTime(job.started_at)"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="formatDateTime(job.completed_at)"></td>
+                                    <td class="px-4 py-3 text-sm text-red-600 max-w-xs truncate" x-text="job.error_message || '-'" :title="job.error_message"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Live Logs -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
+                    <h3 class="font-semibold">ログ</h3>
+                    <div class="flex items-center space-x-2">
+                        <label class="flex items-center text-sm">
+                            <input type="checkbox" x-model="autoScrollLogs" class="mr-1"> 自動スクロール
+                        </label>
+                        <button @click="clearLogs()" class="text-sm text-gray-500 hover:text-gray-700">クリア</button>
+                    </div>
+                </div>
+                <div id="log-container" class="h-64 overflow-y-auto bg-gray-900 text-gray-100 p-4 font-mono text-sm">
+                    <template x-for="(log, idx) in workerLogs" :key="idx">
+                        <div :class="{
+                            'text-red-400': log.level === 'error',
+                            'text-yellow-400': log.level === 'warn',
+                            'text-green-400': log.level === 'info',
+                            'text-gray-400': log.level === 'debug'
+                        }">
+                            <span class="text-gray-500" x-text="log.time"></span>
+                            <span class="ml-2" x-text="'[' + log.level.toUpperCase() + ']'"></span>
+                            <span class="ml-2" x-text="log.message"></span>
+                        </div>
+                    </template>
+                    <div x-show="workerLogs.length === 0" class="text-gray-500">ログはありません。スクレイピングを実行すると、ここにログが表示されます。</div>
+                </div>
             </div>
         </div>
 
@@ -281,6 +434,17 @@
             slots: [],
             municipalities: [],
             slotFilter: { municipalityId: '' },
+            // Calendar state
+            calendarYear: new Date().getFullYear(),
+            calendarMonth: new Date().getMonth(),
+            selectedDate: null,
+            // Worker state
+            jobs: [],
+            workerLogs: [],
+            scrapeRunning: false,
+            selectedMunicipalityForScrape: '',
+            autoScrollLogs: true,
+            // Other
             tickets: [],
             chatMessages: [],
             chatInput: '',
@@ -296,6 +460,7 @@
                 await this.loadFacilities();
                 await this.loadMunicipalities();
                 await this.loadSlots();
+                await this.loadJobs();
                 await this.loadTickets();
             },
 
@@ -336,6 +501,62 @@
                 this.slots = await res.json() || [];
             },
 
+            // Calendar methods
+            get calendarDays() {
+                const days = [];
+                const firstDay = new Date(this.calendarYear, this.calendarMonth, 1);
+                const lastDay = new Date(this.calendarYear, this.calendarMonth + 1, 0);
+                const startDayOfWeek = firstDay.getDay();
+
+                const prevMonth = new Date(this.calendarYear, this.calendarMonth, 0);
+                for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                    const d = prevMonth.getDate() - i;
+                    const date = new Date(this.calendarYear, this.calendarMonth - 1, d);
+                    days.push({ day: d, dateStr: this.toDateStr(date), currentMonth: false, dayOfWeek: date.getDay() });
+                }
+
+                for (let d = 1; d <= lastDay.getDate(); d++) {
+                    const date = new Date(this.calendarYear, this.calendarMonth, d);
+                    days.push({ day: d, dateStr: this.toDateStr(date), currentMonth: true, dayOfWeek: date.getDay() });
+                }
+
+                const remaining = 42 - days.length;
+                for (let d = 1; d <= remaining; d++) {
+                    const date = new Date(this.calendarYear, this.calendarMonth + 1, d);
+                    days.push({ day: d, dateStr: this.toDateStr(date), currentMonth: false, dayOfWeek: date.getDay() });
+                }
+                return days;
+            },
+
+            toDateStr(date) {
+                return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+            },
+
+            prevMonth() {
+                const d = new Date(this.calendarYear, this.calendarMonth - 1, 1);
+                this.calendarYear = d.getFullYear();
+                this.calendarMonth = d.getMonth();
+                this.selectedDate = null;
+            },
+
+            nextMonth() {
+                const d = new Date(this.calendarYear, this.calendarMonth + 1, 1);
+                this.calendarYear = d.getFullYear();
+                this.calendarMonth = d.getMonth();
+                this.selectedDate = null;
+            },
+
+            selectDate(dateStr) {
+                this.selectedDate = this.selectedDate === dateStr ? null : dateStr;
+            },
+
+            getSlotsForDate(dateStr) {
+                return this.slots.filter(s => {
+                    const slotDate = s.slot_date.split('T')[0];
+                    return slotDate === dateStr;
+                }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
             formatDate(dateStr) {
                 if (!dateStr) return '-';
                 const d = new Date(dateStr);
@@ -344,6 +565,66 @@
                 const day = d.getDate();
                 const dow = days[d.getDay()];
                 return `${month}/${day}(${dow})`;
+            },
+
+            formatDateFull(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                const days = ['日', '月', '火', '水', '木', '金', '土'];
+                return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${days[d.getDay()]})`;
+            },
+
+            formatDateTime(dateStr) {
+                if (!dateStr) return '-';
+                const d = new Date(dateStr);
+                return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            },
+
+            // Worker methods
+            async loadJobs() {
+                const res = await fetch('/api/jobs');
+                const data = await res.json();
+                this.jobs = data || [];
+            },
+
+            async triggerScrape() {
+                this.scrapeRunning = true;
+                this.addLog('info', 'スクレイピングを開始します...');
+                try {
+                    const url = this.selectedMunicipalityForScrape 
+                        ? `/api/scrape?municipality_id=${this.selectedMunicipalityForScrape}`
+                        : '/api/scrape';
+                    const res = await fetch(url, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.addLog('info', `スクレイピング完了: ${data.message}`);
+                    } else {
+                        this.addLog('error', `エラー: ${data.error}`);
+                    }
+                } catch (e) {
+                    this.addLog('error', `リクエスト失敗: ${e.message}`);
+                } finally {
+                    this.scrapeRunning = false;
+                    await this.loadJobs();
+                    await this.loadSlots();
+                }
+            },
+
+            addLog(level, message) {
+                const now = new Date();
+                const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                this.workerLogs.push({ level, message, time });
+                if (this.workerLogs.length > 500) this.workerLogs.shift();
+                if (this.autoScrollLogs) {
+                    this.$nextTick(() => {
+                        const container = document.getElementById('log-container');
+                        if (container) container.scrollTop = container.scrollHeight;
+                    });
+                }
+            },
+
+            clearLogs() {
+                this.workerLogs = [];
             },
 
             async loadTickets() {
