@@ -88,6 +88,11 @@ func (e *EmailNotifier) renderTemplate(n *Notification) (string, error) {
       <p style="margin: 5px 0;"><strong>施設:</strong> {{.FacilityName}}</p>
       <p style="margin: 5px 0;"><strong>日時:</strong> {{.SlotDate}} {{.SlotTime}}</p>
       <p style="margin: 5px 0;"><strong>場所:</strong> {{.CourtName}}</p>
+      {{if .ReservationURL}}
+      <p style="margin: 10px 0 5px 0;">
+        <a href="{{.ReservationURL}}" style="display: inline-block; background: #4F46E5; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 14px;">予約サイトを開く →</a>
+      </p>
+      {{end}}
     </div>
     {{end}}
     <p>お早めにご予約ください。</p>
@@ -146,6 +151,9 @@ func (s *SendGridNotifier) Send(ctx context.Context, n *Notification) error {
 		bodyLines = append(bodyLines, fmt.Sprintf("\n【%d】%s", i+1, slot.FacilityName))
 		bodyLines = append(bodyLines, fmt.Sprintf("日時: %s %s", slot.SlotDate, slot.SlotTime))
 		bodyLines = append(bodyLines, fmt.Sprintf("場所: %s", slot.CourtName))
+		if slot.ReservationURL != "" {
+			bodyLines = append(bodyLines, fmt.Sprintf("予約: %s", slot.ReservationURL))
+		}
 	}
 	bodyLines = append(bodyLines, "\nお早めにご予約ください。")
 

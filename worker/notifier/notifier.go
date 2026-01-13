@@ -7,11 +7,12 @@ import (
 
 // SlotInfo represents a single slot in a notification
 type SlotInfo struct {
-	SlotID       string
-	SlotDate     string
-	SlotTime     string
-	CourtName    string
-	FacilityName string // ground name
+	SlotID         string
+	SlotDate       string
+	SlotTime       string
+	CourtName      string
+	FacilityName   string // ground name
+	ReservationURL string // URL to the reservation system
 }
 
 // Notification represents a notification to be sent

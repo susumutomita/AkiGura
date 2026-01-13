@@ -44,6 +44,7 @@ type pendingRow struct {
 	TimeTo         string
 	CourtName      string
 	FacilityName   string
+	ReservationURL string
 }
 
 // ProcessPending sends all pending notifications, grouped by team
@@ -52,11 +53,13 @@ func (s *Sender) ProcessPending(ctx context.Context) (sent, failed int, err erro
 		SELECT n.id, n.team_id, n.channel, n.slot_id,
 		       t.name as team_name, t.email as team_email,
 		       sl.slot_date, sl.time_from, sl.time_to, COALESCE(sl.court_name, '') as court_name,
-		       COALESCE(g.name, '') as facility_name
+		       COALESCE(g.name, '') as facility_name,
+		       COALESCE(m.url, '') as reservation_url
 		FROM notifications n
 		JOIN teams t ON n.team_id = t.id
 		JOIN slots sl ON n.slot_id = sl.id
 		LEFT JOIN grounds g ON sl.ground_id = g.id
+		LEFT JOIN municipalities m ON sl.municipality_id = m.id
 		WHERE n.status = 'pending'
 		ORDER BY n.team_id, n.channel, sl.slot_date, sl.time_from
 		LIMIT 500
@@ -72,7 +75,7 @@ func (s *Sender) ProcessPending(ctx context.Context) (sent, failed int, err erro
 		if err := rows.Scan(&r.NotificationID, &r.TeamID, &r.Channel, &r.SlotID,
 			&r.TeamName, &r.TeamEmail,
 			&r.SlotDate, &r.TimeFrom, &r.TimeTo, &r.CourtName,
-			&r.FacilityName); err != nil {
+			&r.FacilityName, &r.ReservationURL); err != nil {
 			slog.Warn("scan notification", "error", err)
 			continue
 		}
@@ -110,11 +113,12 @@ func (s *Sender) ProcessPending(ctx context.Context) (sent, failed int, err erro
 				slotTime = r.TimeFrom + "-" + r.TimeTo
 			}
 			n.Slots = append(n.Slots, SlotInfo{
-				SlotID:       r.SlotID,
-				SlotDate:     r.SlotDate,
-				SlotTime:     slotTime,
-				CourtName:    r.CourtName,
-				FacilityName: r.FacilityName,
+				SlotID:         r.SlotID,
+				SlotDate:       r.SlotDate,
+				SlotTime:       slotTime,
+				CourtName:      r.CourtName,
+				FacilityName:   r.FacilityName,
+				ReservationURL: r.ReservationURL,
 			})
 			notificationIDs = append(notificationIDs, r.NotificationID)
 		}

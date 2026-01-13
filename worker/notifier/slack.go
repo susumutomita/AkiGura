@@ -57,14 +57,26 @@ func (s *SlackNotifier) Send(ctx context.Context, n *Notification) error {
 	}
 
 	for _, slot := range n.Slots {
-		blocks = append(blocks, map[string]interface{}{
+		sectionBlock := map[string]interface{}{
 			"type": "section",
 			"fields": []map[string]string{
 				{"type": "mrkdwn", "text": fmt.Sprintf("*施設:*\n%s", slot.FacilityName)},
 				{"type": "mrkdwn", "text": fmt.Sprintf("*日時:*\n%s %s", slot.SlotDate, slot.SlotTime)},
 				{"type": "mrkdwn", "text": fmt.Sprintf("*場所:*\n%s", slot.CourtName)},
 			},
-		})
+		}
+		if slot.ReservationURL != "" {
+			sectionBlock["accessory"] = map[string]interface{}{
+				"type": "button",
+				"text": map[string]string{
+					"type":  "plain_text",
+					"text":  "予約する",
+					"emoji": "true",
+				},
+				"url": slot.ReservationURL,
+			}
+		}
+		blocks = append(blocks, sectionBlock)
 	}
 
 	blocks = append(blocks, map[string]interface{}{

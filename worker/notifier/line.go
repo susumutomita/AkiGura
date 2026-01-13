@@ -45,6 +45,9 @@ func (l *LINENotifier) Send(ctx context.Context, n *Notification) error {
 		lines = append(lines, fmt.Sprintf("\n【%d】%s", i+1, slot.FacilityName))
 		lines = append(lines, fmt.Sprintf("日時: %s %s", slot.SlotDate, slot.SlotTime))
 		lines = append(lines, fmt.Sprintf("場所: %s", slot.CourtName))
+		if slot.ReservationURL != "" {
+			lines = append(lines, fmt.Sprintf("予約: %s", slot.ReservationURL))
+		}
 	}
 	lines = append(lines, "\nお早めにご予約ください。")
 
@@ -125,6 +128,11 @@ func (l *LINEMessagingNotifier) Send(ctx context.Context, n *Notification) error
 		bodyContents = append(bodyContents, map[string]interface{}{
 			"type": "text", "text": fmt.Sprintf("場所: %s", slot.CourtName),
 		})
+		if slot.ReservationURL != "" {
+			bodyContents = append(bodyContents, map[string]interface{}{
+				"type": "text", "text": fmt.Sprintf("予約: %s", slot.ReservationURL), "color": "#4F46E5", "action": map[string]string{"type": "uri", "uri": slot.ReservationURL},
+			})
+		}
 	}
 
 	message := map[string]interface{}{
