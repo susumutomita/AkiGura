@@ -321,11 +321,12 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">自治体</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ステータス</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ジョブ状態</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">スクレイプ結果</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">スロット数</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">開始</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">完了</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">エラー</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">詳細</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -340,10 +341,23 @@
                                             'bg-gray-100 text-gray-800': job.status === 'pending'
                                         }" x-text="job.status"></span>
                                     </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs rounded" :class="{
+                                            'bg-green-100 text-green-800': job.scrape_status === 'success',
+                                            'bg-blue-100 text-blue-800': job.scrape_status === 'success_no_slots',
+                                            'bg-red-100 text-red-800': job.scrape_status === 'parse_error' || job.scrape_status === 'network_error',
+                                            'bg-gray-100 text-gray-800': !job.scrape_status
+                                        }" x-text="formatScrapeStatus(job.scrape_status)"></span>
+                                    </td>
                                     <td class="px-4 py-3 whitespace-nowrap" x-text="job.slots_found || 0"></td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="formatDateTime(job.started_at)"></td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="formatDateTime(job.completed_at)"></td>
-                                    <td class="px-4 py-3 text-sm text-red-600 max-w-xs truncate" x-text="job.error_message || '-'" :title="job.error_message"></td>
+                                    <td class="px-4 py-3">
+                                        <button @click="showJobDetails(job)" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                            <span x-show="job.error_message || job.diagnostics">詳細を見る</span>
+                                            <span x-show="!job.error_message && !job.diagnostics">-</span>
+                                        </button>
+                                    </td>
                                 </tr>
                             </template>
                         </tbody>
@@ -671,6 +685,47 @@
                 if (!dateStr) return '-';
                 const d = new Date(dateStr);
                 return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            },
+
+            formatScrapeStatus(status) {
+                const statusMap = {
+                    'success': '✅ 空きあり',
+                    'success_no_slots': 'ℹ️ 空きなし',
+                    'parse_error': '❌ 解析エラー',
+                    'network_error': '❌ 通信エラー',
+                    'no_table_found': '⚠️ テーブルなし',
+                    'unknown_facility': '❌ 不明な施設',
+                    'scraper_unavailable': '❌ スクレイパー利用不可',
+                    'execution_error': '❌ 実行エラー'
+                };
+                return statusMap[status] || status || '-';
+            },
+
+            showJobDetails(job) {
+                let details = '';
+                if (job.error_message) {
+                    details += `エラー: ${job.error_message}\n\n`;
+                }
+                if (job.diagnostics) {
+                    try {
+                        const diag = JSON.parse(job.diagnostics);
+                        details += '診断情報:\n';
+                        if (diag.note) details += `  メモ: ${diag.note}\n`;
+                        if (diag.html_verification) {
+                            const v = diag.html_verification;
+                            if (v.server_message) details += `  サーバー回答: ${v.server_message}\n`;
+                            if (v.confirmation) details += `  確認: ${v.confirmation}\n`;
+                        }
+                        if (diag.raw_results_count !== undefined) details += `  生結果数: ${diag.raw_results_count}\n`;
+                        if (diag.parsed_slots_count !== undefined) details += `  解析済み: ${diag.parsed_slots_count}\n`;
+                        if (diag.parse_errors) details += `  解析エラー: ${diag.parse_errors}\n`;
+                    } catch (e) {
+                        details += `診断情報: ${job.diagnostics}`;
+                    }
+                }
+                if (details) {
+                    alert(details);
+                }
             },
 
             // Worker methods
