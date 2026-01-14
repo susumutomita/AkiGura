@@ -170,9 +170,9 @@ func extractBaseFacilityName(courtName string) string {
 	// - Ａ面, Ｂ面, Ｃ面, etc. (half-width)
 	// - 1面, 2面, 3面, etc.
 	// - （東）, （西）, etc.
-	
+
 	name := courtName
-	
+
 	// Remove full-width letter + 面
 	for _, suffix := range []string{"Ａ面", "Ｂ面", "Ｃ面", "Ｄ面", "Ｅ面", "Ｆ面", "Ｇ面", "Ｈ面", "Ｉ面", "Ｊ面", "Ｋ面", "Ｌ面"} {
 		if strings.HasSuffix(name, suffix) {
@@ -180,7 +180,7 @@ func extractBaseFacilityName(courtName string) string {
 			break
 		}
 	}
-	
+
 	// Remove half-width letter + 面
 	for _, suffix := range []string{"A面", "B面", "C面", "D面", "E面", "F面", "G面", "H面", "I面", "J面", "K面", "L面"} {
 		if strings.HasSuffix(name, suffix) {
@@ -188,7 +188,7 @@ func extractBaseFacilityName(courtName string) string {
 			break
 		}
 	}
-	
+
 	// Remove number + 面
 	for _, suffix := range []string{"1面", "2面", "3面", "4面", "5面", "6面", "7面", "8面", "9面", "10面"} {
 		if strings.HasSuffix(name, suffix) {
@@ -196,7 +196,7 @@ func extractBaseFacilityName(courtName string) string {
 			break
 		}
 	}
-	
+
 	return strings.TrimSpace(name)
 }
 
