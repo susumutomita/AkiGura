@@ -13,15 +13,34 @@
 <body class="bg-gray-100 min-h-screen" x-data="app()" x-init="init()">
     <!-- Header -->
     <header class="bg-indigo-600 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold">🏈 AkiGura Control Plane</h1>
-            <nav class="flex space-x-4">
-                <button @click="currentTab = 'dashboard'" :class="{'bg-indigo-700': currentTab === 'dashboard'}" class="px-3 py-2 rounded hover:bg-indigo-500">ダッシュボード</button>
-                <button @click="currentTab = 'teams'" :class="{'bg-indigo-700': currentTab === 'teams'}" class="px-3 py-2 rounded hover:bg-indigo-500">チーム管理</button>
-                <button @click="currentTab = 'facilities'" :class="{'bg-indigo-700': currentTab === 'facilities'}" class="px-3 py-2 rounded hover:bg-indigo-500">施設管理</button>
-                <button @click="currentTab = 'slots'" :class="{'bg-indigo-700': currentTab === 'slots'}" class="px-3 py-2 rounded hover:bg-indigo-500">空き状況</button>
-                <button @click="currentTab = 'worker'" :class="{'bg-indigo-700': currentTab === 'worker'}" class="px-3 py-2 rounded hover:bg-indigo-500">ワーカー</button>
-                <button @click="currentTab = 'support'" :class="{'bg-indigo-700': currentTab === 'support'}" class="px-3 py-2 rounded hover:bg-indigo-500">AIサポート</button>
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <!-- Mobile Header -->
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl md:text-2xl font-bold">🏈 AkiGura</h1>
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex space-x-2">
+                    <button @click="currentTab = 'dashboard'" :class="{'bg-indigo-700': currentTab === 'dashboard'}" class="px-3 py-2 rounded hover:bg-indigo-500 text-sm">ダッシュボード</button>
+                    <button @click="currentTab = 'teams'" :class="{'bg-indigo-700': currentTab === 'teams'}" class="px-3 py-2 rounded hover:bg-indigo-500 text-sm">チーム</button>
+                    <button @click="currentTab = 'facilities'" :class="{'bg-indigo-700': currentTab === 'facilities'}" class="px-3 py-2 rounded hover:bg-indigo-500 text-sm">施設</button>
+                    <button @click="currentTab = 'slots'" :class="{'bg-indigo-700': currentTab === 'slots'}" class="px-3 py-2 rounded hover:bg-indigo-500 text-sm">空き状況</button>
+                    <button @click="currentTab = 'worker'" :class="{'bg-indigo-700': currentTab === 'worker'}" class="px-3 py-2 rounded hover:bg-indigo-500 text-sm">ワーカー</button>
+                    <button @click="currentTab = 'support'" :class="{'bg-indigo-700': currentTab === 'support'}" class="px-3 py-2 rounded hover:bg-indigo-500 text-sm">AI</button>
+                </nav>
+            </div>
+            <!-- Mobile Nav -->
+            <nav x-show="mobileMenuOpen" x-cloak class="md:hidden mt-3 pb-2 grid grid-cols-3 gap-2">
+                <button @click="currentTab = 'dashboard'; mobileMenuOpen = false" :class="{'bg-indigo-700': currentTab === 'dashboard'}" class="px-2 py-2 rounded hover:bg-indigo-500 text-sm text-center">ダッシュボード</button>
+                <button @click="currentTab = 'teams'; mobileMenuOpen = false" :class="{'bg-indigo-700': currentTab === 'teams'}" class="px-2 py-2 rounded hover:bg-indigo-500 text-sm text-center">チーム</button>
+                <button @click="currentTab = 'facilities'; mobileMenuOpen = false" :class="{'bg-indigo-700': currentTab === 'facilities'}" class="px-2 py-2 rounded hover:bg-indigo-500 text-sm text-center">施設</button>
+                <button @click="currentTab = 'slots'; mobileMenuOpen = false" :class="{'bg-indigo-700': currentTab === 'slots'}" class="px-2 py-2 rounded hover:bg-indigo-500 text-sm text-center">空き状況</button>
+                <button @click="currentTab = 'worker'; mobileMenuOpen = false" :class="{'bg-indigo-700': currentTab === 'worker'}" class="px-2 py-2 rounded hover:bg-indigo-500 text-sm text-center">ワーカー</button>
+                <button @click="currentTab = 'support'; mobileMenuOpen = false" :class="{'bg-indigo-700': currentTab === 'support'}" class="px-2 py-2 rounded hover:bg-indigo-500 text-sm text-center">AIサポート</button>
             </nav>
         </div>
     </header>
@@ -274,64 +293,93 @@
 
         <!-- Worker -->
         <div x-show="currentTab === 'worker'" x-cloak>
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">ワーカー管理</h2>
-                <div class="flex items-center space-x-4">
-                    <select x-model="selectedMunicipalityForScrape" class="border rounded px-3 py-2">
+            <!-- Header with actions -->
+            <div class="mb-4">
+                <h2 class="text-xl md:text-2xl font-bold mb-3">ワーカー管理</h2>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <select x-model="selectedMunicipalityForScrape" class="border rounded px-3 py-2 text-sm flex-1">
                         <option value="">全ての自治体</option>
                         <template x-for="m in municipalities" :key="m.id">
                             <option :value="m.id" x-text="m.name"></option>
                         </template>
                     </select>
-                    <button @click="triggerScrape()" :disabled="scrapeRunning" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span x-show="!scrapeRunning">スクレイピング実行</span>
-                        <span x-show="scrapeRunning">実行中...</span>
-                    </button>
-                    <button @click="loadJobs()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">更新</button>
+                    <div class="flex gap-2">
+                        <button @click="triggerScrape()" :disabled="scrapeRunning" class="flex-1 sm:flex-none bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 text-sm">
+                            <span x-show="!scrapeRunning">スクレイピング</span>
+                            <span x-show="scrapeRunning">実行中...</span>
+                        </button>
+                        <button @click="loadJobs()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm">更新</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Job Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="text-gray-500 text-sm">実行中</div>
-                    <div class="text-2xl font-bold text-yellow-600" x-text="jobs.filter(j => j.status === 'running').length"></div>
+            <!-- Job Stats - Compact on mobile -->
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-white rounded-lg shadow p-3 text-center">
+                    <div class="text-gray-500 text-xs">実行中</div>
+                    <div class="text-xl font-bold text-yellow-600" x-text="jobs.filter(j => j.status === 'running').length"></div>
                 </div>
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="text-gray-500 text-sm">完了</div>
-                    <div class="text-2xl font-bold text-green-600" x-text="jobs.filter(j => j.status === 'completed').length"></div>
+                <div class="bg-white rounded-lg shadow p-3 text-center">
+                    <div class="text-gray-500 text-xs">完了</div>
+                    <div class="text-xl font-bold text-green-600" x-text="jobs.filter(j => j.status === 'completed').length"></div>
                 </div>
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="text-gray-500 text-sm">失敗</div>
-                    <div class="text-2xl font-bold text-red-600" x-text="jobs.filter(j => j.status === 'failed').length"></div>
+                <div class="bg-white rounded-lg shadow p-3 text-center">
+                    <div class="text-gray-500 text-xs">失敗</div>
+                    <div class="text-xl font-bold text-red-600" x-text="jobs.filter(j => j.status === 'failed').length"></div>
                 </div>
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="text-gray-500 text-sm">総スロット数</div>
-                    <div class="text-2xl font-bold text-indigo-600" x-text="jobs.reduce((sum, j) => sum + (j.slots_found || 0), 0)"></div>
+                <div class="bg-white rounded-lg shadow p-3 text-center">
+                    <div class="text-gray-500 text-xs">スロット</div>
+                    <div class="text-xl font-bold text-indigo-600" x-text="jobs.reduce((sum, j) => sum + (j.slots_found || 0), 0)"></div>
                 </div>
             </div>
 
-            <!-- Recent Jobs -->
-            <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+            <!-- Recent Jobs - Card layout for mobile -->
+            <div class="bg-white rounded-lg shadow mb-4">
                 <div class="px-4 py-3 bg-gray-50 border-b">
-                    <h3 class="font-semibold">最近のジョブ</h3>
+                    <h3 class="font-semibold text-sm">最近のジョブ</h3>
                 </div>
-                <div class="overflow-x-auto">
+                
+                <!-- Mobile: Card view -->
+                <div class="md:hidden divide-y">
+                    <template x-for="job in jobs" :key="job.id">
+                        <div class="p-3" @click="showJobDetails(job)">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-medium text-sm" x-text="job.municipality_name || job.municipality_id"></span>
+                                <span class="px-2 py-0.5 text-xs rounded" :class="{
+                                    'bg-green-100 text-green-800': job.scrape_status === 'success',
+                                    'bg-blue-100 text-blue-800': job.scrape_status === 'success_no_slots',
+                                    'bg-red-100 text-red-800': job.scrape_status === 'parse_error' || job.scrape_status === 'network_error',
+                                    'bg-yellow-100 text-yellow-800': job.status === 'running',
+                                    'bg-gray-100 text-gray-800': !job.scrape_status && job.status !== 'running'
+                                }" x-text="job.status === 'running' ? '実行中' : formatScrapeStatus(job.scrape_status)"></span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-gray-500">
+                                <span x-text="job.slots_found ? job.slots_found + '件の空き' : '空きなし'"></span>
+                                <span x-text="formatDateTime(job.completed_at) || formatDateTime(job.started_at) || '-'"></span>
+                            </div>
+                            <div x-show="job.error_message" class="mt-1 text-xs text-red-600 truncate" x-text="job.error_message"></div>
+                        </div>
+                    </template>
+                    <div x-show="jobs.length === 0" class="p-4 text-center text-gray-500 text-sm">ジョブはありません</div>
+                </div>
+
+                <!-- Desktop: Table view -->
+                <div class="hidden md:block overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">自治体</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ステータス</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">スロット数</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">開始</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">完了</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">エラー</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">結果</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">スロット</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">時刻</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">詳細</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             <template x-for="job in jobs" :key="job.id">
                                 <tr>
-                                    <td class="px-4 py-3 whitespace-nowrap" x-text="job.municipality_name || job.municipality_id"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="job.municipality_name || job.municipality_id"></td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="px-2 py-1 text-xs rounded" :class="{
                                             'bg-yellow-100 text-yellow-800': job.status === 'running',
@@ -340,10 +388,20 @@
                                             'bg-gray-100 text-gray-800': job.status === 'pending'
                                         }" x-text="job.status"></span>
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap" x-text="job.slots_found || 0"></td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="formatDateTime(job.started_at)"></td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="formatDateTime(job.completed_at)"></td>
-                                    <td class="px-4 py-3 text-sm text-red-600 max-w-xs truncate" x-text="job.error_message || '-'" :title="job.error_message"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs rounded" :class="{
+                                            'bg-green-100 text-green-800': job.scrape_status === 'success',
+                                            'bg-blue-100 text-blue-800': job.scrape_status === 'success_no_slots',
+                                            'bg-red-100 text-red-800': job.scrape_status === 'parse_error' || job.scrape_status === 'network_error',
+                                            'bg-gray-100 text-gray-800': !job.scrape_status
+                                        }" x-text="formatScrapeStatus(job.scrape_status)"></span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm" x-text="job.slots_found || 0"></td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500" x-text="formatDateTime(job.completed_at) || formatDateTime(job.started_at)"></td>
+                                    <td class="px-4 py-3">
+                                        <button @click="showJobDetails(job)" class="text-indigo-600 hover:text-indigo-800 text-sm" x-show="job.error_message || job.diagnostics">詳細</button>
+                                        <span x-show="!job.error_message && !job.diagnostics" class="text-gray-400">-</span>
+                                    </td>
                                 </tr>
                             </template>
                         </tbody>
@@ -351,18 +409,21 @@
                 </div>
             </div>
 
-            <!-- Live Logs -->
+            <!-- Live Logs - Collapsible on mobile -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
-                    <h3 class="font-semibold">ログ</h3>
+                <div class="px-4 py-3 bg-gray-50 border-b flex justify-between items-center" @click="showLogs = !showLogs">
+                    <h3 class="font-semibold text-sm">ログ</h3>
                     <div class="flex items-center space-x-2">
-                        <label class="flex items-center text-sm">
+                        <label class="hidden sm:flex items-center text-sm" @click.stop>
                             <input type="checkbox" x-model="autoScrollLogs" class="mr-1"> 自動スクロール
                         </label>
-                        <button @click="clearLogs()" class="text-sm text-gray-500 hover:text-gray-700">クリア</button>
+                        <button @click.stop="clearLogs()" class="text-sm text-gray-500 hover:text-gray-700">クリア</button>
+                        <svg class="w-5 h-5 md:hidden transition-transform" :class="{'rotate-180': showLogs}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
                     </div>
                 </div>
-                <div id="log-container" class="h-64 overflow-y-auto bg-gray-900 text-gray-100 p-4 font-mono text-sm">
+                <div x-show="showLogs" x-cloak class="md:block" id="log-container" :class="{'h-40': true, 'md:h-64': true}" class="overflow-y-auto bg-gray-900 text-gray-100 p-3 font-mono text-xs">
                     <template x-for="(log, idx) in workerLogs" :key="idx">
                         <div :class="{
                             'text-red-400': log.level === 'error',
@@ -371,11 +432,11 @@
                             'text-gray-400': log.level === 'debug'
                         }">
                             <span class="text-gray-500" x-text="log.time"></span>
-                            <span class="ml-2" x-text="'[' + log.level.toUpperCase() + ']'"></span>
-                            <span class="ml-2" x-text="log.message"></span>
+                            <span class="ml-1" x-text="'[' + log.level.toUpperCase() + ']'"></span>
+                            <span class="ml-1" x-text="log.message"></span>
                         </div>
                     </template>
-                    <div x-show="workerLogs.length === 0" class="text-gray-500">ログはありません。スクレイピングを実行すると、ここにログが表示されます。</div>
+                    <div x-show="workerLogs.length === 0" class="text-gray-500">ログはありません</div>
                 </div>
             </div>
         </div>
@@ -481,6 +542,7 @@
     function app() {
         return {
             currentTab: 'dashboard',
+            mobileMenuOpen: false,
             dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [] },
             teams: [],
             facilities: [],
@@ -497,6 +559,7 @@
             calendarMonth: new Date().getMonth(),
             selectedDate: null,
             // Worker state
+            showLogs: window.innerWidth >= 768,  // Show logs by default on desktop
             jobs: [],
             workerLogs: [],
             scrapeRunning: false,
@@ -671,6 +734,47 @@
                 if (!dateStr) return '-';
                 const d = new Date(dateStr);
                 return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            },
+
+            formatScrapeStatus(status) {
+                const statusMap = {
+                    'success': '✅ 空きあり',
+                    'success_no_slots': 'ℹ️ 空きなし',
+                    'parse_error': '❌ 解析エラー',
+                    'network_error': '❌ 通信エラー',
+                    'no_table_found': '⚠️ テーブルなし',
+                    'unknown_facility': '❌ 不明な施設',
+                    'scraper_unavailable': '❌ スクレイパー利用不可',
+                    'execution_error': '❌ 実行エラー'
+                };
+                return statusMap[status] || status || '-';
+            },
+
+            showJobDetails(job) {
+                let details = '';
+                if (job.error_message) {
+                    details += `エラー: ${job.error_message}\n\n`;
+                }
+                if (job.diagnostics) {
+                    try {
+                        const diag = JSON.parse(job.diagnostics);
+                        details += '診断情報:\n';
+                        if (diag.note) details += `  メモ: ${diag.note}\n`;
+                        if (diag.html_verification) {
+                            const v = diag.html_verification;
+                            if (v.server_message) details += `  サーバー回答: ${v.server_message}\n`;
+                            if (v.confirmation) details += `  確認: ${v.confirmation}\n`;
+                        }
+                        if (diag.raw_results_count !== undefined) details += `  生結果数: ${diag.raw_results_count}\n`;
+                        if (diag.parsed_slots_count !== undefined) details += `  解析済み: ${diag.parsed_slots_count}\n`;
+                        if (diag.parse_errors) details += `  解析エラー: ${diag.parse_errors}\n`;
+                    } catch (e) {
+                        details += `診断情報: ${job.diagnostics}`;
+                    }
+                }
+                if (details) {
+                    alert(details);
+                }
             },
 
             // Worker methods

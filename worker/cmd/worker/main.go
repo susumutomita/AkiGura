@@ -82,14 +82,14 @@ func run() error {
 	if *flagJobMode {
 		// Job mode: process pending jobs from database
 		slog.Info("starting job processor", "job_interval", *flagJobInterval, "notify_interval", *flagNotifyInterval)
-		
+
 		// Start notification sender in background
 		go sender.StartSender(ctx, *flagNotifyInterval)
-		
+
 		// Process pending jobs periodically
 		ticker := time.NewTicker(*flagJobInterval)
 		defer ticker.Stop()
-		
+
 		for {
 			select {
 			case <-ctx.Done():

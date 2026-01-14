@@ -9,7 +9,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 # Configure all scrapers with wide time range (00:00 - 23:59) and all weekdays
 ALL_WEEKDAYS = "月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日,祝日"
@@ -31,8 +31,20 @@ try:
     from app.facilities.kanagawa_system.fujisawa.fujisawa_facility import FujisawaFacility
 
     SCRAPERS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     SCRAPERS_AVAILABLE = False
+    IMPORT_ERROR = str(e)
+
+
+# Diagnostic status codes
+class ScrapeStatus:
+    SUCCESS = "success"                    # スクレイピング成功、結果あり
+    SUCCESS_NO_SLOTS = "success_no_slots"  # スクレイピング成功、空き枠なし
+    PARSE_ERROR = "parse_error"            # HTMLの解析に失敗
+    NETWORK_ERROR = "network_error"        # ネットワークエラー
+    NO_TABLE_FOUND = "no_table_found"      # 検索結果テーブルが見つからない
+    UNKNOWN_FACILITY = "unknown_facility"  # 不明な施設タイプ
+    SCRAPER_UNAVAILABLE = "scraper_unavailable"  # スクレイパーが利用不可
 
 
 def _make_slot(date: str, time_from: str, time_to: str, court_name: str,
@@ -88,17 +100,103 @@ def parse_slot_string(slot_str: str, facility_type: str) -> Dict[str, Any]:
     return _make_slot(None, None, None, None, slot_str, facility_type)
 
 
+def create_result(
+    facility_type: str,
+    status: str,
+    slots: Optional[List[Dict[str, Any]]] = None,
+    error: Optional[str] = None,
+    diagnostics: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Create a standardized result dict.
+    success=True only when status is "success" or "success_no_slots"
+    """
+    success_statuses = {ScrapeStatus.SUCCESS, ScrapeStatus.SUCCESS_NO_SLOTS}
+    return {
+        "success": status in success_statuses,
+        "status": status,
+        "error": error,
+        "facility_type": facility_type,
+        "slots": slots or [],
+        "diagnostics": diagnostics or {},
+        "scraped_at": datetime.now().isoformat()
+    }
+
+
+def verify_yokohama_html(facility) -> Dict[str, Any]:
+    """
+    横浜市のHTMLレスポンスを検証して診断情報を返す
+    """
+    try:
+        from bs4 import BeautifulSoup
+        
+        search_dates = facility.get_search_dates(0)
+        token = facility.get_token(facility.facility_urls['login_page_url'])
+        payload = facility.create_payload(token, search_dates)
+        facility.send_search_facility_query(facility.facility_urls['facility_search_url'], payload)
+        html = facility.get_available_facilities(facility.facility_urls['facility_status_url'])
+        
+        if not html:
+            return {"verified": False, "reason": "HTML response is empty"}
+        
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # 検索結果のテーブルを探す
+        table = soup.find('table', class_='table table-bordered table-striped facilities')
+        
+        # 「空き施設がN件見つかりました」メッセージを探す
+        page_text = soup.get_text()
+        found_msg = None
+        if '空き施設が' in page_text and '件見つかりました' in page_text:
+            import re
+            match = re.search(r'空き施設が(\d+)件見つかりました', page_text)
+            if match:
+                found_msg = f"空き施設が{match.group(1)}件見つかりました"
+        
+        if '条件に該当する施設はありません' in page_text:
+            return {
+                "verified": True,
+                "has_table": False,
+                "server_message": "条件に該当する施設はありません",
+                "confirmation": "サーバーからの明示的な回答: 空き枠なし"
+            }
+        
+        if found_msg and '0件' in found_msg:
+            return {
+                "verified": True, 
+                "has_table": table is not None,
+                "server_message": found_msg,
+                "confirmation": "サーバーからの明示的な回答: 空き枠0件"
+            }
+        
+        return {
+            "verified": True,
+            "has_table": table is not None,
+            "server_message": found_msg,
+            "html_length": len(html)
+        }
+    except Exception as e:
+        return {"verified": False, "reason": str(e)}
+
+
 def search_facility(facility_type: str) -> Dict[str, Any]:
     """
-    Search a specific facility and return structured results.
+    Search a specific facility and return structured results with diagnostics.
+    
+    Returns a result dict with:
+    - success: bool - True if scraping completed (even with 0 results)
+    - status: str - Detailed status code for debugging
+    - error: str|None - Error message if failed
+    - slots: list - Found slots (can be empty)
+    - diagnostics: dict - Additional debug info (search dates, HTTP status, etc.)
     """
+    global IMPORT_ERROR
     if not SCRAPERS_AVAILABLE:
-        return {
-            "success": False,
-            "error": "Scrapers not available. Install ground-reservation.",
-            "facility_type": facility_type,
-            "slots": []
-        }
+        return create_result(
+            facility_type,
+            ScrapeStatus.SCRAPER_UNAVAILABLE,
+            error=f"Scrapers not available: {IMPORT_ERROR if 'IMPORT_ERROR' in globals() else 'unknown error'}"
+        )
     
     scrapers = {
         "yokohama": YokohamaFacility,
@@ -110,37 +208,72 @@ def search_facility(facility_type: str) -> Dict[str, Any]:
     }
     
     if facility_type not in scrapers:
-        return {
-            "success": False,
-            "error": f"Unknown facility type: {facility_type}",
-            "facility_type": facility_type,
-            "slots": []
-        }
+        return create_result(
+            facility_type,
+            ScrapeStatus.UNKNOWN_FACILITY,
+            error=f"Unknown facility type: {facility_type}. Available: {list(scrapers.keys())}"
+        )
+    
+    diagnostics = {
+        "search_started": datetime.now().isoformat(),
+    }
     
     try:
         facility = scrapers[facility_type]()
         raw_results = facility.search_facility()
         
+        diagnostics["raw_results_count"] = len(raw_results) if raw_results else 0
+        diagnostics["search_completed"] = datetime.now().isoformat()
+        
+        # Parse slots
         slots = []
-        for slot_str in raw_results:
+        parse_errors = 0
+        for slot_str in (raw_results or []):
             if slot_str:  # Skip empty strings
                 parsed = parse_slot_string(slot_str, facility_type)
                 slots.append(parsed)
+                if parsed.get("date") is None:
+                    parse_errors += 1
         
-        return {
-            "success": True,
-            "error": None,
-            "facility_type": facility_type,
-            "slots": slots,
-            "scraped_at": datetime.now().isoformat()
-        }
+        diagnostics["parsed_slots_count"] = len(slots)
+        diagnostics["parse_errors"] = parse_errors
+        
+        # Determine status based on results
+        if len(slots) > 0:
+            status = ScrapeStatus.SUCCESS
+        else:
+            # Scraping succeeded but no slots found
+            # 横浜の場合、追加の検証を実行
+            if facility_type == "yokohama":
+                verification = verify_yokohama_html(facility)
+                diagnostics["html_verification"] = verification
+                if verification.get("confirmation"):
+                    diagnostics["note"] = verification["confirmation"]
+                else:
+                    diagnostics["note"] = "検索は完了しましたが、空き枠は見つかりませんでした。"
+            else:
+                diagnostics["note"] = "検索は完了しましたが、空き枠は見つかりませんでした。"
+            
+            status = ScrapeStatus.SUCCESS_NO_SLOTS
+        
+        return create_result(facility_type, status, slots=slots, diagnostics=diagnostics)
+        
+    except ConnectionError as e:
+        return create_result(
+            facility_type,
+            ScrapeStatus.NETWORK_ERROR,
+            error=str(e),
+            diagnostics=diagnostics
+        )
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "facility_type": facility_type,
-            "slots": []
-        }
+        # Capture exception type for better debugging
+        diagnostics["exception_type"] = type(e).__name__
+        return create_result(
+            facility_type,
+            ScrapeStatus.PARSE_ERROR,
+            error=str(e),
+            diagnostics=diagnostics
+        )
 
 
 def main():

@@ -195,7 +195,8 @@ func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleListJobs(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.DB.QueryContext(r.Context(), `
 		SELECT j.id, j.municipality_id, m.name as municipality_name, j.status, 
-		       j.slots_found, j.error_message, j.started_at, j.completed_at, j.created_at
+		       j.scrape_status, j.slots_found, j.error_message, j.diagnostics,
+		       j.started_at, j.completed_at, j.created_at
 		FROM scrape_jobs j
 		LEFT JOIN municipalities m ON j.municipality_id = m.id
 		ORDER BY j.created_at DESC
@@ -212,8 +213,10 @@ func (s *Server) HandleListJobs(w http.ResponseWriter, r *http.Request) {
 		MunicipalityID   string  `json:"municipality_id"`
 		MunicipalityName *string `json:"municipality_name"`
 		Status           string  `json:"status"`
+		ScrapeStatus     *string `json:"scrape_status"`
 		SlotsFound       int     `json:"slots_found"`
 		ErrorMessage     *string `json:"error_message"`
+		Diagnostics      *string `json:"diagnostics"`
 		StartedAt        *string `json:"started_at"`
 		CompletedAt      *string `json:"completed_at"`
 		CreatedAt        string  `json:"created_at"`
@@ -223,7 +226,8 @@ func (s *Server) HandleListJobs(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var j Job
 		if err := rows.Scan(&j.ID, &j.MunicipalityID, &j.MunicipalityName, &j.Status,
-			&j.SlotsFound, &j.ErrorMessage, &j.StartedAt, &j.CompletedAt, &j.CreatedAt); err != nil {
+			&j.ScrapeStatus, &j.SlotsFound, &j.ErrorMessage, &j.Diagnostics,
+			&j.StartedAt, &j.CompletedAt, &j.CreatedAt); err != nil {
 			continue
 		}
 		jobs = append(jobs, j)

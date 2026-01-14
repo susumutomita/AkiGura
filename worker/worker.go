@@ -14,11 +14,13 @@ import (
 
 // ScraperResult represents the JSON output from scraper_wrapper.py
 type ScraperResult struct {
-	Success      bool   `json:"success"`
-	Error        string `json:"error"`
-	FacilityType string `json:"facility_type"`
-	Slots        []Slot `json:"slots"`
-	ScrapedAt    string `json:"scraped_at"`
+	Success      bool                   `json:"success"`
+	Status       string                 `json:"status"` // success, success_no_slots, parse_error, etc.
+	Error        string                 `json:"error"`
+	FacilityType string                 `json:"facility_type"`
+	Slots        []Slot                 `json:"slots"`
+	Diagnostics  map[string]interface{} `json:"diagnostics"` // Additional debug info
+	ScrapedAt    string                 `json:"scraped_at"`
 }
 
 // Slot represents a single available time slot
@@ -133,15 +135,28 @@ func (w *Worker) CreateJob(ctx context.Context, municipalityID string) (string, 
 
 // UpdateJob updates a scrape job status
 func (w *Worker) UpdateJob(ctx context.Context, jobID, status string, slotsFound int, errorMsg string) error {
+	return w.UpdateJobWithDiagnostics(ctx, jobID, status, "", slotsFound, errorMsg, nil)
+}
+
+// UpdateJobWithDiagnostics updates a scrape job with detailed diagnostics
+func (w *Worker) UpdateJobWithDiagnostics(ctx context.Context, jobID, status, scrapeStatus string, slotsFound int, errorMsg string, diagnostics map[string]interface{}) error {
+	var diagJSON string
+	if diagnostics != nil {
+		if b, err := json.Marshal(diagnostics); err == nil {
+			diagJSON = string(b)
+		}
+	}
 	_, err := w.DB.ExecContext(ctx, `
 		UPDATE scrape_jobs SET 
 			status = ?,
+			scrape_status = ?,
 			slots_found = ?,
 			error_message = ?,
+			diagnostics = ?,
 			started_at = CASE WHEN ? = 'running' THEN CURRENT_TIMESTAMP ELSE started_at END,
 			completed_at = CASE WHEN ? IN ('completed', 'failed') THEN CURRENT_TIMESTAMP ELSE completed_at END
 		WHERE id = ?
-	`, status, slotsFound, errorMsg, status, status, jobID)
+	`, status, scrapeStatus, slotsFound, errorMsg, diagJSON, status, status, jobID)
 	return err
 }
 
@@ -161,28 +176,33 @@ func (w *Worker) ProcessMunicipality(ctx context.Context, municipalityID, scrape
 	// Run scraper
 	result, err := w.RunScraper(ctx, scraperType)
 	if err != nil {
-		w.UpdateJob(ctx, jobID, "failed", 0, err.Error())
+		w.UpdateJobWithDiagnostics(ctx, jobID, "failed", "execution_error", 0, err.Error(), nil)
 		return fmt.Errorf("run scraper: %w", err)
 	}
 
 	if !result.Success {
-		w.UpdateJob(ctx, jobID, "failed", 0, result.Error)
+		w.UpdateJobWithDiagnostics(ctx, jobID, "failed", result.Status, 0, result.Error, result.Diagnostics)
 		return fmt.Errorf("scraper error: %s", result.Error)
 	}
 
 	// Save slots
 	saved, err := w.SaveSlots(ctx, municipalityID, result.Slots)
 	if err != nil {
-		w.UpdateJob(ctx, jobID, "failed", saved, err.Error())
+		w.UpdateJobWithDiagnostics(ctx, jobID, "failed", result.Status, saved, err.Error(), result.Diagnostics)
 		return fmt.Errorf("save slots: %w", err)
 	}
 
-	// Mark as completed
-	if err := w.UpdateJob(ctx, jobID, "completed", saved, ""); err != nil {
+	// Mark as completed - use scrape_status to distinguish between "found slots" vs "no slots available"
+	if err := w.UpdateJobWithDiagnostics(ctx, jobID, "completed", result.Status, saved, "", result.Diagnostics); err != nil {
 		return fmt.Errorf("update job completed: %w", err)
 	}
 
-	slog.Info("scrape completed", "municipality_id", municipalityID, "slots_found", len(result.Slots), "slots_saved", saved)
+	slog.Info("scrape completed",
+		"municipality_id", municipalityID,
+		"status", result.Status,
+		"slots_found", len(result.Slots),
+		"slots_saved", saved,
+		"diagnostics", result.Diagnostics)
 
 	// Run matcher to find matches and create notifications
 	matcher := NewMatcher(w.DB)
@@ -289,7 +309,7 @@ func (w *Worker) ProcessPendingJobs(ctx context.Context) error {
 
 	for _, job := range jobs {
 		slog.Info("processing pending job", "job_id", job.JobID, "scraper_type", job.ScraperType)
-		
+
 		// Mark as running
 		w.DB.ExecContext(ctx, `
 			UPDATE scrape_jobs SET status = 'running', started_at = CURRENT_TIMESTAMP WHERE id = ?
