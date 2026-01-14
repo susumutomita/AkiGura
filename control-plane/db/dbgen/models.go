@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type AuthToken struct {
+	ID        string       `json:"id"`
+	TeamID    string       `json:"team_id"`
+	Token     string       `json:"token"`
+	ExpiresAt time.Time    `json:"expires_at"`
+	UsedAt    sql.NullTime `json:"used_at"`
+	CreatedAt time.Time    `json:"created_at"`
+}
+
 type Facility struct {
 	ID           string    `json:"id"`
 	Name         string    `json:"name"`

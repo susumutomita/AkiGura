@@ -164,3 +164,15 @@ CREATE TABLE system_metrics (
     metric_value REAL NOT NULL,
     recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Auth Tokens (magic link authentication)
+CREATE TABLE auth_tokens (
+    id TEXT PRIMARY KEY,
+    team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_auth_tokens_token ON auth_tokens(token);
+CREATE INDEX idx_auth_tokens_team ON auth_tokens(team_id);

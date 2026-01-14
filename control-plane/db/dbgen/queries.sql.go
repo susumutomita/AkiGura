@@ -259,6 +259,42 @@ func (q *Queries) CountWatchConditions(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const createAuthToken = `-- name: CreateAuthToken :one
+
+INSERT INTO auth_tokens (id, team_id, token, expires_at, created_at)
+VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)
+RETURNING id, team_id, token, expires_at, used_at, created_at
+`
+
+type CreateAuthTokenParams struct {
+	ID        string    `json:"id"`
+	TeamID    string    `json:"team_id"`
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+// =============================================================================
+// Auth Tokens (magic link authentication)
+// =============================================================================
+func (q *Queries) CreateAuthToken(ctx context.Context, arg CreateAuthTokenParams) (AuthToken, error) {
+	row := q.db.QueryRowContext(ctx, createAuthToken,
+		arg.ID,
+		arg.TeamID,
+		arg.Token,
+		arg.ExpiresAt,
+	)
+	var i AuthToken
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Token,
+		&i.ExpiresAt,
+		&i.UsedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createFacility = `-- name: CreateFacility :one
 
 INSERT INTO facilities (id, name, municipality, scraper_type, url, enabled, created_at)
@@ -598,6 +634,15 @@ func (q *Queries) CreateWatchCondition(ctx context.Context, arg CreateWatchCondi
 	return i, err
 }
 
+const deleteExpiredAuthTokens = `-- name: DeleteExpiredAuthTokens :exec
+DELETE FROM auth_tokens WHERE expires_at < CURRENT_TIMESTAMP
+`
+
+func (q *Queries) DeleteExpiredAuthTokens(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteExpiredAuthTokens)
+	return err
+}
+
 const deleteFacility = `-- name: DeleteFacility :exec
 DELETE FROM facilities WHERE id = ?
 `
@@ -632,6 +677,40 @@ DELETE FROM watch_conditions WHERE id = ?
 func (q *Queries) DeleteWatchCondition(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, deleteWatchCondition, id)
 	return err
+}
+
+const getAuthTokenByToken = `-- name: GetAuthTokenByToken :one
+SELECT at.id, at.team_id, at.token, at.expires_at, at.used_at, at.created_at, t.email as team_email, t.name as team_name
+FROM auth_tokens at
+JOIN teams t ON at.team_id = t.id
+WHERE at.token = ? AND at.used_at IS NULL AND at.expires_at > CURRENT_TIMESTAMP
+`
+
+type GetAuthTokenByTokenRow struct {
+	ID        string       `json:"id"`
+	TeamID    string       `json:"team_id"`
+	Token     string       `json:"token"`
+	ExpiresAt time.Time    `json:"expires_at"`
+	UsedAt    sql.NullTime `json:"used_at"`
+	CreatedAt time.Time    `json:"created_at"`
+	TeamEmail string       `json:"team_email"`
+	TeamName  string       `json:"team_name"`
+}
+
+func (q *Queries) GetAuthTokenByToken(ctx context.Context, token string) (GetAuthTokenByTokenRow, error) {
+	row := q.db.QueryRowContext(ctx, getAuthTokenByToken, token)
+	var i GetAuthTokenByTokenRow
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Token,
+		&i.ExpiresAt,
+		&i.UsedAt,
+		&i.CreatedAt,
+		&i.TeamEmail,
+		&i.TeamName,
+	)
+	return i, err
 }
 
 const getFacility = `-- name: GetFacility :one
@@ -1706,6 +1785,15 @@ func (q *Queries) ListWatchConditionsByTeam(ctx context.Context, teamID string) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const markAuthTokenUsed = `-- name: MarkAuthTokenUsed :exec
+UPDATE auth_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) MarkAuthTokenUsed(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, markAuthTokenUsed, id)
+	return err
 }
 
 const matchGroundByCourtName = `-- name: MatchGroundByCourtName :one

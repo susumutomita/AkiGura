@@ -21,24 +21,45 @@
     </header>
 
     <!-- Login Form -->
-    <div x-show="!team" x-cloak class="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
+    <div x-show="!team && !emailSent" x-cloak class="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
         <h2 class="text-xl font-bold mb-4">ログイン / 新規登録</h2>
+        <p class="text-sm text-gray-600 mb-4">メールアドレスを入力すると、ログインリンクをお送りします。</p>
         <div class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
-                <input type="email" x-model="loginEmail" class="mt-1 block w-full border rounded px-3 py-2" placeholder="team@example.com">
+                <input type="email" x-model="loginEmail" @keyup.enter="login()" class="mt-1 block w-full border rounded px-3 py-2" placeholder="team@example.com">
             </div>
             <div x-show="isRegister">
-                <label class="block text-sm font-medium text-gray-700">チーム名</label>
+                <label class="block text-sm font-medium text-gray-700">チーム名（新規登録の場合）</label>
                 <input type="text" x-model="loginName" class="mt-1 block w-full border rounded px-3 py-2" placeholder="東京ファイターズ">
             </div>
-            <button @click="login()" class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
-                <span x-text="isRegister ? '新規登録' : 'ログイン'"></span>
+            <button @click="login()" :disabled="loginLoading" class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span x-show="!loginLoading" x-text="isRegister ? 'ログインリンクを送信' : 'ログインリンクを送信'"></span>
+                <span x-show="loginLoading">送信中...</span>
             </button>
             <p class="text-center text-sm text-gray-500">
-                <a href="#" @click.prevent="isRegister = !isRegister" class="text-indigo-600 hover:underline" x-text="isRegister ? 'ログインはこちら' : '新規登録はこちら'"></a>
+                <a href="#" @click.prevent="isRegister = !isRegister" class="text-indigo-600 hover:underline" x-text="isRegister ? '既存アカウントでログイン' : '新規登録はこちら'"></a>
             </p>
             <p x-show="loginError" class="text-red-500 text-sm" x-text="loginError"></p>
+        </div>
+    </div>
+
+    <!-- Email Sent Message -->
+    <div x-show="!team && emailSent" x-cloak class="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow text-center">
+        <div class="text-5xl mb-4">📧</div>
+        <h2 class="text-xl font-bold mb-2">メールを送信しました</h2>
+        <p class="text-gray-600 mb-4">
+            <span class="font-medium" x-text="loginEmail"></span> 宛にログインリンクを送信しました。
+            メールを確認してリンクをクリックしてください。
+        </p>
+        <p class="text-sm text-gray-500 mb-4">リンクは15分間有効です。</p>
+        <button @click="emailSent = false" class="text-indigo-600 hover:underline text-sm">
+            別のメールアドレスで試す
+        </button>
+        <!-- Debug link for development -->
+        <div x-show="debugLink" class="mt-4 p-3 bg-yellow-50 rounded text-left">
+            <p class="text-xs text-yellow-800 mb-1">開発モード: 直接ログイン</p>
+            <a :href="debugLink" class="text-xs text-indigo-600 break-all" x-text="debugLink"></a>
         </div>
     </div>
 
@@ -208,7 +229,10 @@
         <!-- Settings -->
         <div x-show="tab === 'settings'">
             <h2 class="text-lg font-bold mb-4">設定</h2>
-            <div class="bg-white rounded-lg shadow p-6 space-y-4">
+            
+            <!-- Account Settings -->
+            <div class="bg-white rounded-lg shadow p-6 space-y-4 mb-6">
+                <h3 class="font-semibold text-gray-900">アカウント情報</h3>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">チーム名</label>
                     <input type="text" x-model="team.name" class="mt-1 block w-full border rounded px-3 py-2" disabled>
@@ -217,20 +241,66 @@
                     <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
                     <input type="email" x-model="team.email" class="mt-1 block w-full border rounded px-3 py-2" disabled>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">プラン</label>
-                    <div class="mt-2 grid grid-cols-2 gap-2">
-                        <template x-for="p in planLimits" :key="p.plan">
-                            <div class="border rounded p-3 cursor-pointer" :class="team.plan === p.plan ? 'border-indigo-600 bg-indigo-50' : ''" @click="team.plan = p.plan">
-                                <p class="font-medium" x-text="p.plan.charAt(0).toUpperCase() + p.plan.slice(1)"></p>
-                                <p class="text-xs text-gray-500">
-                                    <span x-text="p.max_grounds + 'グラウンド'"></span>
-                                    <span x-show="p.weekend_only" class="text-orange-600">（週末のみ）</span>
-                                </p>
-                            </div>
-                        </template>
-                    </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="bg-white rounded-lg shadow p-6 space-y-4 mb-6">
+                <h3 class="font-semibold text-gray-900">通知設定</h3>
+                <p class="text-sm text-gray-600">空きが見つかったら通知を受け取る方法を選択してください。</p>
+                
+                <div class="space-y-3">
+                    <!-- Email -->
+                    <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-gray-50" :class="notificationSettings.email ? 'border-indigo-600 bg-indigo-50' : ''">
+                        <input type="checkbox" x-model="notificationSettings.email" class="mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">📧 メール通知</p>
+                            <p class="text-sm text-gray-500" x-text="team?.email"></p>
+                        </div>
+                    </label>
+
+                    <!-- LINE (future) -->
+                    <label class="flex items-center p-3 border rounded cursor-not-allowed opacity-50">
+                        <input type="checkbox" disabled class="mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">🗨️ LINE通知</p>
+                            <p class="text-sm text-gray-500">近日対応予定</p>
+                        </div>
+                    </label>
+
+                    <!-- Slack (future) -->
+                    <label class="flex items-center p-3 border rounded cursor-not-allowed opacity-50">
+                        <input type="checkbox" disabled class="mr-3">
+                        <div class="flex-1">
+                            <p class="font-medium">💬 Slack通知</p>
+                            <p class="text-sm text-gray-500">近日対応予定</p>
+                        </div>
+                    </label>
                 </div>
+
+                <button @click="saveNotificationSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm">
+                    通知設定を保存
+                </button>
+            </div>
+
+            <!-- Plan -->
+            <div class="bg-white rounded-lg shadow p-6 space-y-4 mb-6">
+                <h3 class="font-semibold text-gray-900">プラン</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <template x-for="p in planLimits" :key="p.plan">
+                        <div class="border rounded p-3 cursor-pointer" :class="team.plan === p.plan ? 'border-indigo-600 bg-indigo-50' : ''" @click="team.plan = p.plan">
+                            <p class="font-medium" x-text="p.plan.charAt(0).toUpperCase() + p.plan.slice(1)"></p>
+                            <p class="text-xs text-gray-500">
+                                <span x-text="p.max_grounds + 'グラウンド'"></span>
+                                <span x-show="p.weekend_only" class="text-orange-600">（週末のみ）</span>
+                            </p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-red-600 mb-4">デンジャーゾーン</h3>
                 <button @click="logout()" class="text-red-500 hover:underline text-sm">ログアウト</button>
             </div>
         </div>
@@ -304,7 +374,11 @@
             loginEmail: '',
             loginName: '',
             loginError: '',
+            loginLoading: false,
             isRegister: false,
+            emailSent: false,
+            debugLink: null,
+            notificationSettings: { email: true },
             showConditionModal: false,
             newCondition: { municipality_id: '', ground_id: '', days_of_week: [6, 0], time_from: '09:00', time_to: '17:00' },
             // Calendar state
@@ -400,40 +474,49 @@
 
             async login() {
                 this.loginError = '';
+                this.debugLink = null;
                 if (!this.loginEmail) {
                     this.loginError = 'メールアドレスを入力してください';
                     return;
                 }
-                if (this.isRegister) {
-                    if (!this.loginName) {
-                        this.loginError = 'チーム名を入力してください';
-                        return;
-                    }
-                    const res = await fetch('/api/teams', {
+                
+                this.loginLoading = true;
+                try {
+                    const res = await fetch('/api/auth/magic-link', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: this.loginName, email: this.loginEmail, plan: 'free' })
+                        body: JSON.stringify({ 
+                            email: this.loginEmail, 
+                            name: this.isRegister ? this.loginName : '' 
+                        })
                     });
+                    const data = await res.json();
                     if (!res.ok) {
-                        this.loginError = '登録に失敗しました';
+                        this.loginError = data.error || 'リクエストに失敗しました';
                         return;
                     }
-                    this.team = await res.json();
-                } else {
-                    const res = await fetch('/api/teams/by-email?email=' + encodeURIComponent(this.loginEmail));
-                    if (!res.ok) {
-                        this.loginError = 'チームが見つかりません';
-                        return;
+                    // Show email sent screen
+                    this.emailSent = true;
+                    // In debug mode, show the link directly
+                    if (data.debug_link) {
+                        this.debugLink = data.debug_link;
                     }
-                    this.team = await res.json();
+                } catch (e) {
+                    this.loginError = '通信エラーが発生しました';
+                } finally {
+                    this.loginLoading = false;
                 }
-                localStorage.setItem('akigura_team', JSON.stringify(this.team));
-                await this.loadData();
             },
 
             logout() {
                 this.team = null;
+                this.emailSent = false;
                 localStorage.removeItem('akigura_team');
+            },
+
+            async saveNotificationSettings() {
+                // For now just show confirmation - actual save would need team update API
+                alert('通知設定を保存しました');
             },
 
             async loadData() {
