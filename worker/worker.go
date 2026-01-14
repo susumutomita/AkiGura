@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -72,6 +73,7 @@ func (w *Worker) RunScraper(ctx context.Context, facilityType string) (*ScraperR
 
 // SaveSlots saves scraped slots to the database
 // municipalityID is used to match slots to grounds via court_pattern
+// If no matching ground exists, creates one automatically from court_name
 func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []Slot) (int, error) {
 	saved := 0
 	for _, slot := range slots {
@@ -104,6 +106,12 @@ func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []S
 			slog.Warn("failed to match ground", "error", err, "court_name", courtName)
 		}
 
+		// If no matching ground found, auto-create one from court_name
+		if groundID == nil && courtName != "" {
+			newGroundID := w.getOrCreateGround(ctx, municipalityID, courtName)
+			groundID = newGroundID
+		}
+
 		// Insert slot with ground_id and municipality_id
 		// facility_id is legacy and set to NULL; we use municipality_id now
 		_, err = w.DB.ExecContext(ctx, `
@@ -118,6 +126,78 @@ func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []S
 		saved++
 	}
 	return saved, nil
+}
+
+// getOrCreateGround finds or creates a ground record from court_name
+// It extracts the facility name from court_name (removes court suffixes like A面, B面)
+func (w *Worker) getOrCreateGround(ctx context.Context, municipalityID, courtName string) *string {
+	// Extract base facility name from court_name
+	// e.g., "大神グラウンド野球場Ａ面" -> "大神グラウンド野球場"
+	baseName := extractBaseFacilityName(courtName)
+	if baseName == "" {
+		baseName = courtName
+	}
+
+	// Check if ground with this exact court_pattern exists
+	var existingID string
+	err := w.DB.QueryRowContext(ctx, `
+		SELECT id FROM grounds 
+		WHERE municipality_id = ? AND court_pattern = ?
+	`, municipalityID, baseName).Scan(&existingID)
+	if err == nil {
+		return &existingID
+	}
+
+	// Create new ground
+	newID := uuid.New().String()
+	_, err = w.DB.ExecContext(ctx, `
+		INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled)
+		VALUES (?, ?, ?, ?, 1)
+	`, newID, municipalityID, baseName, baseName)
+	if err != nil {
+		slog.Warn("failed to create ground", "error", err, "name", baseName)
+		return nil
+	}
+	slog.Info("auto-created ground", "municipality_id", municipalityID, "name", baseName)
+	return &newID
+}
+
+// extractBaseFacilityName removes court suffixes from facility names
+// e.g., "大神グラウンド野球場Ａ面" -> "大神グラウンド野球場"
+func extractBaseFacilityName(courtName string) string {
+	// Common patterns to remove:
+	// - A面, B面, C面, etc. (full-width)
+	// - Ａ面, Ｂ面, Ｃ面, etc. (half-width)
+	// - 1面, 2面, 3面, etc.
+	// - （東）, （西）, etc.
+	
+	name := courtName
+	
+	// Remove full-width letter + 面
+	for _, suffix := range []string{"Ａ面", "Ｂ面", "Ｃ面", "Ｄ面", "Ｅ面", "Ｆ面", "Ｇ面", "Ｈ面", "Ｉ面", "Ｊ面", "Ｋ面", "Ｌ面"} {
+		if strings.HasSuffix(name, suffix) {
+			name = strings.TrimSuffix(name, suffix)
+			break
+		}
+	}
+	
+	// Remove half-width letter + 面
+	for _, suffix := range []string{"A面", "B面", "C面", "D面", "E面", "F面", "G面", "H面", "I面", "J面", "K面", "L面"} {
+		if strings.HasSuffix(name, suffix) {
+			name = strings.TrimSuffix(name, suffix)
+			break
+		}
+	}
+	
+	// Remove number + 面
+	for _, suffix := range []string{"1面", "2面", "3面", "4面", "5面", "6面", "7面", "8面", "9面", "10面"} {
+		if strings.HasSuffix(name, suffix) {
+			name = strings.TrimSuffix(name, suffix)
+			break
+		}
+	}
+	
+	return strings.TrimSpace(name)
 }
 
 // CreateJob creates a scrape job record
