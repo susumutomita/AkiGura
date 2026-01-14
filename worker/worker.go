@@ -15,7 +15,7 @@ import (
 // ScraperResult represents the JSON output from scraper_wrapper.py
 type ScraperResult struct {
 	Success      bool                   `json:"success"`
-	Status       string                 `json:"status"`       // success, success_no_slots, parse_error, etc.
+	Status       string                 `json:"status"` // success, success_no_slots, parse_error, etc.
 	Error        string                 `json:"error"`
 	FacilityType string                 `json:"facility_type"`
 	Slots        []Slot                 `json:"slots"`
@@ -309,7 +309,7 @@ func (w *Worker) ProcessPendingJobs(ctx context.Context) error {
 
 	for _, job := range jobs {
 		slog.Info("processing pending job", "job_id", job.JobID, "scraper_type", job.ScraperType)
-		
+
 		// Mark as running
 		w.DB.ExecContext(ctx, `
 			UPDATE scrape_jobs SET status = 'running', started_at = CURRENT_TIMESTAMP WHERE id = ?
