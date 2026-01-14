@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"html"
 	"log/slog"
 	"net/http"
 	"os"
@@ -114,7 +115,7 @@ func (s *Server) HandleRequestMagicLink(w http.ResponseWriter, r *http.Request) 
 
 	if err := sendMagicLinkEmail(config, req.Email, team.Name, magicLink); err != nil {
 		slog.Warn("send magic link email", "error", err, "email", req.Email)
-		// Don't fail the request - show the link in dev mode
+		// In debug mode, show the link; otherwise return error
 		if os.Getenv("DEBUG") == "true" {
 			s.jsonResponse(w, map[string]string{
 				"message":    "Magic link created (email sending disabled)",
@@ -122,6 +123,8 @@ func (s *Server) HandleRequestMagicLink(w http.ResponseWriter, r *http.Request) 
 			})
 			return
 		}
+		s.jsonError(w, "認証メールの送信に失敗しました。後でもう一度お試しください。", http.StatusInternalServerError)
+		return
 	}
 
 	s.jsonResponse(w, map[string]string{
@@ -150,9 +153,11 @@ func (s *Server) HandleVerifyMagicLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Mark token as used
+	// Mark token as used - must succeed to prevent token reuse
 	if err := s.Queries.MarkAuthTokenUsed(ctx, authToken.ID); err != nil {
 		slog.Error("mark token used", "error", err)
+		http.Error(w, "認証処理に失敗しました。再度ログインしてください。", http.StatusInternalServerError)
+		return
 	}
 
 	// Get team
@@ -195,7 +200,10 @@ func teamToJSON(team dbgen.Team) string {
 		"created_at": team.CreatedAt,
 		"updated_at": team.UpdatedAt,
 	})
-	return string(data)
+	// HTML escape the JSON to prevent </script> breakouts
+	var buf bytes.Buffer
+	json.HTMLEscape(&buf, data)
+	return buf.String()
 }
 
 // sendMagicLinkEmail sends the magic link via SendGrid
@@ -204,6 +212,9 @@ func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) er
 		slog.Info("Magic link (SendGrid not configured)", "email", email, "link", magicLink)
 		return nil
 	}
+
+	// Escape teamName to prevent HTML injection in email
+	escapedTeamName := html.EscapeString(teamName)
 
 	htmlContent := fmt.Sprintf(`
 <!DOCTYPE html>
@@ -224,7 +235,7 @@ func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) er
     <p style="color: #9ca3af; font-size: 11px;">リンクが機能しない場合は、以下のURLをブラウザに貼り付けてください：<br>%s</p>
   </div>
 </body>
-</html>`, teamName, magicLink, magicLink)
+</html>`, escapedTeamName, magicLink, magicLink)
 
 	payload := map[string]interface{}{
 		"personalizations": []map[string]interface{}{
