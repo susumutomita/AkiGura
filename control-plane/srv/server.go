@@ -28,7 +28,7 @@ type DashboardData struct {
 	NotificationCount   int64
 	OpenTicketCount     int64
 	TeamsByPlan         []PlanCount
-	RecentJobs          []dbgen.ScrapeJob
+	RecentJobs          []dbgen.ListRecentScrapeJobsRow
 }
 
 type PlanCount struct {

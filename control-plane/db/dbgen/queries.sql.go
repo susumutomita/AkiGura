@@ -7,11 +7,12 @@ package dbgen
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
 const countFacilities = `-- name: CountFacilities :one
-SELECT COUNT(*) FROM facilities
+SELECT COUNT(*) as count FROM facilities
 `
 
 func (q *Queries) CountFacilities(ctx context.Context) (int64, error) {
@@ -22,7 +23,7 @@ func (q *Queries) CountFacilities(ctx context.Context) (int64, error) {
 }
 
 const countNotifications = `-- name: CountNotifications :one
-SELECT COUNT(*) FROM notifications
+SELECT COUNT(*) as count FROM notifications
 `
 
 func (q *Queries) CountNotifications(ctx context.Context) (int64, error) {
@@ -65,7 +66,7 @@ func (q *Queries) CountNotificationsByStatus(ctx context.Context) ([]CountNotifi
 }
 
 const countNotificationsToday = `-- name: CountNotificationsToday :one
-SELECT COUNT(*) FROM notifications WHERE date(created_at) = date('now')
+SELECT COUNT(*) as count FROM notifications WHERE date(created_at) = date('now')
 `
 
 func (q *Queries) CountNotificationsToday(ctx context.Context) (int64, error) {
@@ -108,7 +109,7 @@ func (q *Queries) CountScrapeJobsByStatus(ctx context.Context) ([]CountScrapeJob
 }
 
 const countSlots = `-- name: CountSlots :one
-SELECT COUNT(*) FROM slots
+SELECT COUNT(*) as count FROM slots
 `
 
 func (q *Queries) CountSlots(ctx context.Context) (int64, error) {
@@ -118,8 +119,40 @@ func (q *Queries) CountSlots(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countSlotsByMunicipality = `-- name: CountSlotsByMunicipality :many
+SELECT municipality_id, COUNT(*) as count FROM slots WHERE slot_date >= date('now') GROUP BY municipality_id
+`
+
+type CountSlotsByMunicipalityRow struct {
+	MunicipalityID sql.NullString `json:"municipality_id"`
+	Count          int64          `json:"count"`
+}
+
+func (q *Queries) CountSlotsByMunicipality(ctx context.Context) ([]CountSlotsByMunicipalityRow, error) {
+	rows, err := q.db.QueryContext(ctx, countSlotsByMunicipality)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountSlotsByMunicipalityRow{}
+	for rows.Next() {
+		var i CountSlotsByMunicipalityRow
+		if err := rows.Scan(&i.MunicipalityID, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countSupportTickets = `-- name: CountSupportTickets :one
-SELECT COUNT(*) FROM support_tickets
+SELECT COUNT(*) as count FROM support_tickets
 `
 
 func (q *Queries) CountSupportTickets(ctx context.Context) (int64, error) {
@@ -162,7 +195,7 @@ func (q *Queries) CountSupportTicketsByStatus(ctx context.Context) ([]CountSuppo
 }
 
 const countTeams = `-- name: CountTeams :one
-SELECT COUNT(*) FROM teams
+SELECT COUNT(*) as count FROM teams
 `
 
 func (q *Queries) CountTeams(ctx context.Context) (int64, error) {
@@ -204,8 +237,19 @@ func (q *Queries) CountTeamsByPlan(ctx context.Context) ([]CountTeamsByPlanRow, 
 	return items, nil
 }
 
+const countVisitors = `-- name: CountVisitors :one
+SELECT COUNT(*) as count FROM visitors
+`
+
+func (q *Queries) CountVisitors(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countVisitors)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countWatchConditions = `-- name: CountWatchConditions :one
-SELECT COUNT(*) FROM watch_conditions
+SELECT COUNT(*) as count FROM watch_conditions
 `
 
 func (q *Queries) CountWatchConditions(ctx context.Context) (int64, error) {
@@ -216,6 +260,7 @@ func (q *Queries) CountWatchConditions(ctx context.Context) (int64, error) {
 }
 
 const createFacility = `-- name: CreateFacility :one
+
 INSERT INTO facilities (id, name, municipality, scraper_type, url, enabled, created_at)
 VALUES (?1, ?2, ?3, ?4, ?5, 1, CURRENT_TIMESTAMP)
 RETURNING id, name, municipality, scraper_type, url, enabled, created_at
@@ -229,7 +274,9 @@ type CreateFacilityParams struct {
 	Url          string `json:"url"`
 }
 
-// Facilities
+// =============================================================================
+// Facilities (legacy)
+// =============================================================================
 func (q *Queries) CreateFacility(ctx context.Context, arg CreateFacilityParams) (Facility, error) {
 	row := q.db.QueryRowContext(ctx, createFacility,
 		arg.ID,
@@ -251,7 +298,74 @@ func (q *Queries) CreateFacility(ctx context.Context, arg CreateFacilityParams) 
 	return i, err
 }
 
+const createGround = `-- name: CreateGround :one
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at)
+VALUES (?1, ?2, ?3, ?4, 1, CURRENT_TIMESTAMP)
+RETURNING id, municipality_id, name, court_pattern, enabled, created_at
+`
+
+type CreateGroundParams struct {
+	ID             string         `json:"id"`
+	MunicipalityID string         `json:"municipality_id"`
+	Name           string         `json:"name"`
+	CourtPattern   sql.NullString `json:"court_pattern"`
+}
+
+func (q *Queries) CreateGround(ctx context.Context, arg CreateGroundParams) (Ground, error) {
+	row := q.db.QueryRowContext(ctx, createGround,
+		arg.ID,
+		arg.MunicipalityID,
+		arg.Name,
+		arg.CourtPattern,
+	)
+	var i Ground
+	err := row.Scan(
+		&i.ID,
+		&i.MunicipalityID,
+		&i.Name,
+		&i.CourtPattern,
+		&i.Enabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createMunicipality = `-- name: CreateMunicipality :one
+INSERT INTO municipalities (id, name, scraper_type, url, enabled, created_at)
+VALUES (?1, ?2, ?3, ?4, ?5, CURRENT_TIMESTAMP)
+RETURNING id, name, scraper_type, url, enabled, created_at
+`
+
+type CreateMunicipalityParams struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	ScraperType string `json:"scraper_type"`
+	Url         string `json:"url"`
+	Enabled     int64  `json:"enabled"`
+}
+
+func (q *Queries) CreateMunicipality(ctx context.Context, arg CreateMunicipalityParams) (Municipality, error) {
+	row := q.db.QueryRowContext(ctx, createMunicipality,
+		arg.ID,
+		arg.Name,
+		arg.ScraperType,
+		arg.Url,
+		arg.Enabled,
+	)
+	var i Municipality
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ScraperType,
+		&i.Url,
+		&i.Enabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createNotification = `-- name: CreateNotification :one
+
 INSERT INTO notifications (id, team_id, watch_condition_id, slot_id, channel, status, created_at)
 VALUES (?1, ?2, ?3, ?4, ?5, 'pending', CURRENT_TIMESTAMP)
 RETURNING id, team_id, watch_condition_id, slot_id, channel, status, sent_at, created_at
@@ -265,7 +379,9 @@ type CreateNotificationParams struct {
 	Channel          string `json:"channel"`
 }
 
+// =============================================================================
 // Notifications
+// =============================================================================
 func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error) {
 	row := q.db.QueryRowContext(ctx, createNotification,
 		arg.ID,
@@ -289,26 +405,31 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 }
 
 const createScrapeJob = `-- name: CreateScrapeJob :one
-INSERT INTO scrape_jobs (id, facility_id, status, created_at)
+
+INSERT INTO scrape_jobs (id, municipality_id, status, created_at)
 VALUES (?1, ?2, 'pending', CURRENT_TIMESTAMP)
-RETURNING id, facility_id, status, slots_found, error_message, started_at, completed_at, created_at
+RETURNING id, municipality_id, status, slots_found, error_message, scrape_status, diagnostics, started_at, completed_at, created_at
 `
 
 type CreateScrapeJobParams struct {
-	ID         string `json:"id"`
-	FacilityID string `json:"facility_id"`
+	ID             string `json:"id"`
+	MunicipalityID string `json:"municipality_id"`
 }
 
+// =============================================================================
 // Scrape Jobs
+// =============================================================================
 func (q *Queries) CreateScrapeJob(ctx context.Context, arg CreateScrapeJobParams) (ScrapeJob, error) {
-	row := q.db.QueryRowContext(ctx, createScrapeJob, arg.ID, arg.FacilityID)
+	row := q.db.QueryRowContext(ctx, createScrapeJob, arg.ID, arg.MunicipalityID)
 	var i ScrapeJob
 	err := row.Scan(
 		&i.ID,
-		&i.FacilityID,
+		&i.MunicipalityID,
 		&i.Status,
 		&i.SlotsFound,
 		&i.ErrorMessage,
+		&i.ScrapeStatus,
+		&i.Diagnostics,
 		&i.StartedAt,
 		&i.CompletedAt,
 		&i.CreatedAt,
@@ -316,48 +437,8 @@ func (q *Queries) CreateScrapeJob(ctx context.Context, arg CreateScrapeJobParams
 	return i, err
 }
 
-const createSlot = `-- name: CreateSlot :one
-INSERT INTO slots (id, facility_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at)
-VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)
-RETURNING id, facility_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at
-`
-
-type CreateSlotParams struct {
-	ID         string    `json:"id"`
-	FacilityID string    `json:"facility_id"`
-	SlotDate   time.Time `json:"slot_date"`
-	TimeFrom   string    `json:"time_from"`
-	TimeTo     string    `json:"time_to"`
-	CourtName  *string   `json:"court_name"`
-	RawText    *string   `json:"raw_text"`
-}
-
-// Slots
-func (q *Queries) CreateSlot(ctx context.Context, arg CreateSlotParams) (Slot, error) {
-	row := q.db.QueryRowContext(ctx, createSlot,
-		arg.ID,
-		arg.FacilityID,
-		arg.SlotDate,
-		arg.TimeFrom,
-		arg.TimeTo,
-		arg.CourtName,
-		arg.RawText,
-	)
-	var i Slot
-	err := row.Scan(
-		&i.ID,
-		&i.FacilityID,
-		&i.SlotDate,
-		&i.TimeFrom,
-		&i.TimeTo,
-		&i.CourtName,
-		&i.RawText,
-		&i.ScrapedAt,
-	)
-	return i, err
-}
-
 const createSupportMessage = `-- name: CreateSupportMessage :one
+
 INSERT INTO support_messages (id, ticket_id, role, content, created_at)
 VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)
 RETURNING id, ticket_id, role, content, created_at
@@ -370,7 +451,9 @@ type CreateSupportMessageParams struct {
 	Content  string `json:"content"`
 }
 
+// =============================================================================
 // Support Messages
+// =============================================================================
 func (q *Queries) CreateSupportMessage(ctx context.Context, arg CreateSupportMessageParams) (SupportMessage, error) {
 	row := q.db.QueryRowContext(ctx, createSupportMessage,
 		arg.ID,
@@ -390,19 +473,22 @@ func (q *Queries) CreateSupportMessage(ctx context.Context, arg CreateSupportMes
 }
 
 const createSupportTicket = `-- name: CreateSupportTicket :one
+
 INSERT INTO support_tickets (id, team_id, email, subject, status, priority, created_at, updated_at)
 VALUES (?1, ?2, ?3, ?4, 'open', 'normal', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING id, team_id, email, subject, status, priority, ai_response, human_response, created_at, updated_at
 `
 
 type CreateSupportTicketParams struct {
-	ID      string  `json:"id"`
-	TeamID  *string `json:"team_id"`
-	Email   string  `json:"email"`
-	Subject string  `json:"subject"`
+	ID      string         `json:"id"`
+	TeamID  sql.NullString `json:"team_id"`
+	Email   string         `json:"email"`
+	Subject string         `json:"subject"`
 }
 
+// =============================================================================
 // Support Tickets
+// =============================================================================
 func (q *Queries) CreateSupportTicket(ctx context.Context, arg CreateSupportTicketParams) (SupportTicket, error) {
 	row := q.db.QueryRowContext(ctx, createSupportTicket,
 		arg.ID,
@@ -427,6 +513,7 @@ func (q *Queries) CreateSupportTicket(ctx context.Context, arg CreateSupportTick
 }
 
 const createTeam = `-- name: CreateTeam :one
+
 INSERT INTO teams (id, name, email, plan, status, created_at, updated_at)
 VALUES (?1, ?2, ?3, ?4, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING id, name, email, "plan", status, created_at, updated_at
@@ -439,7 +526,9 @@ type CreateTeamParams struct {
 	Plan  string `json:"plan"`
 }
 
+// =============================================================================
 // Teams
+// =============================================================================
 func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error) {
 	row := q.db.QueryRowContext(ctx, createTeam,
 		arg.ID,
@@ -461,23 +550,26 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 }
 
 const createWatchCondition = `-- name: CreateWatchCondition :one
+
 INSERT INTO watch_conditions (id, team_id, facility_id, days_of_week, time_from, time_to, date_from, date_to, enabled, created_at, updated_at)
 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING id, team_id, facility_id, days_of_week, time_from, time_to, date_from, date_to, enabled, created_at, updated_at
 `
 
 type CreateWatchConditionParams struct {
-	ID         string     `json:"id"`
-	TeamID     string     `json:"team_id"`
-	FacilityID string     `json:"facility_id"`
-	DaysOfWeek string     `json:"days_of_week"`
-	TimeFrom   string     `json:"time_from"`
-	TimeTo     string     `json:"time_to"`
-	DateFrom   *time.Time `json:"date_from"`
-	DateTo     *time.Time `json:"date_to"`
+	ID         string       `json:"id"`
+	TeamID     string       `json:"team_id"`
+	FacilityID string       `json:"facility_id"`
+	DaysOfWeek string       `json:"days_of_week"`
+	TimeFrom   string       `json:"time_from"`
+	TimeTo     string       `json:"time_to"`
+	DateFrom   sql.NullTime `json:"date_from"`
+	DateTo     sql.NullTime `json:"date_to"`
 }
 
+// =============================================================================
 // Watch Conditions
+// =============================================================================
 func (q *Queries) CreateWatchCondition(ctx context.Context, arg CreateWatchConditionParams) (WatchCondition, error) {
 	row := q.db.QueryRowContext(ctx, createWatchCondition,
 		arg.ID,
@@ -561,6 +653,41 @@ func (q *Queries) GetFacility(ctx context.Context, id string) (Facility, error) 
 	return i, err
 }
 
+const getGround = `-- name: GetGround :one
+SELECT g.id, g.municipality_id, g.name, g.court_pattern, g.enabled, g.created_at,
+       m.name as municipality_name, m.scraper_type
+FROM grounds g
+JOIN municipalities m ON g.municipality_id = m.id
+WHERE g.id = ?
+`
+
+type GetGroundRow struct {
+	ID               string         `json:"id"`
+	MunicipalityID   string         `json:"municipality_id"`
+	Name             string         `json:"name"`
+	CourtPattern     sql.NullString `json:"court_pattern"`
+	Enabled          int64          `json:"enabled"`
+	CreatedAt        time.Time      `json:"created_at"`
+	MunicipalityName string         `json:"municipality_name"`
+	ScraperType      string         `json:"scraper_type"`
+}
+
+func (q *Queries) GetGround(ctx context.Context, id string) (GetGroundRow, error) {
+	row := q.db.QueryRowContext(ctx, getGround, id)
+	var i GetGroundRow
+	err := row.Scan(
+		&i.ID,
+		&i.MunicipalityID,
+		&i.Name,
+		&i.CourtPattern,
+		&i.Enabled,
+		&i.CreatedAt,
+		&i.MunicipalityName,
+		&i.ScraperType,
+	)
+	return i, err
+}
+
 const getLatestMetric = `-- name: GetLatestMetric :one
 SELECT id, metric_name, metric_value, recorded_at FROM system_metrics WHERE metric_name = ? ORDER BY recorded_at DESC LIMIT 1
 `
@@ -614,6 +741,42 @@ func (q *Queries) GetMetricsHistory(ctx context.Context, arg GetMetricsHistoryPa
 	return items, nil
 }
 
+const getMunicipality = `-- name: GetMunicipality :one
+SELECT id, name, scraper_type, url, enabled, created_at FROM municipalities WHERE id = ?
+`
+
+func (q *Queries) GetMunicipality(ctx context.Context, id string) (Municipality, error) {
+	row := q.db.QueryRowContext(ctx, getMunicipality, id)
+	var i Municipality
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ScraperType,
+		&i.Url,
+		&i.Enabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getMunicipalityByScraperType = `-- name: GetMunicipalityByScraperType :one
+SELECT id, name, scraper_type, url, enabled, created_at FROM municipalities WHERE scraper_type = ?
+`
+
+func (q *Queries) GetMunicipalityByScraperType(ctx context.Context, scraperType string) (Municipality, error) {
+	row := q.db.QueryRowContext(ctx, getMunicipalityByScraperType, scraperType)
+	var i Municipality
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ScraperType,
+		&i.Url,
+		&i.Enabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getNotification = `-- name: GetNotification :one
 SELECT id, team_id, watch_condition_id, slot_id, channel, status, sent_at, created_at FROM notifications WHERE id = ?
 `
@@ -634,8 +797,29 @@ func (q *Queries) GetNotification(ctx context.Context, id string) (Notification,
 	return i, err
 }
 
+const getPlanLimits = `-- name: GetPlanLimits :one
+
+SELECT "plan", max_grounds, weekend_only, max_conditions_per_ground, notification_priority FROM plan_limits WHERE plan = ?
+`
+
+// =============================================================================
+// Plan Limits
+// =============================================================================
+func (q *Queries) GetPlanLimits(ctx context.Context, plan string) (PlanLimit, error) {
+	row := q.db.QueryRowContext(ctx, getPlanLimits, plan)
+	var i PlanLimit
+	err := row.Scan(
+		&i.Plan,
+		&i.MaxGrounds,
+		&i.WeekendOnly,
+		&i.MaxConditionsPerGround,
+		&i.NotificationPriority,
+	)
+	return i, err
+}
+
 const getScrapeJob = `-- name: GetScrapeJob :one
-SELECT id, facility_id, status, slots_found, error_message, started_at, completed_at, created_at FROM scrape_jobs WHERE id = ?
+SELECT id, municipality_id, status, slots_found, error_message, scrape_status, diagnostics, started_at, completed_at, created_at FROM scrape_jobs WHERE id = ?
 `
 
 func (q *Queries) GetScrapeJob(ctx context.Context, id string) (ScrapeJob, error) {
@@ -643,10 +827,12 @@ func (q *Queries) GetScrapeJob(ctx context.Context, id string) (ScrapeJob, error
 	var i ScrapeJob
 	err := row.Scan(
 		&i.ID,
-		&i.FacilityID,
+		&i.MunicipalityID,
 		&i.Status,
 		&i.SlotsFound,
 		&i.ErrorMessage,
+		&i.ScrapeStatus,
+		&i.Diagnostics,
 		&i.StartedAt,
 		&i.CompletedAt,
 		&i.CreatedAt,
@@ -655,7 +841,7 @@ func (q *Queries) GetScrapeJob(ctx context.Context, id string) (ScrapeJob, error
 }
 
 const getSlot = `-- name: GetSlot :one
-SELECT id, facility_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE id = ?
+SELECT id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE id = ?
 `
 
 func (q *Queries) GetSlot(ctx context.Context, id string) (Slot, error) {
@@ -664,6 +850,8 @@ func (q *Queries) GetSlot(ctx context.Context, id string) (Slot, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.FacilityID,
+		&i.MunicipalityID,
+		&i.GroundID,
 		&i.SlotDate,
 		&i.TimeFrom,
 		&i.TimeTo,
@@ -734,6 +922,22 @@ func (q *Queries) GetTeamByEmail(ctx context.Context, email string) (Team, error
 	return i, err
 }
 
+const getVisitor = `-- name: GetVisitor :one
+SELECT id, view_count, created_at, last_seen FROM visitors WHERE id = ?
+`
+
+func (q *Queries) GetVisitor(ctx context.Context, id string) (Visitor, error) {
+	row := q.db.QueryRowContext(ctx, getVisitor, id)
+	var i Visitor
+	err := row.Scan(
+		&i.ID,
+		&i.ViewCount,
+		&i.CreatedAt,
+		&i.LastSeen,
+	)
+	return i, err
+}
+
 const getWatchCondition = `-- name: GetWatchCondition :one
 SELECT id, team_id, facility_id, days_of_week, time_from, time_to, date_from, date_to, enabled, created_at, updated_at FROM watch_conditions WHERE id = ?
 `
@@ -755,6 +959,40 @@ func (q *Queries) GetWatchCondition(ctx context.Context, id string) (WatchCondit
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listAllMunicipalities = `-- name: ListAllMunicipalities :many
+SELECT id, name, scraper_type, url, enabled, created_at FROM municipalities ORDER BY name
+`
+
+func (q *Queries) ListAllMunicipalities(ctx context.Context) ([]Municipality, error) {
+	rows, err := q.db.QueryContext(ctx, listAllMunicipalities)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Municipality{}
+	for rows.Next() {
+		var i Municipality
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.ScraperType,
+			&i.Url,
+			&i.Enabled,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listEnabledFacilities = `-- name: ListEnabledFacilities :many
@@ -832,6 +1070,134 @@ func (q *Queries) ListFacilities(ctx context.Context, arg ListFacilitiesParams) 
 	return items, nil
 }
 
+const listGrounds = `-- name: ListGrounds :many
+
+SELECT g.id, g.municipality_id, g.name, g.court_pattern, g.enabled, g.created_at,
+       m.name as municipality_name, m.scraper_type
+FROM grounds g
+JOIN municipalities m ON g.municipality_id = m.id
+WHERE g.enabled = 1
+ORDER BY m.name, g.name
+`
+
+type ListGroundsRow struct {
+	ID               string         `json:"id"`
+	MunicipalityID   string         `json:"municipality_id"`
+	Name             string         `json:"name"`
+	CourtPattern     sql.NullString `json:"court_pattern"`
+	Enabled          int64          `json:"enabled"`
+	CreatedAt        time.Time      `json:"created_at"`
+	MunicipalityName string         `json:"municipality_name"`
+	ScraperType      string         `json:"scraper_type"`
+}
+
+// =============================================================================
+// Grounds (grounds)
+// =============================================================================
+func (q *Queries) ListGrounds(ctx context.Context) ([]ListGroundsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listGrounds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListGroundsRow{}
+	for rows.Next() {
+		var i ListGroundsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.MunicipalityID,
+			&i.Name,
+			&i.CourtPattern,
+			&i.Enabled,
+			&i.CreatedAt,
+			&i.MunicipalityName,
+			&i.ScraperType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGroundsByMunicipality = `-- name: ListGroundsByMunicipality :many
+SELECT id, municipality_id, name, court_pattern, enabled, created_at FROM grounds WHERE municipality_id = ? AND enabled = 1 ORDER BY name
+`
+
+func (q *Queries) ListGroundsByMunicipality(ctx context.Context, municipalityID string) ([]Ground, error) {
+	rows, err := q.db.QueryContext(ctx, listGroundsByMunicipality, municipalityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Ground{}
+	for rows.Next() {
+		var i Ground
+		if err := rows.Scan(
+			&i.ID,
+			&i.MunicipalityID,
+			&i.Name,
+			&i.CourtPattern,
+			&i.Enabled,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMunicipalities = `-- name: ListMunicipalities :many
+
+SELECT id, name, scraper_type, url, enabled, created_at FROM municipalities WHERE enabled = 1 ORDER BY name
+`
+
+// =============================================================================
+// Municipalities (municipalities)
+// =============================================================================
+func (q *Queries) ListMunicipalities(ctx context.Context) ([]Municipality, error) {
+	rows, err := q.db.QueryContext(ctx, listMunicipalities)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Municipality{}
+	for rows.Next() {
+		var i Municipality
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.ScraperType,
+			&i.Url,
+			&i.Enabled,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listNotificationsByTeam = `-- name: ListNotificationsByTeam :many
 SELECT id, team_id, watch_condition_id, slot_id, channel, status, sent_at, created_at FROM notifications WHERE team_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?
 `
@@ -875,7 +1241,7 @@ func (q *Queries) ListNotificationsByTeam(ctx context.Context, arg ListNotificat
 }
 
 const listOpenSupportTickets = `-- name: ListOpenSupportTickets :many
-SELECT id, team_id, email, subject, status, priority, ai_response, human_response, created_at, updated_at FROM support_tickets WHERE status IN ('open', 'escalated') ORDER BY 
+SELECT id, team_id, email, subject, status, priority, ai_response, human_response, created_at, updated_at FROM support_tickets WHERE status IN ('open', 'escalated') ORDER BY
     CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END,
     created_at DESC
 `
@@ -915,27 +1281,49 @@ func (q *Queries) ListOpenSupportTickets(ctx context.Context) ([]SupportTicket, 
 }
 
 const listRecentScrapeJobs = `-- name: ListRecentScrapeJobs :many
-SELECT id, facility_id, status, slots_found, error_message, started_at, completed_at, created_at FROM scrape_jobs ORDER BY created_at DESC LIMIT ?
+SELECT sj.id, sj.municipality_id, sj.status, sj.slots_found, sj.error_message, sj.scrape_status, sj.diagnostics, sj.started_at, sj.completed_at, sj.created_at, m.name as municipality_name, m.scraper_type
+FROM scrape_jobs sj
+JOIN municipalities m ON sj.municipality_id = m.id
+ORDER BY sj.created_at DESC LIMIT ?
 `
 
-func (q *Queries) ListRecentScrapeJobs(ctx context.Context, limit int64) ([]ScrapeJob, error) {
+type ListRecentScrapeJobsRow struct {
+	ID               string         `json:"id"`
+	MunicipalityID   string         `json:"municipality_id"`
+	Status           string         `json:"status"`
+	SlotsFound       sql.NullInt64  `json:"slots_found"`
+	ErrorMessage     sql.NullString `json:"error_message"`
+	ScrapeStatus     sql.NullString `json:"scrape_status"`
+	Diagnostics      sql.NullString `json:"diagnostics"`
+	StartedAt        sql.NullTime   `json:"started_at"`
+	CompletedAt      sql.NullTime   `json:"completed_at"`
+	CreatedAt        time.Time      `json:"created_at"`
+	MunicipalityName string         `json:"municipality_name"`
+	ScraperType      string         `json:"scraper_type"`
+}
+
+func (q *Queries) ListRecentScrapeJobs(ctx context.Context, limit int64) ([]ListRecentScrapeJobsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listRecentScrapeJobs, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ScrapeJob{}
+	items := []ListRecentScrapeJobsRow{}
 	for rows.Next() {
-		var i ScrapeJob
+		var i ListRecentScrapeJobsRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.FacilityID,
+			&i.MunicipalityID,
 			&i.Status,
 			&i.SlotsFound,
 			&i.ErrorMessage,
+			&i.ScrapeStatus,
+			&i.Diagnostics,
 			&i.StartedAt,
 			&i.CompletedAt,
 			&i.CreatedAt,
+			&i.MunicipalityName,
+			&i.ScraperType,
 		); err != nil {
 			return nil, err
 		}
@@ -951,11 +1339,11 @@ func (q *Queries) ListRecentScrapeJobs(ctx context.Context, limit int64) ([]Scra
 }
 
 const listSlotsByDateRange = `-- name: ListSlotsByDateRange :many
-SELECT id, facility_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE facility_id = ? AND slot_date BETWEEN ? AND ? ORDER BY slot_date, time_from
+SELECT id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE municipality_id = ? AND slot_date BETWEEN ? AND ? ORDER BY slot_date, time_from
 `
 
-func (q *Queries) ListSlotsByDateRange(ctx context.Context, facilityID string) ([]Slot, error) {
-	rows, err := q.db.QueryContext(ctx, listSlotsByDateRange, facilityID)
+func (q *Queries) ListSlotsByDateRange(ctx context.Context, municipalityID sql.NullString) ([]Slot, error) {
+	rows, err := q.db.QueryContext(ctx, listSlotsByDateRange, municipalityID)
 	if err != nil {
 		return nil, err
 	}
@@ -966,6 +1354,8 @@ func (q *Queries) ListSlotsByDateRange(ctx context.Context, facilityID string) (
 		if err := rows.Scan(
 			&i.ID,
 			&i.FacilityID,
+			&i.MunicipalityID,
+			&i.GroundID,
 			&i.SlotDate,
 			&i.TimeFrom,
 			&i.TimeTo,
@@ -987,10 +1377,10 @@ func (q *Queries) ListSlotsByDateRange(ctx context.Context, facilityID string) (
 }
 
 const listSlotsByFacility = `-- name: ListSlotsByFacility :many
-SELECT id, facility_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE facility_id = ? AND slot_date >= date('now') ORDER BY slot_date, time_from
+SELECT id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE facility_id = ? AND slot_date >= date('now') ORDER BY slot_date, time_from
 `
 
-func (q *Queries) ListSlotsByFacility(ctx context.Context, facilityID string) ([]Slot, error) {
+func (q *Queries) ListSlotsByFacility(ctx context.Context, facilityID sql.NullString) ([]Slot, error) {
 	rows, err := q.db.QueryContext(ctx, listSlotsByFacility, facilityID)
 	if err != nil {
 		return nil, err
@@ -1002,6 +1392,84 @@ func (q *Queries) ListSlotsByFacility(ctx context.Context, facilityID string) ([
 		if err := rows.Scan(
 			&i.ID,
 			&i.FacilityID,
+			&i.MunicipalityID,
+			&i.GroundID,
+			&i.SlotDate,
+			&i.TimeFrom,
+			&i.TimeTo,
+			&i.CourtName,
+			&i.RawText,
+			&i.ScrapedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSlotsByGround = `-- name: ListSlotsByGround :many
+SELECT id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE ground_id = ? AND slot_date >= date('now') ORDER BY slot_date, time_from
+`
+
+func (q *Queries) ListSlotsByGround(ctx context.Context, groundID sql.NullString) ([]Slot, error) {
+	rows, err := q.db.QueryContext(ctx, listSlotsByGround, groundID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Slot{}
+	for rows.Next() {
+		var i Slot
+		if err := rows.Scan(
+			&i.ID,
+			&i.FacilityID,
+			&i.MunicipalityID,
+			&i.GroundID,
+			&i.SlotDate,
+			&i.TimeFrom,
+			&i.TimeTo,
+			&i.CourtName,
+			&i.RawText,
+			&i.ScrapedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSlotsByMunicipality = `-- name: ListSlotsByMunicipality :many
+SELECT id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at FROM slots WHERE municipality_id = ? AND slot_date >= date('now') ORDER BY slot_date, time_from
+`
+
+func (q *Queries) ListSlotsByMunicipality(ctx context.Context, municipalityID sql.NullString) ([]Slot, error) {
+	rows, err := q.db.QueryContext(ctx, listSlotsByMunicipality, municipalityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Slot{}
+	for rows.Next() {
+		var i Slot
+		if err := rows.Scan(
+			&i.ID,
+			&i.FacilityID,
+			&i.MunicipalityID,
+			&i.GroundID,
 			&i.SlotDate,
 			&i.TimeFrom,
 			&i.TimeTo,
@@ -1056,7 +1524,7 @@ func (q *Queries) ListSupportMessagesByTicket(ctx context.Context, ticketID stri
 }
 
 const listSupportTickets = `-- name: ListSupportTickets :many
-SELECT id, team_id, email, subject, status, priority, ai_response, human_response, created_at, updated_at FROM support_tickets ORDER BY 
+SELECT id, team_id, email, subject, status, priority, ai_response, human_response, created_at, updated_at FROM support_tickets ORDER BY
     CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 ELSE 4 END,
     created_at DESC
 LIMIT ? OFFSET ?
@@ -1149,19 +1617,19 @@ WHERE wc.facility_id = ? AND wc.enabled = 1 AND t.status = 'active'
 `
 
 type ListWatchConditionsByFacilityRow struct {
-	ID         string     `json:"id"`
-	TeamID     string     `json:"team_id"`
-	FacilityID string     `json:"facility_id"`
-	DaysOfWeek string     `json:"days_of_week"`
-	TimeFrom   string     `json:"time_from"`
-	TimeTo     string     `json:"time_to"`
-	DateFrom   *time.Time `json:"date_from"`
-	DateTo     *time.Time `json:"date_to"`
-	Enabled    int64      `json:"enabled"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	TeamEmail  string     `json:"team_email"`
-	TeamName   string     `json:"team_name"`
+	ID         string       `json:"id"`
+	TeamID     string       `json:"team_id"`
+	FacilityID string       `json:"facility_id"`
+	DaysOfWeek string       `json:"days_of_week"`
+	TimeFrom   string       `json:"time_from"`
+	TimeTo     string       `json:"time_to"`
+	DateFrom   sql.NullTime `json:"date_from"`
+	DateTo     sql.NullTime `json:"date_to"`
+	Enabled    int64        `json:"enabled"`
+	CreatedAt  time.Time    `json:"created_at"`
+	UpdatedAt  time.Time    `json:"updated_at"`
+	TeamEmail  string       `json:"team_email"`
+	TeamName   string       `json:"team_name"`
 }
 
 func (q *Queries) ListWatchConditionsByFacility(ctx context.Context, facilityID string) ([]ListWatchConditionsByFacilityRow, error) {
@@ -1240,7 +1708,26 @@ func (q *Queries) ListWatchConditionsByTeam(ctx context.Context, teamID string) 
 	return items, nil
 }
 
+const matchGroundByCourtName = `-- name: MatchGroundByCourtName :one
+SELECT g.id FROM grounds g
+WHERE g.municipality_id = ?1 AND instr(?2, g.court_pattern) > 0
+LIMIT 1
+`
+
+type MatchGroundByCourtNameParams struct {
+	MunicipalityID string `json:"municipality_id"`
+	INSTR          string `json:"INSTR"`
+}
+
+func (q *Queries) MatchGroundByCourtName(ctx context.Context, arg MatchGroundByCourtNameParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, matchGroundByCourtName, arg.MunicipalityID, arg.INSTR)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
 const recordMetric = `-- name: RecordMetric :exec
+
 INSERT INTO system_metrics (metric_name, metric_value, recorded_at)
 VALUES (?1, ?2, CURRENT_TIMESTAMP)
 `
@@ -1250,7 +1737,9 @@ type RecordMetricParams struct {
 	MetricValue float64 `json:"metric_value"`
 }
 
+// =============================================================================
 // System Metrics
+// =============================================================================
 func (q *Queries) RecordMetric(ctx context.Context, arg RecordMetricParams) error {
 	_, err := q.db.ExecContext(ctx, recordMetric, arg.MetricName, arg.MetricValue)
 	return err
@@ -1296,20 +1785,24 @@ func (q *Queries) UpdateNotificationStatus(ctx context.Context, arg UpdateNotifi
 }
 
 const updateScrapeJobStatus = `-- name: UpdateScrapeJobStatus :exec
-UPDATE scrape_jobs SET 
-    status = ?2, 
+UPDATE scrape_jobs SET
+    status = ?2,
     slots_found = ?3,
     error_message = ?4,
+    scrape_status = ?5,
+    diagnostics = ?6,
     started_at = CASE WHEN ?2 = 'running' THEN CURRENT_TIMESTAMP ELSE started_at END,
     completed_at = CASE WHEN ?2 IN ('completed', 'failed') THEN CURRENT_TIMESTAMP ELSE completed_at END
 WHERE id = ?1
 `
 
 type UpdateScrapeJobStatusParams struct {
-	ID           string  `json:"id"`
-	Status       string  `json:"status"`
-	SlotsFound   *int64  `json:"slots_found"`
-	ErrorMessage *string `json:"error_message"`
+	ID           string         `json:"id"`
+	Status       string         `json:"status"`
+	SlotsFound   sql.NullInt64  `json:"slots_found"`
+	ErrorMessage sql.NullString `json:"error_message"`
+	ScrapeStatus sql.NullString `json:"scrape_status"`
+	Diagnostics  sql.NullString `json:"diagnostics"`
 }
 
 func (q *Queries) UpdateScrapeJobStatus(ctx context.Context, arg UpdateScrapeJobStatusParams) error {
@@ -1318,6 +1811,8 @@ func (q *Queries) UpdateScrapeJobStatus(ctx context.Context, arg UpdateScrapeJob
 		arg.Status,
 		arg.SlotsFound,
 		arg.ErrorMessage,
+		arg.ScrapeStatus,
+		arg.Diagnostics,
 	)
 	return err
 }
@@ -1327,11 +1822,11 @@ UPDATE support_tickets SET status = ?2, priority = ?3, ai_response = ?4, human_r
 `
 
 type UpdateSupportTicketParams struct {
-	ID            string  `json:"id"`
-	Status        string  `json:"status"`
-	Priority      string  `json:"priority"`
-	AiResponse    *string `json:"ai_response"`
-	HumanResponse *string `json:"human_response"`
+	ID            string         `json:"id"`
+	Status        string         `json:"status"`
+	Priority      string         `json:"priority"`
+	AiResponse    sql.NullString `json:"ai_response"`
+	HumanResponse sql.NullString `json:"human_response"`
 }
 
 func (q *Queries) UpdateSupportTicket(ctx context.Context, arg UpdateSupportTicketParams) error {
@@ -1350,8 +1845,8 @@ UPDATE support_tickets SET ai_response = ?2, status = 'ai_handled', updated_at =
 `
 
 type UpdateSupportTicketAIResponseParams struct {
-	ID         string  `json:"id"`
-	AiResponse *string `json:"ai_response"`
+	ID         string         `json:"id"`
+	AiResponse sql.NullString `json:"ai_response"`
 }
 
 func (q *Queries) UpdateSupportTicketAIResponse(ctx context.Context, arg UpdateSupportTicketAIResponseParams) error {
@@ -1387,14 +1882,14 @@ UPDATE watch_conditions SET facility_id = ?2, days_of_week = ?3, time_from = ?4,
 `
 
 type UpdateWatchConditionParams struct {
-	ID         string     `json:"id"`
-	FacilityID string     `json:"facility_id"`
-	DaysOfWeek string     `json:"days_of_week"`
-	TimeFrom   string     `json:"time_from"`
-	TimeTo     string     `json:"time_to"`
-	DateFrom   *time.Time `json:"date_from"`
-	DateTo     *time.Time `json:"date_to"`
-	Enabled    int64      `json:"enabled"`
+	ID         string       `json:"id"`
+	FacilityID string       `json:"facility_id"`
+	DaysOfWeek string       `json:"days_of_week"`
+	TimeFrom   string       `json:"time_from"`
+	TimeTo     string       `json:"time_to"`
+	DateFrom   sql.NullTime `json:"date_from"`
+	DateTo     sql.NullTime `json:"date_to"`
+	Enabled    int64        `json:"enabled"`
 }
 
 func (q *Queries) UpdateWatchCondition(ctx context.Context, arg UpdateWatchConditionParams) error {
@@ -1409,4 +1904,83 @@ func (q *Queries) UpdateWatchCondition(ctx context.Context, arg UpdateWatchCondi
 		arg.Enabled,
 	)
 	return err
+}
+
+const upsertSlot = `-- name: UpsertSlot :one
+
+INSERT INTO slots (id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, CURRENT_TIMESTAMP)
+ON CONFLICT(municipality_id, slot_date, time_from, time_to, court_name) DO UPDATE SET
+    ground_id = COALESCE(excluded.ground_id, slots.ground_id),
+    raw_text = excluded.raw_text,
+    scraped_at = CURRENT_TIMESTAMP
+RETURNING id, facility_id, municipality_id, ground_id, slot_date, time_from, time_to, court_name, raw_text, scraped_at
+`
+
+type UpsertSlotParams struct {
+	ID             string         `json:"id"`
+	FacilityID     sql.NullString `json:"facility_id"`
+	MunicipalityID sql.NullString `json:"municipality_id"`
+	GroundID       sql.NullString `json:"ground_id"`
+	SlotDate       time.Time      `json:"slot_date"`
+	TimeFrom       string         `json:"time_from"`
+	TimeTo         string         `json:"time_to"`
+	CourtName      sql.NullString `json:"court_name"`
+	RawText        sql.NullString `json:"raw_text"`
+}
+
+// =============================================================================
+// Slots
+// =============================================================================
+func (q *Queries) UpsertSlot(ctx context.Context, arg UpsertSlotParams) (Slot, error) {
+	row := q.db.QueryRowContext(ctx, upsertSlot,
+		arg.ID,
+		arg.FacilityID,
+		arg.MunicipalityID,
+		arg.GroundID,
+		arg.SlotDate,
+		arg.TimeFrom,
+		arg.TimeTo,
+		arg.CourtName,
+		arg.RawText,
+	)
+	var i Slot
+	err := row.Scan(
+		&i.ID,
+		&i.FacilityID,
+		&i.MunicipalityID,
+		&i.GroundID,
+		&i.SlotDate,
+		&i.TimeFrom,
+		&i.TimeTo,
+		&i.CourtName,
+		&i.RawText,
+		&i.ScrapedAt,
+	)
+	return i, err
+}
+
+const upsertVisitor = `-- name: UpsertVisitor :one
+
+INSERT INTO visitors (id, view_count, created_at, last_seen)
+VALUES (?1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT(id) DO UPDATE SET
+    view_count = visitors.view_count + 1,
+    last_seen = CURRENT_TIMESTAMP
+RETURNING id, view_count, created_at, last_seen
+`
+
+// =============================================================================
+// Visitors (legacy)
+// =============================================================================
+func (q *Queries) UpsertVisitor(ctx context.Context, id string) (Visitor, error) {
+	row := q.db.QueryRowContext(ctx, upsertVisitor, id)
+	var i Visitor
+	err := row.Scan(
+		&i.ID,
+		&i.ViewCount,
+		&i.CreatedAt,
+		&i.LastSeen,
+	)
+	return i, err
 }
