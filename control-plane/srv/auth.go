@@ -169,7 +169,11 @@ func (s *Server) HandleVerifyMagicLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return HTML that stores the session and redirects
-	html := fmt.Sprintf(`<!DOCTYPE html>
+	// Use base64 encoding to safely embed JSON in script context
+	teamJSON := teamToJSON(team)
+	teamBase64 := base64.StdEncoding.EncodeToString([]byte(teamJSON))
+
+	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -177,17 +181,18 @@ func (s *Server) HandleVerifyMagicLink(w http.ResponseWriter, r *http.Request) {
 </head>
 <body>
     <script>
-        localStorage.setItem('akigura_team', JSON.stringify(%s));
+        var teamData = JSON.parse(atob('%s'));
+        localStorage.setItem('akigura_team', JSON.stringify(teamData));
         window.location.href = '/user';
     </script>
     <noscript>
         <p>認証が完了しました。<a href="/user">こちら</a>をクリックしてダッシュボードに移動してください。</p>
     </noscript>
 </body>
-</html>`, teamToJSON(team))
+</html>`, teamBase64)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	w.Write([]byte(htmlContent))
 }
 
 func teamToJSON(team dbgen.Team) string {
