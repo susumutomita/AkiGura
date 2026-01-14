@@ -122,6 +122,9 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("POST /api/billing/checkout", s.HandleCreateCheckout)
 	mux.HandleFunc("POST /api/billing/portal", s.HandleBillingPortal)
 	mux.HandleFunc("POST /api/billing/webhook", s.HandleStripeWebhook)
+	// Auth endpoints
+	mux.HandleFunc("POST /api/auth/magic-link", s.HandleRequestMagicLink)
+	mux.HandleFunc("GET /auth/verify", s.HandleVerifyMagicLink)
 	slog.Info("starting server", "addr", addr)
 	return http.ListenAndServe(addr, mux)
 }

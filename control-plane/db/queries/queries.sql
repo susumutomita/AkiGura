@@ -319,3 +319,24 @@ SELECT * FROM visitors WHERE id = ?;
 
 -- name: CountVisitors :one
 SELECT COUNT(*) as count FROM visitors;
+
+-- =============================================================================
+-- Auth Tokens (magic link authentication)
+-- =============================================================================
+
+-- name: CreateAuthToken :one
+INSERT INTO auth_tokens (id, team_id, token, expires_at, created_at)
+VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)
+RETURNING *;
+
+-- name: GetAuthTokenByToken :one
+SELECT at.*, t.email as team_email, t.name as team_name
+FROM auth_tokens at
+JOIN teams t ON at.team_id = t.id
+WHERE at.token = ? AND at.used_at IS NULL AND at.expires_at > CURRENT_TIMESTAMP;
+
+-- name: MarkAuthTokenUsed :exec
+UPDATE auth_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?;
+
+-- name: DeleteExpiredAuthTokens :exec
+DELETE FROM auth_tokens WHERE expires_at < CURRENT_TIMESTAMP;
