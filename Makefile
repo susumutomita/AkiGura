@@ -59,3 +59,7 @@ run_control_plane:
 .PHONY: run_worker
 run_worker:
 	cd worker && go run ./cmd/worker
+
+.PHONY: sqlc
+sqlc:
+	cd control-plane && sqlc generate

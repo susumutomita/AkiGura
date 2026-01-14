@@ -1,6 +1,7 @@
 package srv
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -533,7 +534,7 @@ func (s *Server) HandleCreateTicket(w http.ResponseWriter, r *http.Request) {
 	ticketID := uuid.New().String()
 	ticket, err := s.Queries.CreateSupportTicket(r.Context(), dbgen.CreateSupportTicketParams{
 		ID:      ticketID,
-		TeamID:  nil,
+		TeamID:  sql.NullString{},
 		Email:   req.Email,
 		Subject: req.Subject,
 	})

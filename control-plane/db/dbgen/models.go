@@ -5,6 +5,7 @@
 package dbgen
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -18,43 +19,73 @@ type Facility struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+type Ground struct {
+	ID             string         `json:"id"`
+	MunicipalityID string         `json:"municipality_id"`
+	Name           string         `json:"name"`
+	CourtPattern   sql.NullString `json:"court_pattern"`
+	Enabled        int64          `json:"enabled"`
+	CreatedAt      time.Time      `json:"created_at"`
+}
+
 type Migration struct {
 	MigrationNumber int64     `json:"migration_number"`
 	MigrationName   string    `json:"migration_name"`
 	ExecutedAt      time.Time `json:"executed_at"`
 }
 
+type Municipality struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	ScraperType string    `json:"scraper_type"`
+	Url         string    `json:"url"`
+	Enabled     int64     `json:"enabled"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type Notification struct {
-	ID               string     `json:"id"`
-	TeamID           string     `json:"team_id"`
-	WatchConditionID string     `json:"watch_condition_id"`
-	SlotID           string     `json:"slot_id"`
-	Channel          string     `json:"channel"`
-	Status           string     `json:"status"`
-	SentAt           *time.Time `json:"sent_at"`
-	CreatedAt        time.Time  `json:"created_at"`
+	ID               string       `json:"id"`
+	TeamID           string       `json:"team_id"`
+	WatchConditionID string       `json:"watch_condition_id"`
+	SlotID           string       `json:"slot_id"`
+	Channel          string       `json:"channel"`
+	Status           string       `json:"status"`
+	SentAt           sql.NullTime `json:"sent_at"`
+	CreatedAt        time.Time    `json:"created_at"`
+}
+
+type PlanLimit struct {
+	Plan                   string `json:"plan"`
+	MaxGrounds             int64  `json:"max_grounds"`
+	WeekendOnly            int64  `json:"weekend_only"`
+	MaxConditionsPerGround int64  `json:"max_conditions_per_ground"`
+	NotificationPriority   int64  `json:"notification_priority"`
 }
 
 type ScrapeJob struct {
-	ID           string     `json:"id"`
-	FacilityID   string     `json:"facility_id"`
-	Status       string     `json:"status"`
-	SlotsFound   *int64     `json:"slots_found"`
-	ErrorMessage *string    `json:"error_message"`
-	StartedAt    *time.Time `json:"started_at"`
-	CompletedAt  *time.Time `json:"completed_at"`
-	CreatedAt    time.Time  `json:"created_at"`
+	ID             string         `json:"id"`
+	MunicipalityID string         `json:"municipality_id"`
+	Status         string         `json:"status"`
+	SlotsFound     sql.NullInt64  `json:"slots_found"`
+	ErrorMessage   sql.NullString `json:"error_message"`
+	ScrapeStatus   sql.NullString `json:"scrape_status"`
+	Diagnostics    sql.NullString `json:"diagnostics"`
+	StartedAt      sql.NullTime   `json:"started_at"`
+	CompletedAt    sql.NullTime   `json:"completed_at"`
+	CreatedAt      time.Time      `json:"created_at"`
 }
 
 type Slot struct {
-	ID         string    `json:"id"`
-	FacilityID string    `json:"facility_id"`
-	SlotDate   time.Time `json:"slot_date"`
-	TimeFrom   string    `json:"time_from"`
-	TimeTo     string    `json:"time_to"`
-	CourtName  *string   `json:"court_name"`
-	RawText    *string   `json:"raw_text"`
-	ScrapedAt  time.Time `json:"scraped_at"`
+	ID             string         `json:"id"`
+	FacilityID     sql.NullString `json:"facility_id"`
+	MunicipalityID sql.NullString `json:"municipality_id"`
+	GroundID       sql.NullString `json:"ground_id"`
+	SlotDate       time.Time      `json:"slot_date"`
+	TimeFrom       string         `json:"time_from"`
+	TimeTo         string         `json:"time_to"`
+	CourtName      sql.NullString `json:"court_name"`
+	RawText        sql.NullString `json:"raw_text"`
+	ScrapedAt      time.Time      `json:"scraped_at"`
 }
 
 type SupportMessage struct {
@@ -66,16 +97,16 @@ type SupportMessage struct {
 }
 
 type SupportTicket struct {
-	ID            string    `json:"id"`
-	TeamID        *string   `json:"team_id"`
-	Email         string    `json:"email"`
-	Subject       string    `json:"subject"`
-	Status        string    `json:"status"`
-	Priority      string    `json:"priority"`
-	AiResponse    *string   `json:"ai_response"`
-	HumanResponse *string   `json:"human_response"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID            string         `json:"id"`
+	TeamID        sql.NullString `json:"team_id"`
+	Email         string         `json:"email"`
+	Subject       string         `json:"subject"`
+	Status        string         `json:"status"`
+	Priority      string         `json:"priority"`
+	AiResponse    sql.NullString `json:"ai_response"`
+	HumanResponse sql.NullString `json:"human_response"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
 type SystemMetric struct {
@@ -103,15 +134,15 @@ type Visitor struct {
 }
 
 type WatchCondition struct {
-	ID         string     `json:"id"`
-	TeamID     string     `json:"team_id"`
-	FacilityID string     `json:"facility_id"`
-	DaysOfWeek string     `json:"days_of_week"`
-	TimeFrom   string     `json:"time_from"`
-	TimeTo     string     `json:"time_to"`
-	DateFrom   *time.Time `json:"date_from"`
-	DateTo     *time.Time `json:"date_to"`
-	Enabled    int64      `json:"enabled"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
+	ID         string       `json:"id"`
+	TeamID     string       `json:"team_id"`
+	FacilityID string       `json:"facility_id"`
+	DaysOfWeek string       `json:"days_of_week"`
+	TimeFrom   string       `json:"time_from"`
+	TimeTo     string       `json:"time_to"`
+	DateFrom   sql.NullTime `json:"date_from"`
+	DateTo     sql.NullTime `json:"date_to"`
+	Enabled    int64        `json:"enabled"`
+	CreatedAt  time.Time    `json:"created_at"`
+	UpdatedAt  time.Time    `json:"updated_at"`
 }
