@@ -10,6 +10,7 @@ import (
 	"html"
 	"log/slog"
 	"net/http"
+	"net/mail"
 	"net/smtp"
 	"os"
 	"strings"
@@ -309,8 +310,12 @@ func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) er
 
 // sendMagicLinkEmailSMTP sends the magic link via SMTP (Gmail)
 func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string) error {
-	// Sanitize inputs to prevent header injection
-	sanitizedEmail := sanitizeEmailHeader(email)
+	// Validate and parse email address to prevent injection
+	parsedAddr, err := mail.ParseAddress(email)
+	if err != nil {
+		return fmt.Errorf("invalid email address: %w", err)
+	}
+	sanitizedEmail := parsedAddr.Address
 	escapedTeamName := html.EscapeString(teamName)
 
 	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
