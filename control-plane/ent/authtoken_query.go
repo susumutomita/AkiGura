@@ -24,7 +24,6 @@ type AuthTokenQuery struct {
 	inters     []Interceptor
 	predicates []predicate.AuthToken
 	withTeam   *TeamQuery
-	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -299,12 +298,12 @@ func (_q *AuthTokenQuery) WithTeam(opts ...func(*TeamQuery)) *AuthTokenQuery {
 // Example:
 //
 //	var v []struct {
-//		Token string `json:"token,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.AuthToken.Query().
-//		GroupBy(authtoken.FieldToken).
+//		GroupBy(authtoken.FieldTeamID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *AuthTokenQuery) GroupBy(field string, fields ...string) *AuthTokenGroupBy {
@@ -322,11 +321,11 @@ func (_q *AuthTokenQuery) GroupBy(field string, fields ...string) *AuthTokenGrou
 // Example:
 //
 //	var v []struct {
-//		Token string `json:"token,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //	}
 //
 //	client.AuthToken.Query().
-//		Select(authtoken.FieldToken).
+//		Select(authtoken.FieldTeamID).
 //		Scan(ctx, &v)
 func (_q *AuthTokenQuery) Select(fields ...string) *AuthTokenSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -370,18 +369,11 @@ func (_q *AuthTokenQuery) prepareQuery(ctx context.Context) error {
 func (_q *AuthTokenQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*AuthToken, error) {
 	var (
 		nodes       = []*AuthToken{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
 			_q.withTeam != nil,
 		}
 	)
-	if _q.withTeam != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, authtoken.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*AuthToken).scanValues(nil, columns)
 	}
@@ -413,10 +405,7 @@ func (_q *AuthTokenQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes 
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*AuthToken)
 	for i := range nodes {
-		if nodes[i].team_auth_tokens == nil {
-			continue
-		}
-		fk := *nodes[i].team_auth_tokens
+		fk := nodes[i].TeamID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -433,7 +422,7 @@ func (_q *AuthTokenQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes 
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_auth_tokens" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -466,6 +455,9 @@ func (_q *AuthTokenQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != authtoken.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withTeam != nil {
+			_spec.Node.AddColumnOnce(authtoken.FieldTeamID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

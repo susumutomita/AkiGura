@@ -65,6 +65,11 @@ func IDContainsFold(id string) predicate.AuthToken {
 	return predicate.AuthToken(sql.FieldContainsFold(FieldID, id))
 }
 
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldEQ(FieldTeamID, v))
+}
+
 // Token applies equality check predicate on the "token" field. It's identical to TokenEQ.
 func Token(v string) predicate.AuthToken {
 	return predicate.AuthToken(sql.FieldEQ(FieldToken, v))
@@ -83,6 +88,71 @@ func UsedAt(v time.Time) predicate.AuthToken {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.AuthToken {
 	return predicate.AuthToken(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// TeamIDGT applies the GT predicate on the "team_id" field.
+func TeamIDGT(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldGT(FieldTeamID, v))
+}
+
+// TeamIDGTE applies the GTE predicate on the "team_id" field.
+func TeamIDGTE(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldGTE(FieldTeamID, v))
+}
+
+// TeamIDLT applies the LT predicate on the "team_id" field.
+func TeamIDLT(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldLT(FieldTeamID, v))
+}
+
+// TeamIDLTE applies the LTE predicate on the "team_id" field.
+func TeamIDLTE(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldLTE(FieldTeamID, v))
+}
+
+// TeamIDContains applies the Contains predicate on the "team_id" field.
+func TeamIDContains(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldContains(FieldTeamID, v))
+}
+
+// TeamIDHasPrefix applies the HasPrefix predicate on the "team_id" field.
+func TeamIDHasPrefix(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldHasPrefix(FieldTeamID, v))
+}
+
+// TeamIDHasSuffix applies the HasSuffix predicate on the "team_id" field.
+func TeamIDHasSuffix(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldHasSuffix(FieldTeamID, v))
+}
+
+// TeamIDEqualFold applies the EqualFold predicate on the "team_id" field.
+func TeamIDEqualFold(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldEqualFold(FieldTeamID, v))
+}
+
+// TeamIDContainsFold applies the ContainsFold predicate on the "team_id" field.
+func TeamIDContainsFold(v string) predicate.AuthToken {
+	return predicate.AuthToken(sql.FieldContainsFold(FieldTeamID, v))
 }
 
 // TokenEQ applies the EQ predicate on the "token" field.

@@ -21,6 +21,12 @@ type SupportMessageCreate struct {
 	hooks    []Hook
 }
 
+// SetTicketID sets the "ticket_id" field.
+func (_c *SupportMessageCreate) SetTicketID(v string) *SupportMessageCreate {
+	_c.mutation.SetTicketID(v)
+	return _c
+}
+
 // SetRole sets the "role" field.
 func (_c *SupportMessageCreate) SetRole(v supportmessage.Role) *SupportMessageCreate {
 	_c.mutation.SetRole(v)
@@ -50,12 +56,6 @@ func (_c *SupportMessageCreate) SetNillableCreatedAt(v *time.Time) *SupportMessa
 // SetID sets the "id" field.
 func (_c *SupportMessageCreate) SetID(v string) *SupportMessageCreate {
 	_c.mutation.SetID(v)
-	return _c
-}
-
-// SetTicketID sets the "ticket" edge to the SupportTicket entity by ID.
-func (_c *SupportMessageCreate) SetTicketID(id string) *SupportMessageCreate {
-	_c.mutation.SetTicketID(id)
 	return _c
 }
 
@@ -107,6 +107,14 @@ func (_c *SupportMessageCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *SupportMessageCreate) check() error {
+	if _, ok := _c.mutation.TicketID(); !ok {
+		return &ValidationError{Name: "ticket_id", err: errors.New(`ent: missing required field "SupportMessage.ticket_id"`)}
+	}
+	if v, ok := _c.mutation.TicketID(); ok {
+		if err := supportmessage.TicketIDValidator(v); err != nil {
+			return &ValidationError{Name: "ticket_id", err: fmt.Errorf(`ent: validator failed for field "SupportMessage.ticket_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "SupportMessage.role"`)}
 	}
@@ -190,7 +198,7 @@ func (_c *SupportMessageCreate) createSpec() (*SupportMessage, *sqlgraph.CreateS
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.support_ticket_messages = &nodes[0]
+		_node.TicketID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

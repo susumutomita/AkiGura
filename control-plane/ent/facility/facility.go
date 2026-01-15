@@ -38,14 +38,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "watchcondition" package.
 	WatchConditionsInverseTable = "watch_conditions"
 	// WatchConditionsColumn is the table column denoting the watch_conditions relation/edge.
-	WatchConditionsColumn = "facility_watch_conditions"
+	WatchConditionsColumn = "facility_id"
 	// SlotsTable is the table that holds the slots relation/edge.
 	SlotsTable = "slots"
 	// SlotsInverseTable is the table name for the Slot entity.
 	// It exists in this package in order to avoid circular dependency with the "slot" package.
 	SlotsInverseTable = "slots"
 	// SlotsColumn is the table column denoting the slots relation/edge.
-	SlotsColumn = "facility_slots"
+	SlotsColumn = "facility_id"
 )
 
 // Columns holds all SQL columns for facility fields.

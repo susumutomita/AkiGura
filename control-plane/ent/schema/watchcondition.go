@@ -20,8 +20,12 @@ func (WatchCondition) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("team_id").
+			NotEmpty(),
+		field.String("facility_id").
+			NotEmpty(),
 		field.String("days_of_week").
-			NotEmpty(), // JSON array like "[0,6]"
+			NotEmpty(),
 		field.String("time_from").
 			NotEmpty(),
 		field.String("time_to").
@@ -48,10 +52,12 @@ func (WatchCondition) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("team", Team.Type).
 			Ref("watch_conditions").
+			Field("team_id").
 			Unique().
 			Required(),
 		edge.From("facility", Facility.Type).
 			Ref("watch_conditions").
+			Field("facility_id").
 			Unique().
 			Required(),
 		edge.To("notifications", Notification.Type),
@@ -61,7 +67,7 @@ func (WatchCondition) Edges() []ent.Edge {
 // Indexes of the WatchCondition.
 func (WatchCondition) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Edges("team"),
-		index.Edges("facility"),
+		index.Fields("team_id"),
+		index.Fields("facility_id"),
 	}
 }

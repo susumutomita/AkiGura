@@ -14,6 +14,12 @@ const (
 	Label = "slot"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldFacilityID holds the string denoting the facility_id field in the database.
+	FieldFacilityID = "facility_id"
+	// FieldMunicipalityID holds the string denoting the municipality_id field in the database.
+	FieldMunicipalityID = "municipality_id"
+	// FieldGroundID holds the string denoting the ground_id field in the database.
+	FieldGroundID = "ground_id"
 	// FieldSlotDate holds the string denoting the slot_date field in the database.
 	FieldSlotDate = "slot_date"
 	// FieldTimeFrom holds the string denoting the time_from field in the database.
@@ -42,33 +48,36 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "facility" package.
 	FacilityInverseTable = "facilities"
 	// FacilityColumn is the table column denoting the facility relation/edge.
-	FacilityColumn = "facility_slots"
+	FacilityColumn = "facility_id"
 	// MunicipalityTable is the table that holds the municipality relation/edge.
 	MunicipalityTable = "slots"
 	// MunicipalityInverseTable is the table name for the Municipality entity.
 	// It exists in this package in order to avoid circular dependency with the "municipality" package.
 	MunicipalityInverseTable = "municipalities"
 	// MunicipalityColumn is the table column denoting the municipality relation/edge.
-	MunicipalityColumn = "municipality_slots"
+	MunicipalityColumn = "municipality_id"
 	// GroundTable is the table that holds the ground relation/edge.
 	GroundTable = "slots"
 	// GroundInverseTable is the table name for the Ground entity.
 	// It exists in this package in order to avoid circular dependency with the "ground" package.
 	GroundInverseTable = "grounds"
 	// GroundColumn is the table column denoting the ground relation/edge.
-	GroundColumn = "ground_slots"
+	GroundColumn = "ground_id"
 	// NotificationsTable is the table that holds the notifications relation/edge.
 	NotificationsTable = "notifications"
 	// NotificationsInverseTable is the table name for the Notification entity.
 	// It exists in this package in order to avoid circular dependency with the "notification" package.
 	NotificationsInverseTable = "notifications"
 	// NotificationsColumn is the table column denoting the notifications relation/edge.
-	NotificationsColumn = "slot_notifications"
+	NotificationsColumn = "slot_id"
 )
 
 // Columns holds all SQL columns for slot fields.
 var Columns = []string{
 	FieldID,
+	FieldFacilityID,
+	FieldMunicipalityID,
+	FieldGroundID,
 	FieldSlotDate,
 	FieldTimeFrom,
 	FieldTimeTo,
@@ -77,23 +86,10 @@ var Columns = []string{
 	FieldScrapedAt,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "slots"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"facility_slots",
-	"ground_slots",
-	"municipality_slots",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -115,6 +111,21 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByFacilityID orders the results by the facility_id field.
+func ByFacilityID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFacilityID, opts...).ToFunc()
+}
+
+// ByMunicipalityID orders the results by the municipality_id field.
+func ByMunicipalityID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMunicipalityID, opts...).ToFunc()
+}
+
+// ByGroundID orders the results by the ground_id field.
+func ByGroundID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGroundID, opts...).ToFunc()
 }
 
 // BySlotDate orders the results by the slot_date field.

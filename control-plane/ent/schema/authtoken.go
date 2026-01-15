@@ -20,6 +20,8 @@ func (AuthToken) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("team_id").
+			NotEmpty(),
 		field.String("token").
 			Unique().
 			NotEmpty().
@@ -39,6 +41,7 @@ func (AuthToken) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("team", Team.Type).
 			Ref("auth_tokens").
+			Field("team_id").
 			Unique().
 			Required(),
 	}
@@ -48,6 +51,6 @@ func (AuthToken) Edges() []ent.Edge {
 func (AuthToken) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("token").Unique(),
-		index.Edges("team"),
+		index.Fields("team_id"),
 	}
 }

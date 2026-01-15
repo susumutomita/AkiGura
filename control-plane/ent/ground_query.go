@@ -27,7 +27,6 @@ type GroundQuery struct {
 	predicates       []predicate.Ground
 	withMunicipality *MunicipalityQuery
 	withSlots        *SlotQuery
-	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -336,12 +335,12 @@ func (_q *GroundQuery) WithSlots(opts ...func(*SlotQuery)) *GroundQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		MunicipalityID string `json:"municipality_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Ground.Query().
-//		GroupBy(ground.FieldName).
+//		GroupBy(ground.FieldMunicipalityID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *GroundQuery) GroupBy(field string, fields ...string) *GroundGroupBy {
@@ -359,11 +358,11 @@ func (_q *GroundQuery) GroupBy(field string, fields ...string) *GroundGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		MunicipalityID string `json:"municipality_id,omitempty"`
 //	}
 //
 //	client.Ground.Query().
-//		Select(ground.FieldName).
+//		Select(ground.FieldMunicipalityID).
 //		Scan(ctx, &v)
 func (_q *GroundQuery) Select(fields ...string) *GroundSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -407,19 +406,12 @@ func (_q *GroundQuery) prepareQuery(ctx context.Context) error {
 func (_q *GroundQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ground, error) {
 	var (
 		nodes       = []*Ground{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
 			_q.withMunicipality != nil,
 			_q.withSlots != nil,
 		}
 	)
-	if _q.withMunicipality != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, ground.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Ground).scanValues(nil, columns)
 	}
@@ -458,10 +450,7 @@ func (_q *GroundQuery) loadMunicipality(ctx context.Context, query *Municipality
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Ground)
 	for i := range nodes {
-		if nodes[i].municipality_grounds == nil {
-			continue
-		}
-		fk := *nodes[i].municipality_grounds
+		fk := nodes[i].MunicipalityID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -478,7 +467,7 @@ func (_q *GroundQuery) loadMunicipality(ctx context.Context, query *Municipality
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "municipality_grounds" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "municipality_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -496,7 +485,9 @@ func (_q *GroundQuery) loadSlots(ctx context.Context, query *SlotQuery, nodes []
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(slot.FieldGroundID)
+	}
 	query.Where(predicate.Slot(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(ground.SlotsColumn), fks...))
 	}))
@@ -505,13 +496,13 @@ func (_q *GroundQuery) loadSlots(ctx context.Context, query *SlotQuery, nodes []
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.ground_slots
+		fk := n.GroundID
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "ground_slots" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "ground_id" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "ground_slots" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "ground_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -542,6 +533,9 @@ func (_q *GroundQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != ground.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withMunicipality != nil {
+			_spec.Node.AddColumnOnce(ground.FieldMunicipalityID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

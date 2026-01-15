@@ -19,6 +19,10 @@ type WatchCondition struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID string `json:"team_id,omitempty"`
+	// FacilityID holds the value of the "facility_id" field.
+	FacilityID string `json:"facility_id,omitempty"`
 	// DaysOfWeek holds the value of the "days_of_week" field.
 	DaysOfWeek string `json:"days_of_week,omitempty"`
 	// TimeFrom holds the value of the "time_from" field.
@@ -37,10 +41,8 @@ type WatchCondition struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the WatchConditionQuery when eager-loading is set.
-	Edges                     WatchConditionEdges `json:"edges"`
-	facility_watch_conditions *string
-	team_watch_conditions     *string
-	selectValues              sql.SelectValues
+	Edges        WatchConditionEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // WatchConditionEdges holds the relations/edges for other nodes in the graph.
@@ -94,14 +96,10 @@ func (*WatchCondition) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case watchcondition.FieldEnabled:
 			values[i] = new(sql.NullBool)
-		case watchcondition.FieldID, watchcondition.FieldDaysOfWeek, watchcondition.FieldTimeFrom, watchcondition.FieldTimeTo:
+		case watchcondition.FieldID, watchcondition.FieldTeamID, watchcondition.FieldFacilityID, watchcondition.FieldDaysOfWeek, watchcondition.FieldTimeFrom, watchcondition.FieldTimeTo:
 			values[i] = new(sql.NullString)
 		case watchcondition.FieldDateFrom, watchcondition.FieldDateTo, watchcondition.FieldCreatedAt, watchcondition.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case watchcondition.ForeignKeys[0]: // facility_watch_conditions
-			values[i] = new(sql.NullString)
-		case watchcondition.ForeignKeys[1]: // team_watch_conditions
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -122,6 +120,18 @@ func (_m *WatchCondition) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case watchcondition.FieldTeamID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value.Valid {
+				_m.TeamID = value.String
+			}
+		case watchcondition.FieldFacilityID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field facility_id", values[i])
+			} else if value.Valid {
+				_m.FacilityID = value.String
 			}
 		case watchcondition.FieldDaysOfWeek:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -172,20 +182,6 @@ func (_m *WatchCondition) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
-			}
-		case watchcondition.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field facility_watch_conditions", values[i])
-			} else if value.Valid {
-				_m.facility_watch_conditions = new(string)
-				*_m.facility_watch_conditions = value.String
-			}
-		case watchcondition.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field team_watch_conditions", values[i])
-			} else if value.Valid {
-				_m.team_watch_conditions = new(string)
-				*_m.team_watch_conditions = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -238,6 +234,12 @@ func (_m *WatchCondition) String() string {
 	var builder strings.Builder
 	builder.WriteString("WatchCondition(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("team_id=")
+	builder.WriteString(_m.TeamID)
+	builder.WriteString(", ")
+	builder.WriteString("facility_id=")
+	builder.WriteString(_m.FacilityID)
+	builder.WriteString(", ")
 	builder.WriteString("days_of_week=")
 	builder.WriteString(_m.DaysOfWeek)
 	builder.WriteString(", ")

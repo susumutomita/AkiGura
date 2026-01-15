@@ -20,6 +20,10 @@ func (PromoCodeUsage) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("promo_code_id").
+			NotEmpty(),
+		field.String("team_id").
+			NotEmpty(),
 		field.Time("applied_at").
 			Default(time.Now).
 			Immutable(),
@@ -31,10 +35,12 @@ func (PromoCodeUsage) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("promo_code", PromoCode.Type).
 			Ref("usages").
+			Field("promo_code_id").
 			Unique().
 			Required(),
 		edge.From("team", Team.Type).
 			Ref("promo_code_usages").
+			Field("team_id").
 			Unique().
 			Required(),
 	}
@@ -43,7 +49,7 @@ func (PromoCodeUsage) Edges() []ent.Edge {
 // Indexes of the PromoCodeUsage.
 func (PromoCodeUsage) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Edges("team"),
-		index.Edges("promo_code", "team").Unique(),
+		index.Fields("team_id"),
+		index.Fields("promo_code_id", "team_id").Unique(),
 	}
 }

@@ -14,6 +14,10 @@ const (
 	Label = "promo_code_usage"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldPromoCodeID holds the string denoting the promo_code_id field in the database.
+	FieldPromoCodeID = "promo_code_id"
+	// FieldTeamID holds the string denoting the team_id field in the database.
+	FieldTeamID = "team_id"
 	// FieldAppliedAt holds the string denoting the applied_at field in the database.
 	FieldAppliedAt = "applied_at"
 	// EdgePromoCode holds the string denoting the promo_code edge name in mutations.
@@ -28,27 +32,22 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "promocode" package.
 	PromoCodeInverseTable = "promo_codes"
 	// PromoCodeColumn is the table column denoting the promo_code relation/edge.
-	PromoCodeColumn = "promo_code_usages"
+	PromoCodeColumn = "promo_code_id"
 	// TeamTable is the table that holds the team relation/edge.
 	TeamTable = "promo_code_usages"
 	// TeamInverseTable is the table name for the Team entity.
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
-	TeamColumn = "team_promo_code_usages"
+	TeamColumn = "team_id"
 )
 
 // Columns holds all SQL columns for promocodeusage fields.
 var Columns = []string{
 	FieldID,
+	FieldPromoCodeID,
+	FieldTeamID,
 	FieldAppliedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "promo_code_usages"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"promo_code_usages",
-	"team_promo_code_usages",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -58,15 +57,14 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
-			return true
-		}
-	}
 	return false
 }
 
 var (
+	// PromoCodeIDValidator is a validator for the "promo_code_id" field. It is called by the builders before save.
+	PromoCodeIDValidator func(string) error
+	// TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	TeamIDValidator func(string) error
 	// DefaultAppliedAt holds the default value on creation for the "applied_at" field.
 	DefaultAppliedAt func() time.Time
 )
@@ -77,6 +75,16 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByPromoCodeID orders the results by the promo_code_id field.
+func ByPromoCodeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPromoCodeID, opts...).ToFunc()
+}
+
+// ByTeamID orders the results by the team_id field.
+func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
 }
 
 // ByAppliedAt orders the results by the applied_at field.

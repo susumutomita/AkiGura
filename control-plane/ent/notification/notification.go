@@ -15,6 +15,12 @@ const (
 	Label = "notification"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldTeamID holds the string denoting the team_id field in the database.
+	FieldTeamID = "team_id"
+	// FieldWatchConditionID holds the string denoting the watch_condition_id field in the database.
+	FieldWatchConditionID = "watch_condition_id"
+	// FieldSlotID holds the string denoting the slot_id field in the database.
+	FieldSlotID = "slot_id"
 	// FieldChannel holds the string denoting the channel field in the database.
 	FieldChannel = "channel"
 	// FieldStatus holds the string denoting the status field in the database.
@@ -37,38 +43,33 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
-	TeamColumn = "team_notifications"
+	TeamColumn = "team_id"
 	// WatchConditionTable is the table that holds the watch_condition relation/edge.
 	WatchConditionTable = "notifications"
 	// WatchConditionInverseTable is the table name for the WatchCondition entity.
 	// It exists in this package in order to avoid circular dependency with the "watchcondition" package.
 	WatchConditionInverseTable = "watch_conditions"
 	// WatchConditionColumn is the table column denoting the watch_condition relation/edge.
-	WatchConditionColumn = "watch_condition_notifications"
+	WatchConditionColumn = "watch_condition_id"
 	// SlotTable is the table that holds the slot relation/edge.
 	SlotTable = "notifications"
 	// SlotInverseTable is the table name for the Slot entity.
 	// It exists in this package in order to avoid circular dependency with the "slot" package.
 	SlotInverseTable = "slots"
 	// SlotColumn is the table column denoting the slot relation/edge.
-	SlotColumn = "slot_notifications"
+	SlotColumn = "slot_id"
 )
 
 // Columns holds all SQL columns for notification fields.
 var Columns = []string{
 	FieldID,
+	FieldTeamID,
+	FieldWatchConditionID,
+	FieldSlotID,
 	FieldChannel,
 	FieldStatus,
 	FieldSentAt,
 	FieldCreatedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "notifications"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"slot_notifications",
-	"team_notifications",
-	"watch_condition_notifications",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -78,15 +79,16 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
-			return true
-		}
-	}
 	return false
 }
 
 var (
+	// TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	TeamIDValidator func(string) error
+	// WatchConditionIDValidator is a validator for the "watch_condition_id" field. It is called by the builders before save.
+	WatchConditionIDValidator func(string) error
+	// SlotIDValidator is a validator for the "slot_id" field. It is called by the builders before save.
+	SlotIDValidator func(string) error
 	// ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
 	ChannelValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -126,6 +128,21 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByTeamID orders the results by the team_id field.
+func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
+}
+
+// ByWatchConditionID orders the results by the watch_condition_id field.
+func ByWatchConditionID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWatchConditionID, opts...).ToFunc()
+}
+
+// BySlotID orders the results by the slot_id field.
+func BySlotID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSlotID, opts...).ToFunc()
 }
 
 // ByChannel orders the results by the channel field.

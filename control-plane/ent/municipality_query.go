@@ -501,7 +501,9 @@ func (_q *MunicipalityQuery) loadGrounds(ctx context.Context, query *GroundQuery
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(ground.FieldMunicipalityID)
+	}
 	query.Where(predicate.Ground(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(municipality.GroundsColumn), fks...))
 	}))
@@ -510,13 +512,10 @@ func (_q *MunicipalityQuery) loadGrounds(ctx context.Context, query *GroundQuery
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.municipality_grounds
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "municipality_grounds" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.MunicipalityID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "municipality_grounds" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "municipality_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -532,7 +531,9 @@ func (_q *MunicipalityQuery) loadSlots(ctx context.Context, query *SlotQuery, no
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(slot.FieldMunicipalityID)
+	}
 	query.Where(predicate.Slot(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(municipality.SlotsColumn), fks...))
 	}))
@@ -541,13 +542,13 @@ func (_q *MunicipalityQuery) loadSlots(ctx context.Context, query *SlotQuery, no
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.municipality_slots
+		fk := n.MunicipalityID
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "municipality_slots" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "municipality_id" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "municipality_slots" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "municipality_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -563,7 +564,9 @@ func (_q *MunicipalityQuery) loadScrapeJobs(ctx context.Context, query *ScrapeJo
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(scrapejob.FieldMunicipalityID)
+	}
 	query.Where(predicate.ScrapeJob(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(municipality.ScrapeJobsColumn), fks...))
 	}))
@@ -572,13 +575,10 @@ func (_q *MunicipalityQuery) loadScrapeJobs(ctx context.Context, query *ScrapeJo
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.municipality_scrape_jobs
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "municipality_scrape_jobs" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.MunicipalityID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "municipality_scrape_jobs" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "municipality_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

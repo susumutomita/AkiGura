@@ -19,6 +19,8 @@ func (SupportMessage) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("ticket_id").
+			NotEmpty(),
 		field.Enum("role").
 			Values("user", "assistant", "system"),
 		field.Text("content").
@@ -34,6 +36,7 @@ func (SupportMessage) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("ticket", SupportTicket.Type).
 			Ref("messages").
+			Field("ticket_id").
 			Unique().
 			Required(),
 	}

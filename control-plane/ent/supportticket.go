@@ -18,6 +18,8 @@ type SupportTicket struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID *string `json:"team_id,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// Subject holds the value of the "subject" field.
@@ -36,9 +38,8 @@ type SupportTicket struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SupportTicketQuery when eager-loading is set.
-	Edges                SupportTicketEdges `json:"edges"`
-	team_support_tickets *string
-	selectValues         sql.SelectValues
+	Edges        SupportTicketEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // SupportTicketEdges holds the relations/edges for other nodes in the graph.
@@ -77,12 +78,10 @@ func (*SupportTicket) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case supportticket.FieldID, supportticket.FieldEmail, supportticket.FieldSubject, supportticket.FieldStatus, supportticket.FieldPriority, supportticket.FieldAiResponse, supportticket.FieldHumanResponse:
+		case supportticket.FieldID, supportticket.FieldTeamID, supportticket.FieldEmail, supportticket.FieldSubject, supportticket.FieldStatus, supportticket.FieldPriority, supportticket.FieldAiResponse, supportticket.FieldHumanResponse:
 			values[i] = new(sql.NullString)
 		case supportticket.FieldCreatedAt, supportticket.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case supportticket.ForeignKeys[0]: // team_support_tickets
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -103,6 +102,13 @@ func (_m *SupportTicket) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case supportticket.FieldTeamID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value.Valid {
+				_m.TeamID = new(string)
+				*_m.TeamID = value.String
 			}
 		case supportticket.FieldEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -154,13 +160,6 @@ func (_m *SupportTicket) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case supportticket.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field team_support_tickets", values[i])
-			} else if value.Valid {
-				_m.team_support_tickets = new(string)
-				*_m.team_support_tickets = value.String
-			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -207,6 +206,11 @@ func (_m *SupportTicket) String() string {
 	var builder strings.Builder
 	builder.WriteString("SupportTicket(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.TeamID; v != nil {
+		builder.WriteString("team_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(_m.Email)
 	builder.WriteString(", ")

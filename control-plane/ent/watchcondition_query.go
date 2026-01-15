@@ -29,7 +29,6 @@ type WatchConditionQuery struct {
 	withTeam          *TeamQuery
 	withFacility      *FacilityQuery
 	withNotifications *NotificationQuery
-	withFKs           bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -372,12 +371,12 @@ func (_q *WatchConditionQuery) WithNotifications(opts ...func(*NotificationQuery
 // Example:
 //
 //	var v []struct {
-//		DaysOfWeek string `json:"days_of_week,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.WatchCondition.Query().
-//		GroupBy(watchcondition.FieldDaysOfWeek).
+//		GroupBy(watchcondition.FieldTeamID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *WatchConditionQuery) GroupBy(field string, fields ...string) *WatchConditionGroupBy {
@@ -395,11 +394,11 @@ func (_q *WatchConditionQuery) GroupBy(field string, fields ...string) *WatchCon
 // Example:
 //
 //	var v []struct {
-//		DaysOfWeek string `json:"days_of_week,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //	}
 //
 //	client.WatchCondition.Query().
-//		Select(watchcondition.FieldDaysOfWeek).
+//		Select(watchcondition.FieldTeamID).
 //		Scan(ctx, &v)
 func (_q *WatchConditionQuery) Select(fields ...string) *WatchConditionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -443,7 +442,6 @@ func (_q *WatchConditionQuery) prepareQuery(ctx context.Context) error {
 func (_q *WatchConditionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*WatchCondition, error) {
 	var (
 		nodes       = []*WatchCondition{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [3]bool{
 			_q.withTeam != nil,
@@ -451,12 +449,6 @@ func (_q *WatchConditionQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 			_q.withNotifications != nil,
 		}
 	)
-	if _q.withTeam != nil || _q.withFacility != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, watchcondition.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*WatchCondition).scanValues(nil, columns)
 	}
@@ -501,10 +493,7 @@ func (_q *WatchConditionQuery) loadTeam(ctx context.Context, query *TeamQuery, n
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*WatchCondition)
 	for i := range nodes {
-		if nodes[i].team_watch_conditions == nil {
-			continue
-		}
-		fk := *nodes[i].team_watch_conditions
+		fk := nodes[i].TeamID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -521,7 +510,7 @@ func (_q *WatchConditionQuery) loadTeam(ctx context.Context, query *TeamQuery, n
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_watch_conditions" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -533,10 +522,7 @@ func (_q *WatchConditionQuery) loadFacility(ctx context.Context, query *Facility
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*WatchCondition)
 	for i := range nodes {
-		if nodes[i].facility_watch_conditions == nil {
-			continue
-		}
-		fk := *nodes[i].facility_watch_conditions
+		fk := nodes[i].FacilityID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -553,7 +539,7 @@ func (_q *WatchConditionQuery) loadFacility(ctx context.Context, query *Facility
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "facility_watch_conditions" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "facility_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -571,7 +557,9 @@ func (_q *WatchConditionQuery) loadNotifications(ctx context.Context, query *Not
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(notification.FieldWatchConditionID)
+	}
 	query.Where(predicate.Notification(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(watchcondition.NotificationsColumn), fks...))
 	}))
@@ -580,13 +568,10 @@ func (_q *WatchConditionQuery) loadNotifications(ctx context.Context, query *Not
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.watch_condition_notifications
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "watch_condition_notifications" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.WatchConditionID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "watch_condition_notifications" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "watch_condition_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -617,6 +602,12 @@ func (_q *WatchConditionQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != watchcondition.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withTeam != nil {
+			_spec.Node.AddColumnOnce(watchcondition.FieldTeamID)
+		}
+		if _q.withFacility != nil {
+			_spec.Node.AddColumnOnce(watchcondition.FieldFacilityID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

@@ -38,21 +38,21 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "ground" package.
 	GroundsInverseTable = "grounds"
 	// GroundsColumn is the table column denoting the grounds relation/edge.
-	GroundsColumn = "municipality_grounds"
+	GroundsColumn = "municipality_id"
 	// SlotsTable is the table that holds the slots relation/edge.
 	SlotsTable = "slots"
 	// SlotsInverseTable is the table name for the Slot entity.
 	// It exists in this package in order to avoid circular dependency with the "slot" package.
 	SlotsInverseTable = "slots"
 	// SlotsColumn is the table column denoting the slots relation/edge.
-	SlotsColumn = "municipality_slots"
+	SlotsColumn = "municipality_id"
 	// ScrapeJobsTable is the table that holds the scrape_jobs relation/edge.
 	ScrapeJobsTable = "scrape_jobs"
 	// ScrapeJobsInverseTable is the table name for the ScrapeJob entity.
 	// It exists in this package in order to avoid circular dependency with the "scrapejob" package.
 	ScrapeJobsInverseTable = "scrape_jobs"
 	// ScrapeJobsColumn is the table column denoting the scrape_jobs relation/edge.
-	ScrapeJobsColumn = "municipality_scrape_jobs"
+	ScrapeJobsColumn = "municipality_id"
 )
 
 // Columns holds all SQL columns for municipality fields.

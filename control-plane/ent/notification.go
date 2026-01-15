@@ -20,6 +20,12 @@ type Notification struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID string `json:"team_id,omitempty"`
+	// WatchConditionID holds the value of the "watch_condition_id" field.
+	WatchConditionID string `json:"watch_condition_id,omitempty"`
+	// SlotID holds the value of the "slot_id" field.
+	SlotID string `json:"slot_id,omitempty"`
 	// Channel holds the value of the "channel" field.
 	Channel string `json:"channel,omitempty"`
 	// Status holds the value of the "status" field.
@@ -30,11 +36,8 @@ type Notification struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the NotificationQuery when eager-loading is set.
-	Edges                         NotificationEdges `json:"edges"`
-	slot_notifications            *string
-	team_notifications            *string
-	watch_condition_notifications *string
-	selectValues                  sql.SelectValues
+	Edges        NotificationEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // NotificationEdges holds the relations/edges for other nodes in the graph.
@@ -88,16 +91,10 @@ func (*Notification) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case notification.FieldID, notification.FieldChannel, notification.FieldStatus:
+		case notification.FieldID, notification.FieldTeamID, notification.FieldWatchConditionID, notification.FieldSlotID, notification.FieldChannel, notification.FieldStatus:
 			values[i] = new(sql.NullString)
 		case notification.FieldSentAt, notification.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case notification.ForeignKeys[0]: // slot_notifications
-			values[i] = new(sql.NullString)
-		case notification.ForeignKeys[1]: // team_notifications
-			values[i] = new(sql.NullString)
-		case notification.ForeignKeys[2]: // watch_condition_notifications
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -118,6 +115,24 @@ func (_m *Notification) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case notification.FieldTeamID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value.Valid {
+				_m.TeamID = value.String
+			}
+		case notification.FieldWatchConditionID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field watch_condition_id", values[i])
+			} else if value.Valid {
+				_m.WatchConditionID = value.String
+			}
+		case notification.FieldSlotID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field slot_id", values[i])
+			} else if value.Valid {
+				_m.SlotID = value.String
 			}
 		case notification.FieldChannel:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -143,27 +158,6 @@ func (_m *Notification) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
-			}
-		case notification.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field slot_notifications", values[i])
-			} else if value.Valid {
-				_m.slot_notifications = new(string)
-				*_m.slot_notifications = value.String
-			}
-		case notification.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field team_notifications", values[i])
-			} else if value.Valid {
-				_m.team_notifications = new(string)
-				*_m.team_notifications = value.String
-			}
-		case notification.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field watch_condition_notifications", values[i])
-			} else if value.Valid {
-				_m.watch_condition_notifications = new(string)
-				*_m.watch_condition_notifications = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -216,6 +210,15 @@ func (_m *Notification) String() string {
 	var builder strings.Builder
 	builder.WriteString("Notification(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("team_id=")
+	builder.WriteString(_m.TeamID)
+	builder.WriteString(", ")
+	builder.WriteString("watch_condition_id=")
+	builder.WriteString(_m.WatchConditionID)
+	builder.WriteString(", ")
+	builder.WriteString("slot_id=")
+	builder.WriteString(_m.SlotID)
+	builder.WriteString(", ")
 	builder.WriteString("channel=")
 	builder.WriteString(_m.Channel)
 	builder.WriteString(", ")

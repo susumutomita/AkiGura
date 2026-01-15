@@ -457,7 +457,9 @@ func (_q *FacilityQuery) loadWatchConditions(ctx context.Context, query *WatchCo
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(watchcondition.FieldFacilityID)
+	}
 	query.Where(predicate.WatchCondition(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(facility.WatchConditionsColumn), fks...))
 	}))
@@ -466,13 +468,10 @@ func (_q *FacilityQuery) loadWatchConditions(ctx context.Context, query *WatchCo
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.facility_watch_conditions
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "facility_watch_conditions" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.FacilityID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "facility_watch_conditions" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "facility_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -488,7 +487,9 @@ func (_q *FacilityQuery) loadSlots(ctx context.Context, query *SlotQuery, nodes 
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(slot.FieldFacilityID)
+	}
 	query.Where(predicate.Slot(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(facility.SlotsColumn), fks...))
 	}))
@@ -497,13 +498,13 @@ func (_q *FacilityQuery) loadSlots(ctx context.Context, query *SlotQuery, nodes 
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.facility_slots
+		fk := n.FacilityID
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "facility_slots" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "facility_id" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "facility_slots" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "facility_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

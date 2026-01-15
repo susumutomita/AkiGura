@@ -65,6 +65,11 @@ func IDContainsFold(id string) predicate.SupportMessage {
 	return predicate.SupportMessage(sql.FieldContainsFold(FieldID, id))
 }
 
+// TicketID applies equality check predicate on the "ticket_id" field. It's identical to TicketIDEQ.
+func TicketID(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldEQ(FieldTicketID, v))
+}
+
 // Content applies equality check predicate on the "content" field. It's identical to ContentEQ.
 func Content(v string) predicate.SupportMessage {
 	return predicate.SupportMessage(sql.FieldEQ(FieldContent, v))
@@ -73,6 +78,71 @@ func Content(v string) predicate.SupportMessage {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.SupportMessage {
 	return predicate.SupportMessage(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// TicketIDEQ applies the EQ predicate on the "ticket_id" field.
+func TicketIDEQ(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldEQ(FieldTicketID, v))
+}
+
+// TicketIDNEQ applies the NEQ predicate on the "ticket_id" field.
+func TicketIDNEQ(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldNEQ(FieldTicketID, v))
+}
+
+// TicketIDIn applies the In predicate on the "ticket_id" field.
+func TicketIDIn(vs ...string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldIn(FieldTicketID, vs...))
+}
+
+// TicketIDNotIn applies the NotIn predicate on the "ticket_id" field.
+func TicketIDNotIn(vs ...string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldNotIn(FieldTicketID, vs...))
+}
+
+// TicketIDGT applies the GT predicate on the "ticket_id" field.
+func TicketIDGT(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldGT(FieldTicketID, v))
+}
+
+// TicketIDGTE applies the GTE predicate on the "ticket_id" field.
+func TicketIDGTE(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldGTE(FieldTicketID, v))
+}
+
+// TicketIDLT applies the LT predicate on the "ticket_id" field.
+func TicketIDLT(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldLT(FieldTicketID, v))
+}
+
+// TicketIDLTE applies the LTE predicate on the "ticket_id" field.
+func TicketIDLTE(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldLTE(FieldTicketID, v))
+}
+
+// TicketIDContains applies the Contains predicate on the "ticket_id" field.
+func TicketIDContains(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldContains(FieldTicketID, v))
+}
+
+// TicketIDHasPrefix applies the HasPrefix predicate on the "ticket_id" field.
+func TicketIDHasPrefix(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldHasPrefix(FieldTicketID, v))
+}
+
+// TicketIDHasSuffix applies the HasSuffix predicate on the "ticket_id" field.
+func TicketIDHasSuffix(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldHasSuffix(FieldTicketID, v))
+}
+
+// TicketIDEqualFold applies the EqualFold predicate on the "ticket_id" field.
+func TicketIDEqualFold(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldEqualFold(FieldTicketID, v))
+}
+
+// TicketIDContainsFold applies the ContainsFold predicate on the "ticket_id" field.
+func TicketIDContainsFold(v string) predicate.SupportMessage {
+	return predicate.SupportMessage(sql.FieldContainsFold(FieldTicketID, v))
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.

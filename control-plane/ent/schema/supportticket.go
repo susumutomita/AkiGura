@@ -20,6 +20,9 @@ func (SupportTicket) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("team_id").
+			Optional().
+			Nillable(),
 		field.String("email").
 			NotEmpty(),
 		field.String("subject").
@@ -50,6 +53,7 @@ func (SupportTicket) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("team", Team.Type).
 			Ref("support_tickets").
+			Field("team_id").
 			Unique(),
 		edge.To("messages", SupportMessage.Type),
 	}
@@ -58,7 +62,7 @@ func (SupportTicket) Edges() []ent.Edge {
 // Indexes of the SupportTicket.
 func (SupportTicket) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Edges("team"),
+		index.Fields("team_id"),
 		index.Fields("status"),
 	}
 }

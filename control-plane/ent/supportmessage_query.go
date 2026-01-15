@@ -24,7 +24,6 @@ type SupportMessageQuery struct {
 	inters     []Interceptor
 	predicates []predicate.SupportMessage
 	withTicket *SupportTicketQuery
-	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -299,12 +298,12 @@ func (_q *SupportMessageQuery) WithTicket(opts ...func(*SupportTicketQuery)) *Su
 // Example:
 //
 //	var v []struct {
-//		Role supportmessage.Role `json:"role,omitempty"`
+//		TicketID string `json:"ticket_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.SupportMessage.Query().
-//		GroupBy(supportmessage.FieldRole).
+//		GroupBy(supportmessage.FieldTicketID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *SupportMessageQuery) GroupBy(field string, fields ...string) *SupportMessageGroupBy {
@@ -322,11 +321,11 @@ func (_q *SupportMessageQuery) GroupBy(field string, fields ...string) *SupportM
 // Example:
 //
 //	var v []struct {
-//		Role supportmessage.Role `json:"role,omitempty"`
+//		TicketID string `json:"ticket_id,omitempty"`
 //	}
 //
 //	client.SupportMessage.Query().
-//		Select(supportmessage.FieldRole).
+//		Select(supportmessage.FieldTicketID).
 //		Scan(ctx, &v)
 func (_q *SupportMessageQuery) Select(fields ...string) *SupportMessageSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -370,18 +369,11 @@ func (_q *SupportMessageQuery) prepareQuery(ctx context.Context) error {
 func (_q *SupportMessageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*SupportMessage, error) {
 	var (
 		nodes       = []*SupportMessage{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
 			_q.withTicket != nil,
 		}
 	)
-	if _q.withTicket != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, supportmessage.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*SupportMessage).scanValues(nil, columns)
 	}
@@ -413,10 +405,7 @@ func (_q *SupportMessageQuery) loadTicket(ctx context.Context, query *SupportTic
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*SupportMessage)
 	for i := range nodes {
-		if nodes[i].support_ticket_messages == nil {
-			continue
-		}
-		fk := *nodes[i].support_ticket_messages
+		fk := nodes[i].TicketID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -433,7 +422,7 @@ func (_q *SupportMessageQuery) loadTicket(ctx context.Context, query *SupportTic
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "support_ticket_messages" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "ticket_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -466,6 +455,9 @@ func (_q *SupportMessageQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != supportmessage.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withTicket != nil {
+			_spec.Node.AddColumnOnce(supportmessage.FieldTicketID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

@@ -20,8 +20,14 @@ func (Notification) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("team_id").
+			NotEmpty(),
+		field.String("watch_condition_id").
+			NotEmpty(),
+		field.String("slot_id").
+			NotEmpty(),
 		field.String("channel").
-			NotEmpty(), // email, line, slack
+			NotEmpty(),
 		field.Enum("status").
 			Values("pending", "sent", "failed").
 			Default("pending"),
@@ -39,14 +45,17 @@ func (Notification) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("team", Team.Type).
 			Ref("notifications").
+			Field("team_id").
 			Unique().
 			Required(),
 		edge.From("watch_condition", WatchCondition.Type).
 			Ref("notifications").
+			Field("watch_condition_id").
 			Unique().
 			Required(),
 		edge.From("slot", Slot.Type).
 			Ref("notifications").
+			Field("slot_id").
 			Unique().
 			Required(),
 	}
@@ -55,7 +64,7 @@ func (Notification) Edges() []ent.Edge {
 // Indexes of the Notification.
 func (Notification) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Edges("team"),
+		index.Fields("team_id"),
 		index.Fields("status"),
 	}
 }

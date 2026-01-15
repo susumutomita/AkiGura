@@ -15,6 +15,8 @@ const (
 	Label = "support_message"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldTicketID holds the string denoting the ticket_id field in the database.
+	FieldTicketID = "ticket_id"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
 	// FieldContent holds the string denoting the content field in the database.
@@ -31,21 +33,16 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "supportticket" package.
 	TicketInverseTable = "support_tickets"
 	// TicketColumn is the table column denoting the ticket relation/edge.
-	TicketColumn = "support_ticket_messages"
+	TicketColumn = "ticket_id"
 )
 
 // Columns holds all SQL columns for supportmessage fields.
 var Columns = []string{
 	FieldID,
+	FieldTicketID,
 	FieldRole,
 	FieldContent,
 	FieldCreatedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "support_messages"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"support_ticket_messages",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -55,15 +52,12 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
-			return true
-		}
-	}
 	return false
 }
 
 var (
+	// TicketIDValidator is a validator for the "ticket_id" field. It is called by the builders before save.
+	TicketIDValidator func(string) error
 	// ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	ContentValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -100,6 +94,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByTicketID orders the results by the ticket_id field.
+func ByTicketID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTicketID, opts...).ToFunc()
 }
 
 // ByRole orders the results by the role field.

@@ -65,6 +65,11 @@ func IDContainsFold(id string) predicate.ScrapeJob {
 	return predicate.ScrapeJob(sql.FieldContainsFold(FieldID, id))
 }
 
+// MunicipalityID applies equality check predicate on the "municipality_id" field. It's identical to MunicipalityIDEQ.
+func MunicipalityID(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldEQ(FieldMunicipalityID, v))
+}
+
 // SlotsFound applies equality check predicate on the "slots_found" field. It's identical to SlotsFoundEQ.
 func SlotsFound(v int) predicate.ScrapeJob {
 	return predicate.ScrapeJob(sql.FieldEQ(FieldSlotsFound, v))
@@ -98,6 +103,71 @@ func CompletedAt(v time.Time) predicate.ScrapeJob {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.ScrapeJob {
 	return predicate.ScrapeJob(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// MunicipalityIDEQ applies the EQ predicate on the "municipality_id" field.
+func MunicipalityIDEQ(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldEQ(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDNEQ applies the NEQ predicate on the "municipality_id" field.
+func MunicipalityIDNEQ(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldNEQ(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDIn applies the In predicate on the "municipality_id" field.
+func MunicipalityIDIn(vs ...string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldIn(FieldMunicipalityID, vs...))
+}
+
+// MunicipalityIDNotIn applies the NotIn predicate on the "municipality_id" field.
+func MunicipalityIDNotIn(vs ...string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldNotIn(FieldMunicipalityID, vs...))
+}
+
+// MunicipalityIDGT applies the GT predicate on the "municipality_id" field.
+func MunicipalityIDGT(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldGT(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDGTE applies the GTE predicate on the "municipality_id" field.
+func MunicipalityIDGTE(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldGTE(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDLT applies the LT predicate on the "municipality_id" field.
+func MunicipalityIDLT(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldLT(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDLTE applies the LTE predicate on the "municipality_id" field.
+func MunicipalityIDLTE(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldLTE(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDContains applies the Contains predicate on the "municipality_id" field.
+func MunicipalityIDContains(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldContains(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDHasPrefix applies the HasPrefix predicate on the "municipality_id" field.
+func MunicipalityIDHasPrefix(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldHasPrefix(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDHasSuffix applies the HasSuffix predicate on the "municipality_id" field.
+func MunicipalityIDHasSuffix(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldHasSuffix(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDEqualFold applies the EqualFold predicate on the "municipality_id" field.
+func MunicipalityIDEqualFold(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldEqualFold(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDContainsFold applies the ContainsFold predicate on the "municipality_id" field.
+func MunicipalityIDContainsFold(v string) predicate.ScrapeJob {
+	return predicate.ScrapeJob(sql.FieldContainsFold(FieldMunicipalityID, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

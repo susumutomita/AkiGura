@@ -18,6 +18,8 @@ type AuthToken struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID string `json:"team_id,omitempty"`
 	// Token holds the value of the "token" field.
 	Token string `json:"-"`
 	// ExpiresAt holds the value of the "expires_at" field.
@@ -28,9 +30,8 @@ type AuthToken struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AuthTokenQuery when eager-loading is set.
-	Edges            AuthTokenEdges `json:"edges"`
-	team_auth_tokens *string
-	selectValues     sql.SelectValues
+	Edges        AuthTokenEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // AuthTokenEdges holds the relations/edges for other nodes in the graph.
@@ -58,12 +59,10 @@ func (*AuthToken) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case authtoken.FieldID, authtoken.FieldToken:
+		case authtoken.FieldID, authtoken.FieldTeamID, authtoken.FieldToken:
 			values[i] = new(sql.NullString)
 		case authtoken.FieldExpiresAt, authtoken.FieldUsedAt, authtoken.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case authtoken.ForeignKeys[0]: // team_auth_tokens
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -84,6 +83,12 @@ func (_m *AuthToken) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case authtoken.FieldTeamID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value.Valid {
+				_m.TeamID = value.String
 			}
 		case authtoken.FieldToken:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -109,13 +114,6 @@ func (_m *AuthToken) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
-			}
-		case authtoken.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field team_auth_tokens", values[i])
-			} else if value.Valid {
-				_m.team_auth_tokens = new(string)
-				*_m.team_auth_tokens = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -158,6 +156,9 @@ func (_m *AuthToken) String() string {
 	var builder strings.Builder
 	builder.WriteString("AuthToken(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("team_id=")
+	builder.WriteString(_m.TeamID)
+	builder.WriteString(", ")
 	builder.WriteString("token=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("expires_at=")

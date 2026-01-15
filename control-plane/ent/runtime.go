@@ -27,12 +27,16 @@ import (
 func init() {
 	authtokenFields := schema.AuthToken{}.Fields()
 	_ = authtokenFields
+	// authtokenDescTeamID is the schema descriptor for team_id field.
+	authtokenDescTeamID := authtokenFields[1].Descriptor()
+	// authtoken.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	authtoken.TeamIDValidator = authtokenDescTeamID.Validators[0].(func(string) error)
 	// authtokenDescToken is the schema descriptor for token field.
-	authtokenDescToken := authtokenFields[1].Descriptor()
+	authtokenDescToken := authtokenFields[2].Descriptor()
 	// authtoken.TokenValidator is a validator for the "token" field. It is called by the builders before save.
 	authtoken.TokenValidator = authtokenDescToken.Validators[0].(func(string) error)
 	// authtokenDescCreatedAt is the schema descriptor for created_at field.
-	authtokenDescCreatedAt := authtokenFields[4].Descriptor()
+	authtokenDescCreatedAt := authtokenFields[5].Descriptor()
 	// authtoken.DefaultCreatedAt holds the default value on creation for the created_at field.
 	authtoken.DefaultCreatedAt = authtokenDescCreatedAt.Default.(func() time.Time)
 	facilityFields := schema.Facility{}.Fields()
@@ -63,16 +67,20 @@ func init() {
 	facility.DefaultCreatedAt = facilityDescCreatedAt.Default.(func() time.Time)
 	groundFields := schema.Ground{}.Fields()
 	_ = groundFields
+	// groundDescMunicipalityID is the schema descriptor for municipality_id field.
+	groundDescMunicipalityID := groundFields[1].Descriptor()
+	// ground.MunicipalityIDValidator is a validator for the "municipality_id" field. It is called by the builders before save.
+	ground.MunicipalityIDValidator = groundDescMunicipalityID.Validators[0].(func(string) error)
 	// groundDescName is the schema descriptor for name field.
-	groundDescName := groundFields[1].Descriptor()
+	groundDescName := groundFields[2].Descriptor()
 	// ground.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	ground.NameValidator = groundDescName.Validators[0].(func(string) error)
 	// groundDescEnabled is the schema descriptor for enabled field.
-	groundDescEnabled := groundFields[3].Descriptor()
+	groundDescEnabled := groundFields[4].Descriptor()
 	// ground.DefaultEnabled holds the default value on creation for the enabled field.
 	ground.DefaultEnabled = groundDescEnabled.Default.(bool)
 	// groundDescCreatedAt is the schema descriptor for created_at field.
-	groundDescCreatedAt := groundFields[4].Descriptor()
+	groundDescCreatedAt := groundFields[5].Descriptor()
 	// ground.DefaultCreatedAt holds the default value on creation for the created_at field.
 	ground.DefaultCreatedAt = groundDescCreatedAt.Default.(func() time.Time)
 	municipalityFields := schema.Municipality{}.Fields()
@@ -99,12 +107,24 @@ func init() {
 	municipality.DefaultCreatedAt = municipalityDescCreatedAt.Default.(func() time.Time)
 	notificationFields := schema.Notification{}.Fields()
 	_ = notificationFields
+	// notificationDescTeamID is the schema descriptor for team_id field.
+	notificationDescTeamID := notificationFields[1].Descriptor()
+	// notification.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	notification.TeamIDValidator = notificationDescTeamID.Validators[0].(func(string) error)
+	// notificationDescWatchConditionID is the schema descriptor for watch_condition_id field.
+	notificationDescWatchConditionID := notificationFields[2].Descriptor()
+	// notification.WatchConditionIDValidator is a validator for the "watch_condition_id" field. It is called by the builders before save.
+	notification.WatchConditionIDValidator = notificationDescWatchConditionID.Validators[0].(func(string) error)
+	// notificationDescSlotID is the schema descriptor for slot_id field.
+	notificationDescSlotID := notificationFields[3].Descriptor()
+	// notification.SlotIDValidator is a validator for the "slot_id" field. It is called by the builders before save.
+	notification.SlotIDValidator = notificationDescSlotID.Validators[0].(func(string) error)
 	// notificationDescChannel is the schema descriptor for channel field.
-	notificationDescChannel := notificationFields[1].Descriptor()
+	notificationDescChannel := notificationFields[4].Descriptor()
 	// notification.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
 	notification.ChannelValidator = notificationDescChannel.Validators[0].(func(string) error)
 	// notificationDescCreatedAt is the schema descriptor for created_at field.
-	notificationDescCreatedAt := notificationFields[4].Descriptor()
+	notificationDescCreatedAt := notificationFields[7].Descriptor()
 	// notification.DefaultCreatedAt holds the default value on creation for the created_at field.
 	notification.DefaultCreatedAt = notificationDescCreatedAt.Default.(func() time.Time)
 	promocodeFields := schema.PromoCode{}.Fields()
@@ -135,60 +155,76 @@ func init() {
 	promocode.DefaultCreatedAt = promocodeDescCreatedAt.Default.(func() time.Time)
 	promocodeusageFields := schema.PromoCodeUsage{}.Fields()
 	_ = promocodeusageFields
+	// promocodeusageDescPromoCodeID is the schema descriptor for promo_code_id field.
+	promocodeusageDescPromoCodeID := promocodeusageFields[1].Descriptor()
+	// promocodeusage.PromoCodeIDValidator is a validator for the "promo_code_id" field. It is called by the builders before save.
+	promocodeusage.PromoCodeIDValidator = promocodeusageDescPromoCodeID.Validators[0].(func(string) error)
+	// promocodeusageDescTeamID is the schema descriptor for team_id field.
+	promocodeusageDescTeamID := promocodeusageFields[2].Descriptor()
+	// promocodeusage.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	promocodeusage.TeamIDValidator = promocodeusageDescTeamID.Validators[0].(func(string) error)
 	// promocodeusageDescAppliedAt is the schema descriptor for applied_at field.
-	promocodeusageDescAppliedAt := promocodeusageFields[1].Descriptor()
+	promocodeusageDescAppliedAt := promocodeusageFields[3].Descriptor()
 	// promocodeusage.DefaultAppliedAt holds the default value on creation for the applied_at field.
 	promocodeusage.DefaultAppliedAt = promocodeusageDescAppliedAt.Default.(func() time.Time)
 	scrapejobFields := schema.ScrapeJob{}.Fields()
 	_ = scrapejobFields
+	// scrapejobDescMunicipalityID is the schema descriptor for municipality_id field.
+	scrapejobDescMunicipalityID := scrapejobFields[1].Descriptor()
+	// scrapejob.MunicipalityIDValidator is a validator for the "municipality_id" field. It is called by the builders before save.
+	scrapejob.MunicipalityIDValidator = scrapejobDescMunicipalityID.Validators[0].(func(string) error)
 	// scrapejobDescSlotsFound is the schema descriptor for slots_found field.
-	scrapejobDescSlotsFound := scrapejobFields[2].Descriptor()
+	scrapejobDescSlotsFound := scrapejobFields[3].Descriptor()
 	// scrapejob.DefaultSlotsFound holds the default value on creation for the slots_found field.
 	scrapejob.DefaultSlotsFound = scrapejobDescSlotsFound.Default.(int)
 	// scrapejobDescCreatedAt is the schema descriptor for created_at field.
-	scrapejobDescCreatedAt := scrapejobFields[8].Descriptor()
+	scrapejobDescCreatedAt := scrapejobFields[9].Descriptor()
 	// scrapejob.DefaultCreatedAt holds the default value on creation for the created_at field.
 	scrapejob.DefaultCreatedAt = scrapejobDescCreatedAt.Default.(func() time.Time)
 	slotFields := schema.Slot{}.Fields()
 	_ = slotFields
 	// slotDescTimeFrom is the schema descriptor for time_from field.
-	slotDescTimeFrom := slotFields[2].Descriptor()
+	slotDescTimeFrom := slotFields[5].Descriptor()
 	// slot.TimeFromValidator is a validator for the "time_from" field. It is called by the builders before save.
 	slot.TimeFromValidator = slotDescTimeFrom.Validators[0].(func(string) error)
 	// slotDescTimeTo is the schema descriptor for time_to field.
-	slotDescTimeTo := slotFields[3].Descriptor()
+	slotDescTimeTo := slotFields[6].Descriptor()
 	// slot.TimeToValidator is a validator for the "time_to" field. It is called by the builders before save.
 	slot.TimeToValidator = slotDescTimeTo.Validators[0].(func(string) error)
 	// slotDescScrapedAt is the schema descriptor for scraped_at field.
-	slotDescScrapedAt := slotFields[6].Descriptor()
+	slotDescScrapedAt := slotFields[9].Descriptor()
 	// slot.DefaultScrapedAt holds the default value on creation for the scraped_at field.
 	slot.DefaultScrapedAt = slotDescScrapedAt.Default.(func() time.Time)
 	supportmessageFields := schema.SupportMessage{}.Fields()
 	_ = supportmessageFields
+	// supportmessageDescTicketID is the schema descriptor for ticket_id field.
+	supportmessageDescTicketID := supportmessageFields[1].Descriptor()
+	// supportmessage.TicketIDValidator is a validator for the "ticket_id" field. It is called by the builders before save.
+	supportmessage.TicketIDValidator = supportmessageDescTicketID.Validators[0].(func(string) error)
 	// supportmessageDescContent is the schema descriptor for content field.
-	supportmessageDescContent := supportmessageFields[2].Descriptor()
+	supportmessageDescContent := supportmessageFields[3].Descriptor()
 	// supportmessage.ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	supportmessage.ContentValidator = supportmessageDescContent.Validators[0].(func(string) error)
 	// supportmessageDescCreatedAt is the schema descriptor for created_at field.
-	supportmessageDescCreatedAt := supportmessageFields[3].Descriptor()
+	supportmessageDescCreatedAt := supportmessageFields[4].Descriptor()
 	// supportmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
 	supportmessage.DefaultCreatedAt = supportmessageDescCreatedAt.Default.(func() time.Time)
 	supportticketFields := schema.SupportTicket{}.Fields()
 	_ = supportticketFields
 	// supportticketDescEmail is the schema descriptor for email field.
-	supportticketDescEmail := supportticketFields[1].Descriptor()
+	supportticketDescEmail := supportticketFields[2].Descriptor()
 	// supportticket.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	supportticket.EmailValidator = supportticketDescEmail.Validators[0].(func(string) error)
 	// supportticketDescSubject is the schema descriptor for subject field.
-	supportticketDescSubject := supportticketFields[2].Descriptor()
+	supportticketDescSubject := supportticketFields[3].Descriptor()
 	// supportticket.SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
 	supportticket.SubjectValidator = supportticketDescSubject.Validators[0].(func(string) error)
 	// supportticketDescCreatedAt is the schema descriptor for created_at field.
-	supportticketDescCreatedAt := supportticketFields[7].Descriptor()
+	supportticketDescCreatedAt := supportticketFields[8].Descriptor()
 	// supportticket.DefaultCreatedAt holds the default value on creation for the created_at field.
 	supportticket.DefaultCreatedAt = supportticketDescCreatedAt.Default.(func() time.Time)
 	// supportticketDescUpdatedAt is the schema descriptor for updated_at field.
-	supportticketDescUpdatedAt := supportticketFields[8].Descriptor()
+	supportticketDescUpdatedAt := supportticketFields[9].Descriptor()
 	// supportticket.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	supportticket.DefaultUpdatedAt = supportticketDescUpdatedAt.Default.(func() time.Time)
 	// supportticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -215,28 +251,36 @@ func init() {
 	team.UpdateDefaultUpdatedAt = teamDescUpdatedAt.UpdateDefault.(func() time.Time)
 	watchconditionFields := schema.WatchCondition{}.Fields()
 	_ = watchconditionFields
+	// watchconditionDescTeamID is the schema descriptor for team_id field.
+	watchconditionDescTeamID := watchconditionFields[1].Descriptor()
+	// watchcondition.TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	watchcondition.TeamIDValidator = watchconditionDescTeamID.Validators[0].(func(string) error)
+	// watchconditionDescFacilityID is the schema descriptor for facility_id field.
+	watchconditionDescFacilityID := watchconditionFields[2].Descriptor()
+	// watchcondition.FacilityIDValidator is a validator for the "facility_id" field. It is called by the builders before save.
+	watchcondition.FacilityIDValidator = watchconditionDescFacilityID.Validators[0].(func(string) error)
 	// watchconditionDescDaysOfWeek is the schema descriptor for days_of_week field.
-	watchconditionDescDaysOfWeek := watchconditionFields[1].Descriptor()
+	watchconditionDescDaysOfWeek := watchconditionFields[3].Descriptor()
 	// watchcondition.DaysOfWeekValidator is a validator for the "days_of_week" field. It is called by the builders before save.
 	watchcondition.DaysOfWeekValidator = watchconditionDescDaysOfWeek.Validators[0].(func(string) error)
 	// watchconditionDescTimeFrom is the schema descriptor for time_from field.
-	watchconditionDescTimeFrom := watchconditionFields[2].Descriptor()
+	watchconditionDescTimeFrom := watchconditionFields[4].Descriptor()
 	// watchcondition.TimeFromValidator is a validator for the "time_from" field. It is called by the builders before save.
 	watchcondition.TimeFromValidator = watchconditionDescTimeFrom.Validators[0].(func(string) error)
 	// watchconditionDescTimeTo is the schema descriptor for time_to field.
-	watchconditionDescTimeTo := watchconditionFields[3].Descriptor()
+	watchconditionDescTimeTo := watchconditionFields[5].Descriptor()
 	// watchcondition.TimeToValidator is a validator for the "time_to" field. It is called by the builders before save.
 	watchcondition.TimeToValidator = watchconditionDescTimeTo.Validators[0].(func(string) error)
 	// watchconditionDescEnabled is the schema descriptor for enabled field.
-	watchconditionDescEnabled := watchconditionFields[6].Descriptor()
+	watchconditionDescEnabled := watchconditionFields[8].Descriptor()
 	// watchcondition.DefaultEnabled holds the default value on creation for the enabled field.
 	watchcondition.DefaultEnabled = watchconditionDescEnabled.Default.(bool)
 	// watchconditionDescCreatedAt is the schema descriptor for created_at field.
-	watchconditionDescCreatedAt := watchconditionFields[7].Descriptor()
+	watchconditionDescCreatedAt := watchconditionFields[9].Descriptor()
 	// watchcondition.DefaultCreatedAt holds the default value on creation for the created_at field.
 	watchcondition.DefaultCreatedAt = watchconditionDescCreatedAt.Default.(func() time.Time)
 	// watchconditionDescUpdatedAt is the schema descriptor for updated_at field.
-	watchconditionDescUpdatedAt := watchconditionFields[8].Descriptor()
+	watchconditionDescUpdatedAt := watchconditionFields[10].Descriptor()
 	// watchcondition.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	watchcondition.DefaultUpdatedAt = watchconditionDescUpdatedAt.Default.(func() time.Time)
 	// watchcondition.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

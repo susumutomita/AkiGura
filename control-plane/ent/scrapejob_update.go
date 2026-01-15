@@ -29,6 +29,20 @@ func (_u *ScrapeJobUpdate) Where(ps ...predicate.ScrapeJob) *ScrapeJobUpdate {
 	return _u
 }
 
+// SetMunicipalityID sets the "municipality_id" field.
+func (_u *ScrapeJobUpdate) SetMunicipalityID(v string) *ScrapeJobUpdate {
+	_u.mutation.SetMunicipalityID(v)
+	return _u
+}
+
+// SetNillableMunicipalityID sets the "municipality_id" field if the given value is not nil.
+func (_u *ScrapeJobUpdate) SetNillableMunicipalityID(v *string) *ScrapeJobUpdate {
+	if v != nil {
+		_u.SetMunicipalityID(*v)
+	}
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *ScrapeJobUpdate) SetStatus(v scrapejob.Status) *ScrapeJobUpdate {
 	_u.mutation.SetStatus(v)
@@ -164,12 +178,6 @@ func (_u *ScrapeJobUpdate) ClearCompletedAt() *ScrapeJobUpdate {
 	return _u
 }
 
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_u *ScrapeJobUpdate) SetMunicipalityID(id string) *ScrapeJobUpdate {
-	_u.mutation.SetMunicipalityID(id)
-	return _u
-}
-
 // SetMunicipality sets the "municipality" edge to the Municipality entity.
 func (_u *ScrapeJobUpdate) SetMunicipality(v *Municipality) *ScrapeJobUpdate {
 	return _u.SetMunicipalityID(v.ID)
@@ -215,6 +223,11 @@ func (_u *ScrapeJobUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ScrapeJobUpdate) check() error {
+	if v, ok := _u.mutation.MunicipalityID(); ok {
+		if err := scrapejob.MunicipalityIDValidator(v); err != nil {
+			return &ValidationError{Name: "municipality_id", err: fmt.Errorf(`ent: validator failed for field "ScrapeJob.municipality_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := scrapejob.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "ScrapeJob.status": %w`, err)}
@@ -324,6 +337,20 @@ type ScrapeJobUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ScrapeJobMutation
+}
+
+// SetMunicipalityID sets the "municipality_id" field.
+func (_u *ScrapeJobUpdateOne) SetMunicipalityID(v string) *ScrapeJobUpdateOne {
+	_u.mutation.SetMunicipalityID(v)
+	return _u
+}
+
+// SetNillableMunicipalityID sets the "municipality_id" field if the given value is not nil.
+func (_u *ScrapeJobUpdateOne) SetNillableMunicipalityID(v *string) *ScrapeJobUpdateOne {
+	if v != nil {
+		_u.SetMunicipalityID(*v)
+	}
+	return _u
 }
 
 // SetStatus sets the "status" field.
@@ -461,12 +488,6 @@ func (_u *ScrapeJobUpdateOne) ClearCompletedAt() *ScrapeJobUpdateOne {
 	return _u
 }
 
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_u *ScrapeJobUpdateOne) SetMunicipalityID(id string) *ScrapeJobUpdateOne {
-	_u.mutation.SetMunicipalityID(id)
-	return _u
-}
-
 // SetMunicipality sets the "municipality" edge to the Municipality entity.
 func (_u *ScrapeJobUpdateOne) SetMunicipality(v *Municipality) *ScrapeJobUpdateOne {
 	return _u.SetMunicipalityID(v.ID)
@@ -525,6 +546,11 @@ func (_u *ScrapeJobUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ScrapeJobUpdateOne) check() error {
+	if v, ok := _u.mutation.MunicipalityID(); ok {
+		if err := scrapejob.MunicipalityIDValidator(v); err != nil {
+			return &ValidationError{Name: "municipality_id", err: fmt.Errorf(`ent: validator failed for field "ScrapeJob.municipality_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := scrapejob.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "ScrapeJob.status": %w`, err)}

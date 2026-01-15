@@ -18,6 +18,8 @@ type ScrapeJob struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// MunicipalityID holds the value of the "municipality_id" field.
+	MunicipalityID string `json:"municipality_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status scrapejob.Status `json:"status,omitempty"`
 	// SlotsFound holds the value of the "slots_found" field.
@@ -36,9 +38,8 @@ type ScrapeJob struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ScrapeJobQuery when eager-loading is set.
-	Edges                    ScrapeJobEdges `json:"edges"`
-	municipality_scrape_jobs *string
-	selectValues             sql.SelectValues
+	Edges        ScrapeJobEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // ScrapeJobEdges holds the relations/edges for other nodes in the graph.
@@ -68,12 +69,10 @@ func (*ScrapeJob) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case scrapejob.FieldSlotsFound:
 			values[i] = new(sql.NullInt64)
-		case scrapejob.FieldID, scrapejob.FieldStatus, scrapejob.FieldErrorMessage, scrapejob.FieldScrapeStatus, scrapejob.FieldDiagnostics:
+		case scrapejob.FieldID, scrapejob.FieldMunicipalityID, scrapejob.FieldStatus, scrapejob.FieldErrorMessage, scrapejob.FieldScrapeStatus, scrapejob.FieldDiagnostics:
 			values[i] = new(sql.NullString)
 		case scrapejob.FieldStartedAt, scrapejob.FieldCompletedAt, scrapejob.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case scrapejob.ForeignKeys[0]: // municipality_scrape_jobs
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -94,6 +93,12 @@ func (_m *ScrapeJob) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case scrapejob.FieldMunicipalityID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field municipality_id", values[i])
+			} else if value.Valid {
+				_m.MunicipalityID = value.String
 			}
 		case scrapejob.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -148,13 +153,6 @@ func (_m *ScrapeJob) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case scrapejob.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field municipality_scrape_jobs", values[i])
-			} else if value.Valid {
-				_m.municipality_scrape_jobs = new(string)
-				*_m.municipality_scrape_jobs = value.String
-			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -196,6 +194,9 @@ func (_m *ScrapeJob) String() string {
 	var builder strings.Builder
 	builder.WriteString("ScrapeJob(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("municipality_id=")
+	builder.WriteString(_m.MunicipalityID)
+	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")

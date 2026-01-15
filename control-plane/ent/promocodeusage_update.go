@@ -29,21 +29,37 @@ func (_u *PromoCodeUsageUpdate) Where(ps ...predicate.PromoCodeUsage) *PromoCode
 	return _u
 }
 
-// SetPromoCodeID sets the "promo_code" edge to the PromoCode entity by ID.
-func (_u *PromoCodeUsageUpdate) SetPromoCodeID(id string) *PromoCodeUsageUpdate {
-	_u.mutation.SetPromoCodeID(id)
+// SetPromoCodeID sets the "promo_code_id" field.
+func (_u *PromoCodeUsageUpdate) SetPromoCodeID(v string) *PromoCodeUsageUpdate {
+	_u.mutation.SetPromoCodeID(v)
+	return _u
+}
+
+// SetNillablePromoCodeID sets the "promo_code_id" field if the given value is not nil.
+func (_u *PromoCodeUsageUpdate) SetNillablePromoCodeID(v *string) *PromoCodeUsageUpdate {
+	if v != nil {
+		_u.SetPromoCodeID(*v)
+	}
+	return _u
+}
+
+// SetTeamID sets the "team_id" field.
+func (_u *PromoCodeUsageUpdate) SetTeamID(v string) *PromoCodeUsageUpdate {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *PromoCodeUsageUpdate) SetNillableTeamID(v *string) *PromoCodeUsageUpdate {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
 	return _u
 }
 
 // SetPromoCode sets the "promo_code" edge to the PromoCode entity.
 func (_u *PromoCodeUsageUpdate) SetPromoCode(v *PromoCode) *PromoCodeUsageUpdate {
 	return _u.SetPromoCodeID(v.ID)
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *PromoCodeUsageUpdate) SetTeamID(id string) *PromoCodeUsageUpdate {
-	_u.mutation.SetTeamID(id)
-	return _u
 }
 
 // SetTeam sets the "team" edge to the Team entity.
@@ -97,6 +113,16 @@ func (_u *PromoCodeUsageUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PromoCodeUsageUpdate) check() error {
+	if v, ok := _u.mutation.PromoCodeID(); ok {
+		if err := promocodeusage.PromoCodeIDValidator(v); err != nil {
+			return &ValidationError{Name: "promo_code_id", err: fmt.Errorf(`ent: validator failed for field "PromoCodeUsage.promo_code_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := promocodeusage.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "PromoCodeUsage.team_id": %w`, err)}
+		}
+	}
 	if _u.mutation.PromoCodeCleared() && len(_u.mutation.PromoCodeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "PromoCodeUsage.promo_code"`)
 	}
@@ -196,21 +222,37 @@ type PromoCodeUsageUpdateOne struct {
 	mutation *PromoCodeUsageMutation
 }
 
-// SetPromoCodeID sets the "promo_code" edge to the PromoCode entity by ID.
-func (_u *PromoCodeUsageUpdateOne) SetPromoCodeID(id string) *PromoCodeUsageUpdateOne {
-	_u.mutation.SetPromoCodeID(id)
+// SetPromoCodeID sets the "promo_code_id" field.
+func (_u *PromoCodeUsageUpdateOne) SetPromoCodeID(v string) *PromoCodeUsageUpdateOne {
+	_u.mutation.SetPromoCodeID(v)
+	return _u
+}
+
+// SetNillablePromoCodeID sets the "promo_code_id" field if the given value is not nil.
+func (_u *PromoCodeUsageUpdateOne) SetNillablePromoCodeID(v *string) *PromoCodeUsageUpdateOne {
+	if v != nil {
+		_u.SetPromoCodeID(*v)
+	}
+	return _u
+}
+
+// SetTeamID sets the "team_id" field.
+func (_u *PromoCodeUsageUpdateOne) SetTeamID(v string) *PromoCodeUsageUpdateOne {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *PromoCodeUsageUpdateOne) SetNillableTeamID(v *string) *PromoCodeUsageUpdateOne {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
 	return _u
 }
 
 // SetPromoCode sets the "promo_code" edge to the PromoCode entity.
 func (_u *PromoCodeUsageUpdateOne) SetPromoCode(v *PromoCode) *PromoCodeUsageUpdateOne {
 	return _u.SetPromoCodeID(v.ID)
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *PromoCodeUsageUpdateOne) SetTeamID(id string) *PromoCodeUsageUpdateOne {
-	_u.mutation.SetTeamID(id)
-	return _u
 }
 
 // SetTeam sets the "team" edge to the Team entity.
@@ -277,6 +319,16 @@ func (_u *PromoCodeUsageUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PromoCodeUsageUpdateOne) check() error {
+	if v, ok := _u.mutation.PromoCodeID(); ok {
+		if err := promocodeusage.PromoCodeIDValidator(v); err != nil {
+			return &ValidationError{Name: "promo_code_id", err: fmt.Errorf(`ent: validator failed for field "PromoCodeUsage.promo_code_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := promocodeusage.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "PromoCodeUsage.team_id": %w`, err)}
+		}
+	}
 	if _u.mutation.PromoCodeCleared() && len(_u.mutation.PromoCodeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "PromoCodeUsage.promo_code"`)
 	}

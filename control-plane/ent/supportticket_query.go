@@ -27,7 +27,6 @@ type SupportTicketQuery struct {
 	predicates   []predicate.SupportTicket
 	withTeam     *TeamQuery
 	withMessages *SupportMessageQuery
-	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -336,12 +335,12 @@ func (_q *SupportTicketQuery) WithMessages(opts ...func(*SupportMessageQuery)) *
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.SupportTicket.Query().
-//		GroupBy(supportticket.FieldEmail).
+//		GroupBy(supportticket.FieldTeamID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *SupportTicketQuery) GroupBy(field string, fields ...string) *SupportTicketGroupBy {
@@ -359,11 +358,11 @@ func (_q *SupportTicketQuery) GroupBy(field string, fields ...string) *SupportTi
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //	}
 //
 //	client.SupportTicket.Query().
-//		Select(supportticket.FieldEmail).
+//		Select(supportticket.FieldTeamID).
 //		Scan(ctx, &v)
 func (_q *SupportTicketQuery) Select(fields ...string) *SupportTicketSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -407,19 +406,12 @@ func (_q *SupportTicketQuery) prepareQuery(ctx context.Context) error {
 func (_q *SupportTicketQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*SupportTicket, error) {
 	var (
 		nodes       = []*SupportTicket{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
 			_q.withTeam != nil,
 			_q.withMessages != nil,
 		}
 	)
-	if _q.withTeam != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, supportticket.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*SupportTicket).scanValues(nil, columns)
 	}
@@ -458,10 +450,10 @@ func (_q *SupportTicketQuery) loadTeam(ctx context.Context, query *TeamQuery, no
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*SupportTicket)
 	for i := range nodes {
-		if nodes[i].team_support_tickets == nil {
+		if nodes[i].TeamID == nil {
 			continue
 		}
-		fk := *nodes[i].team_support_tickets
+		fk := *nodes[i].TeamID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -478,7 +470,7 @@ func (_q *SupportTicketQuery) loadTeam(ctx context.Context, query *TeamQuery, no
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_support_tickets" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -496,7 +488,9 @@ func (_q *SupportTicketQuery) loadMessages(ctx context.Context, query *SupportMe
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(supportmessage.FieldTicketID)
+	}
 	query.Where(predicate.SupportMessage(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(supportticket.MessagesColumn), fks...))
 	}))
@@ -505,13 +499,10 @@ func (_q *SupportTicketQuery) loadMessages(ctx context.Context, query *SupportMe
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.support_ticket_messages
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "support_ticket_messages" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TicketID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "support_ticket_messages" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "ticket_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -542,6 +533,9 @@ func (_q *SupportTicketQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != supportticket.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withTeam != nil {
+			_spec.Node.AddColumnOnce(supportticket.FieldTeamID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

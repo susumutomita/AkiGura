@@ -65,6 +65,11 @@ func IDContainsFold(id string) predicate.SupportTicket {
 	return predicate.SupportTicket(sql.FieldContainsFold(FieldID, id))
 }
 
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldEQ(FieldTeamID, v))
+}
+
 // Email applies equality check predicate on the "email" field. It's identical to EmailEQ.
 func Email(v string) predicate.SupportTicket {
 	return predicate.SupportTicket(sql.FieldEQ(FieldEmail, v))
@@ -93,6 +98,81 @@ func CreatedAt(v time.Time) predicate.SupportTicket {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.SupportTicket {
 	return predicate.SupportTicket(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// TeamIDGT applies the GT predicate on the "team_id" field.
+func TeamIDGT(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldGT(FieldTeamID, v))
+}
+
+// TeamIDGTE applies the GTE predicate on the "team_id" field.
+func TeamIDGTE(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldGTE(FieldTeamID, v))
+}
+
+// TeamIDLT applies the LT predicate on the "team_id" field.
+func TeamIDLT(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldLT(FieldTeamID, v))
+}
+
+// TeamIDLTE applies the LTE predicate on the "team_id" field.
+func TeamIDLTE(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldLTE(FieldTeamID, v))
+}
+
+// TeamIDContains applies the Contains predicate on the "team_id" field.
+func TeamIDContains(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldContains(FieldTeamID, v))
+}
+
+// TeamIDHasPrefix applies the HasPrefix predicate on the "team_id" field.
+func TeamIDHasPrefix(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldHasPrefix(FieldTeamID, v))
+}
+
+// TeamIDHasSuffix applies the HasSuffix predicate on the "team_id" field.
+func TeamIDHasSuffix(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldHasSuffix(FieldTeamID, v))
+}
+
+// TeamIDIsNil applies the IsNil predicate on the "team_id" field.
+func TeamIDIsNil() predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldIsNull(FieldTeamID))
+}
+
+// TeamIDNotNil applies the NotNil predicate on the "team_id" field.
+func TeamIDNotNil() predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldNotNull(FieldTeamID))
+}
+
+// TeamIDEqualFold applies the EqualFold predicate on the "team_id" field.
+func TeamIDEqualFold(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldEqualFold(FieldTeamID, v))
+}
+
+// TeamIDContainsFold applies the ContainsFold predicate on the "team_id" field.
+func TeamIDContainsFold(v string) predicate.SupportTicket {
+	return predicate.SupportTicket(sql.FieldContainsFold(FieldTeamID, v))
 }
 
 // EmailEQ applies the EQ predicate on the "email" field.

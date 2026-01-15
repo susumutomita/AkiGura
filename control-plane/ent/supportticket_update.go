@@ -30,6 +30,26 @@ func (_u *SupportTicketUpdate) Where(ps ...predicate.SupportTicket) *SupportTick
 	return _u
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *SupportTicketUpdate) SetTeamID(v string) *SupportTicketUpdate {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *SupportTicketUpdate) SetNillableTeamID(v *string) *SupportTicketUpdate {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (_u *SupportTicketUpdate) ClearTeamID() *SupportTicketUpdate {
+	_u.mutation.ClearTeamID()
+	return _u
+}
+
 // SetEmail sets the "email" field.
 func (_u *SupportTicketUpdate) SetEmail(v string) *SupportTicketUpdate {
 	_u.mutation.SetEmail(v)
@@ -129,20 +149,6 @@ func (_u *SupportTicketUpdate) ClearHumanResponse() *SupportTicketUpdate {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *SupportTicketUpdate) SetUpdatedAt(v time.Time) *SupportTicketUpdate {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *SupportTicketUpdate) SetTeamID(id string) *SupportTicketUpdate {
-	_u.mutation.SetTeamID(id)
-	return _u
-}
-
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (_u *SupportTicketUpdate) SetNillableTeamID(id *string) *SupportTicketUpdate {
-	if id != nil {
-		_u = _u.SetTeamID(*id)
-	}
 	return _u
 }
 
@@ -392,6 +398,26 @@ type SupportTicketUpdateOne struct {
 	mutation *SupportTicketMutation
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *SupportTicketUpdateOne) SetTeamID(v string) *SupportTicketUpdateOne {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *SupportTicketUpdateOne) SetNillableTeamID(v *string) *SupportTicketUpdateOne {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (_u *SupportTicketUpdateOne) ClearTeamID() *SupportTicketUpdateOne {
+	_u.mutation.ClearTeamID()
+	return _u
+}
+
 // SetEmail sets the "email" field.
 func (_u *SupportTicketUpdateOne) SetEmail(v string) *SupportTicketUpdateOne {
 	_u.mutation.SetEmail(v)
@@ -491,20 +517,6 @@ func (_u *SupportTicketUpdateOne) ClearHumanResponse() *SupportTicketUpdateOne {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *SupportTicketUpdateOne) SetUpdatedAt(v time.Time) *SupportTicketUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *SupportTicketUpdateOne) SetTeamID(id string) *SupportTicketUpdateOne {
-	_u.mutation.SetTeamID(id)
-	return _u
-}
-
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (_u *SupportTicketUpdateOne) SetNillableTeamID(id *string) *SupportTicketUpdateOne {
-	if id != nil {
-		_u = _u.SetTeamID(*id)
-	}
 	return _u
 }
 

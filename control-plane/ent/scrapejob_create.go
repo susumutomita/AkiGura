@@ -21,6 +21,12 @@ type ScrapeJobCreate struct {
 	hooks    []Hook
 }
 
+// SetMunicipalityID sets the "municipality_id" field.
+func (_c *ScrapeJobCreate) SetMunicipalityID(v string) *ScrapeJobCreate {
+	_c.mutation.SetMunicipalityID(v)
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *ScrapeJobCreate) SetStatus(v scrapejob.Status) *ScrapeJobCreate {
 	_c.mutation.SetStatus(v)
@@ -139,12 +145,6 @@ func (_c *ScrapeJobCreate) SetID(v string) *ScrapeJobCreate {
 	return _c
 }
 
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_c *ScrapeJobCreate) SetMunicipalityID(id string) *ScrapeJobCreate {
-	_c.mutation.SetMunicipalityID(id)
-	return _c
-}
-
 // SetMunicipality sets the "municipality" edge to the Municipality entity.
 func (_c *ScrapeJobCreate) SetMunicipality(v *Municipality) *ScrapeJobCreate {
 	return _c.SetMunicipalityID(v.ID)
@@ -201,6 +201,14 @@ func (_c *ScrapeJobCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *ScrapeJobCreate) check() error {
+	if _, ok := _c.mutation.MunicipalityID(); !ok {
+		return &ValidationError{Name: "municipality_id", err: errors.New(`ent: missing required field "ScrapeJob.municipality_id"`)}
+	}
+	if v, ok := _c.mutation.MunicipalityID(); ok {
+		if err := scrapejob.MunicipalityIDValidator(v); err != nil {
+			return &ValidationError{Name: "municipality_id", err: fmt.Errorf(`ent: validator failed for field "ScrapeJob.municipality_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "ScrapeJob.status"`)}
 	}
@@ -299,7 +307,7 @@ func (_c *ScrapeJobCreate) createSpec() (*ScrapeJob, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.municipality_scrape_jobs = &nodes[0]
+		_node.MunicipalityID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

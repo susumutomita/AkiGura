@@ -20,6 +20,8 @@ func (Ground) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("municipality_id").
+			NotEmpty(),
 		field.String("name").
 			NotEmpty(),
 		field.String("court_pattern").
@@ -37,6 +39,7 @@ func (Ground) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("municipality", Municipality.Type).
 			Ref("grounds").
+			Field("municipality_id").
 			Unique().
 			Required(),
 		edge.To("slots", Slot.Type),
@@ -46,6 +49,7 @@ func (Ground) Edges() []ent.Edge {
 // Indexes of the Ground.
 func (Ground) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("municipality_id"),
 		index.Fields("name"),
 	}
 }

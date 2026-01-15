@@ -22,6 +22,18 @@ type PromoCodeUsageCreate struct {
 	hooks    []Hook
 }
 
+// SetPromoCodeID sets the "promo_code_id" field.
+func (_c *PromoCodeUsageCreate) SetPromoCodeID(v string) *PromoCodeUsageCreate {
+	_c.mutation.SetPromoCodeID(v)
+	return _c
+}
+
+// SetTeamID sets the "team_id" field.
+func (_c *PromoCodeUsageCreate) SetTeamID(v string) *PromoCodeUsageCreate {
+	_c.mutation.SetTeamID(v)
+	return _c
+}
+
 // SetAppliedAt sets the "applied_at" field.
 func (_c *PromoCodeUsageCreate) SetAppliedAt(v time.Time) *PromoCodeUsageCreate {
 	_c.mutation.SetAppliedAt(v)
@@ -42,21 +54,9 @@ func (_c *PromoCodeUsageCreate) SetID(v string) *PromoCodeUsageCreate {
 	return _c
 }
 
-// SetPromoCodeID sets the "promo_code" edge to the PromoCode entity by ID.
-func (_c *PromoCodeUsageCreate) SetPromoCodeID(id string) *PromoCodeUsageCreate {
-	_c.mutation.SetPromoCodeID(id)
-	return _c
-}
-
 // SetPromoCode sets the "promo_code" edge to the PromoCode entity.
 func (_c *PromoCodeUsageCreate) SetPromoCode(v *PromoCode) *PromoCodeUsageCreate {
 	return _c.SetPromoCodeID(v.ID)
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_c *PromoCodeUsageCreate) SetTeamID(id string) *PromoCodeUsageCreate {
-	_c.mutation.SetTeamID(id)
-	return _c
 }
 
 // SetTeam sets the "team" edge to the Team entity.
@@ -107,6 +107,22 @@ func (_c *PromoCodeUsageCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *PromoCodeUsageCreate) check() error {
+	if _, ok := _c.mutation.PromoCodeID(); !ok {
+		return &ValidationError{Name: "promo_code_id", err: errors.New(`ent: missing required field "PromoCodeUsage.promo_code_id"`)}
+	}
+	if v, ok := _c.mutation.PromoCodeID(); ok {
+		if err := promocodeusage.PromoCodeIDValidator(v); err != nil {
+			return &ValidationError{Name: "promo_code_id", err: fmt.Errorf(`ent: validator failed for field "PromoCodeUsage.promo_code_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "PromoCodeUsage.team_id"`)}
+	}
+	if v, ok := _c.mutation.TeamID(); ok {
+		if err := promocodeusage.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "PromoCodeUsage.team_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.AppliedAt(); !ok {
 		return &ValidationError{Name: "applied_at", err: errors.New(`ent: missing required field "PromoCodeUsage.applied_at"`)}
 	}
@@ -169,7 +185,7 @@ func (_c *PromoCodeUsageCreate) createSpec() (*PromoCodeUsage, *sqlgraph.CreateS
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.promo_code_usages = &nodes[0]
+		_node.PromoCodeID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.TeamIDs(); len(nodes) > 0 {
@@ -186,7 +202,7 @@ func (_c *PromoCodeUsageCreate) createSpec() (*PromoCodeUsage, *sqlgraph.CreateS
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_promo_code_usages = &nodes[0]
+		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

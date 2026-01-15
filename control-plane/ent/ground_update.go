@@ -29,6 +29,20 @@ func (_u *GroundUpdate) Where(ps ...predicate.Ground) *GroundUpdate {
 	return _u
 }
 
+// SetMunicipalityID sets the "municipality_id" field.
+func (_u *GroundUpdate) SetMunicipalityID(v string) *GroundUpdate {
+	_u.mutation.SetMunicipalityID(v)
+	return _u
+}
+
+// SetNillableMunicipalityID sets the "municipality_id" field if the given value is not nil.
+func (_u *GroundUpdate) SetNillableMunicipalityID(v *string) *GroundUpdate {
+	if v != nil {
+		_u.SetMunicipalityID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *GroundUpdate) SetName(v string) *GroundUpdate {
 	_u.mutation.SetName(v)
@@ -74,12 +88,6 @@ func (_u *GroundUpdate) SetNillableEnabled(v *bool) *GroundUpdate {
 	if v != nil {
 		_u.SetEnabled(*v)
 	}
-	return _u
-}
-
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_u *GroundUpdate) SetMunicipalityID(id string) *GroundUpdate {
-	_u.mutation.SetMunicipalityID(id)
 	return _u
 }
 
@@ -164,6 +172,11 @@ func (_u *GroundUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *GroundUpdate) check() error {
+	if v, ok := _u.mutation.MunicipalityID(); ok {
+		if err := ground.MunicipalityIDValidator(v); err != nil {
+			return &ValidationError{Name: "municipality_id", err: fmt.Errorf(`ent: validator failed for field "Ground.municipality_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Name(); ok {
 		if err := ground.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Ground.name": %w`, err)}
@@ -293,6 +306,20 @@ type GroundUpdateOne struct {
 	mutation *GroundMutation
 }
 
+// SetMunicipalityID sets the "municipality_id" field.
+func (_u *GroundUpdateOne) SetMunicipalityID(v string) *GroundUpdateOne {
+	_u.mutation.SetMunicipalityID(v)
+	return _u
+}
+
+// SetNillableMunicipalityID sets the "municipality_id" field if the given value is not nil.
+func (_u *GroundUpdateOne) SetNillableMunicipalityID(v *string) *GroundUpdateOne {
+	if v != nil {
+		_u.SetMunicipalityID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *GroundUpdateOne) SetName(v string) *GroundUpdateOne {
 	_u.mutation.SetName(v)
@@ -338,12 +365,6 @@ func (_u *GroundUpdateOne) SetNillableEnabled(v *bool) *GroundUpdateOne {
 	if v != nil {
 		_u.SetEnabled(*v)
 	}
-	return _u
-}
-
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_u *GroundUpdateOne) SetMunicipalityID(id string) *GroundUpdateOne {
-	_u.mutation.SetMunicipalityID(id)
 	return _u
 }
 
@@ -441,6 +462,11 @@ func (_u *GroundUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *GroundUpdateOne) check() error {
+	if v, ok := _u.mutation.MunicipalityID(); ok {
+		if err := ground.MunicipalityIDValidator(v); err != nil {
+			return &ValidationError{Name: "municipality_id", err: fmt.Errorf(`ent: validator failed for field "Ground.municipality_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Name(); ok {
 		if err := ground.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Ground.name": %w`, err)}

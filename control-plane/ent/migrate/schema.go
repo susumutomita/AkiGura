@@ -15,7 +15,7 @@ var (
 		{Name: "expires_at", Type: field.TypeTime},
 		{Name: "used_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "team_auth_tokens", Type: field.TypeString},
+		{Name: "team_id", Type: field.TypeString},
 	}
 	// AuthTokensTable holds the schema information for the "auth_tokens" table.
 	AuthTokensTable = &schema.Table{
@@ -37,7 +37,7 @@ var (
 				Columns: []*schema.Column{AuthTokensColumns[1]},
 			},
 			{
-				Name:    "authtoken_team_auth_tokens",
+				Name:    "authtoken_team_id",
 				Unique:  false,
 				Columns: []*schema.Column{AuthTokensColumns[5]},
 			},
@@ -66,7 +66,7 @@ var (
 		{Name: "court_pattern", Type: field.TypeString, Nullable: true},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "municipality_grounds", Type: field.TypeString},
+		{Name: "municipality_id", Type: field.TypeString},
 	}
 	// GroundsTable holds the schema information for the "grounds" table.
 	GroundsTable = &schema.Table{
@@ -82,6 +82,11 @@ var (
 			},
 		},
 		Indexes: []*schema.Index{
+			{
+				Name:    "ground_municipality_id",
+				Unique:  false,
+				Columns: []*schema.Column{GroundsColumns[5]},
+			},
 			{
 				Name:    "ground_name",
 				Unique:  false,
@@ -118,9 +123,9 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "failed"}, Default: "pending"},
 		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "slot_notifications", Type: field.TypeString},
-		{Name: "team_notifications", Type: field.TypeString},
-		{Name: "watch_condition_notifications", Type: field.TypeString},
+		{Name: "slot_id", Type: field.TypeString},
+		{Name: "team_id", Type: field.TypeString},
+		{Name: "watch_condition_id", Type: field.TypeString},
 	}
 	// NotificationsTable holds the schema information for the "notifications" table.
 	NotificationsTable = &schema.Table{
@@ -149,7 +154,7 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "notification_team_notifications",
+				Name:    "notification_team_id",
 				Unique:  false,
 				Columns: []*schema.Column{NotificationsColumns[6]},
 			},
@@ -191,8 +196,8 @@ var (
 	PromoCodeUsagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
 		{Name: "applied_at", Type: field.TypeTime},
-		{Name: "promo_code_usages", Type: field.TypeString},
-		{Name: "team_promo_code_usages", Type: field.TypeString},
+		{Name: "promo_code_id", Type: field.TypeString},
+		{Name: "team_id", Type: field.TypeString},
 	}
 	// PromoCodeUsagesTable holds the schema information for the "promo_code_usages" table.
 	PromoCodeUsagesTable = &schema.Table{
@@ -215,12 +220,12 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "promocodeusage_team_promo_code_usages",
+				Name:    "promocodeusage_team_id",
 				Unique:  false,
 				Columns: []*schema.Column{PromoCodeUsagesColumns[3]},
 			},
 			{
-				Name:    "promocodeusage_promo_code_usages_team_promo_code_usages",
+				Name:    "promocodeusage_promo_code_id_team_id",
 				Unique:  true,
 				Columns: []*schema.Column{PromoCodeUsagesColumns[2], PromoCodeUsagesColumns[3]},
 			},
@@ -237,7 +242,7 @@ var (
 		{Name: "started_at", Type: field.TypeTime, Nullable: true},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "municipality_scrape_jobs", Type: field.TypeString},
+		{Name: "municipality_id", Type: field.TypeString},
 	}
 	// ScrapeJobsTable holds the schema information for the "scrape_jobs" table.
 	ScrapeJobsTable = &schema.Table{
@@ -254,7 +259,7 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "scrapejob_municipality_scrape_jobs",
+				Name:    "scrapejob_municipality_id",
 				Unique:  false,
 				Columns: []*schema.Column{ScrapeJobsColumns[9]},
 			},
@@ -268,15 +273,15 @@ var (
 	// SlotsColumns holds the columns for the "slots" table.
 	SlotsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
-		{Name: "slot_date", Type: field.TypeTime, SchemaType: map[string]string{"sqlite3": "date"}},
+		{Name: "slot_date", Type: field.TypeTime},
 		{Name: "time_from", Type: field.TypeString},
 		{Name: "time_to", Type: field.TypeString},
 		{Name: "court_name", Type: field.TypeString, Nullable: true},
 		{Name: "raw_text", Type: field.TypeString, Nullable: true},
 		{Name: "scraped_at", Type: field.TypeTime},
-		{Name: "facility_slots", Type: field.TypeString, Nullable: true},
-		{Name: "ground_slots", Type: field.TypeString, Nullable: true},
-		{Name: "municipality_slots", Type: field.TypeString, Nullable: true},
+		{Name: "facility_id", Type: field.TypeString, Nullable: true},
+		{Name: "ground_id", Type: field.TypeString, Nullable: true},
+		{Name: "municipality_id", Type: field.TypeString, Nullable: true},
 	}
 	// SlotsTable holds the schema information for the "slots" table.
 	SlotsTable = &schema.Table{
@@ -310,12 +315,12 @@ var (
 				Columns: []*schema.Column{SlotsColumns[1]},
 			},
 			{
-				Name:    "slot_municipality_slots",
+				Name:    "slot_municipality_id",
 				Unique:  false,
 				Columns: []*schema.Column{SlotsColumns[9]},
 			},
 			{
-				Name:    "slot_ground_slots",
+				Name:    "slot_ground_id",
 				Unique:  false,
 				Columns: []*schema.Column{SlotsColumns[8]},
 			},
@@ -327,7 +332,7 @@ var (
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"user", "assistant", "system"}},
 		{Name: "content", Type: field.TypeString, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "support_ticket_messages", Type: field.TypeString},
+		{Name: "ticket_id", Type: field.TypeString},
 	}
 	// SupportMessagesTable holds the schema information for the "support_messages" table.
 	SupportMessagesTable = &schema.Table{
@@ -354,7 +359,7 @@ var (
 		{Name: "human_response", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "team_support_tickets", Type: field.TypeString, Nullable: true},
+		{Name: "team_id", Type: field.TypeString, Nullable: true},
 	}
 	// SupportTicketsTable holds the schema information for the "support_tickets" table.
 	SupportTicketsTable = &schema.Table{
@@ -371,7 +376,7 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "supportticket_team_support_tickets",
+				Name:    "supportticket_team_id",
 				Unique:  false,
 				Columns: []*schema.Column{SupportTicketsColumns[9]},
 			},
@@ -420,8 +425,8 @@ var (
 		{Name: "enabled", Type: field.TypeBool, Default: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "facility_watch_conditions", Type: field.TypeString},
-		{Name: "team_watch_conditions", Type: field.TypeString},
+		{Name: "facility_id", Type: field.TypeString},
+		{Name: "team_id", Type: field.TypeString},
 	}
 	// WatchConditionsTable holds the schema information for the "watch_conditions" table.
 	WatchConditionsTable = &schema.Table{
@@ -444,12 +449,12 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "watchcondition_team_watch_conditions",
+				Name:    "watchcondition_team_id",
 				Unique:  false,
 				Columns: []*schema.Column{WatchConditionsColumns[10]},
 			},
 			{
-				Name:    "watchcondition_facility_watch_conditions",
+				Name:    "watchcondition_facility_id",
 				Unique:  false,
 				Columns: []*schema.Column{WatchConditionsColumns[9]},
 			},

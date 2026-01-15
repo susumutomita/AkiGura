@@ -14,6 +14,10 @@ const (
 	Label = "watch_condition"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldTeamID holds the string denoting the team_id field in the database.
+	FieldTeamID = "team_id"
+	// FieldFacilityID holds the string denoting the facility_id field in the database.
+	FieldFacilityID = "facility_id"
 	// FieldDaysOfWeek holds the string denoting the days_of_week field in the database.
 	FieldDaysOfWeek = "days_of_week"
 	// FieldTimeFrom holds the string denoting the time_from field in the database.
@@ -44,26 +48,28 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
-	TeamColumn = "team_watch_conditions"
+	TeamColumn = "team_id"
 	// FacilityTable is the table that holds the facility relation/edge.
 	FacilityTable = "watch_conditions"
 	// FacilityInverseTable is the table name for the Facility entity.
 	// It exists in this package in order to avoid circular dependency with the "facility" package.
 	FacilityInverseTable = "facilities"
 	// FacilityColumn is the table column denoting the facility relation/edge.
-	FacilityColumn = "facility_watch_conditions"
+	FacilityColumn = "facility_id"
 	// NotificationsTable is the table that holds the notifications relation/edge.
 	NotificationsTable = "notifications"
 	// NotificationsInverseTable is the table name for the Notification entity.
 	// It exists in this package in order to avoid circular dependency with the "notification" package.
 	NotificationsInverseTable = "notifications"
 	// NotificationsColumn is the table column denoting the notifications relation/edge.
-	NotificationsColumn = "watch_condition_notifications"
+	NotificationsColumn = "watch_condition_id"
 )
 
 // Columns holds all SQL columns for watchcondition fields.
 var Columns = []string{
 	FieldID,
+	FieldTeamID,
+	FieldFacilityID,
 	FieldDaysOfWeek,
 	FieldTimeFrom,
 	FieldTimeTo,
@@ -74,13 +80,6 @@ var Columns = []string{
 	FieldUpdatedAt,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "watch_conditions"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"facility_watch_conditions",
-	"team_watch_conditions",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
@@ -88,15 +87,14 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
-			return true
-		}
-	}
 	return false
 }
 
 var (
+	// TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	TeamIDValidator func(string) error
+	// FacilityIDValidator is a validator for the "facility_id" field. It is called by the builders before save.
+	FacilityIDValidator func(string) error
 	// DaysOfWeekValidator is a validator for the "days_of_week" field. It is called by the builders before save.
 	DaysOfWeekValidator func(string) error
 	// TimeFromValidator is a validator for the "time_from" field. It is called by the builders before save.
@@ -119,6 +117,16 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByTeamID orders the results by the team_id field.
+func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
+}
+
+// ByFacilityID orders the results by the facility_id field.
+func ByFacilityID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFacilityID, opts...).ToFunc()
 }
 
 // ByDaysOfWeek orders the results by the days_of_week field.
