@@ -310,7 +310,7 @@ func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) er
 // sendMagicLinkEmailSMTP sends the magic link via SMTP (Gmail)
 func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string) error {
 	// Sanitize inputs to prevent header injection
-	email = sanitizeEmailHeader(email)
+	sanitizedEmail := sanitizeEmailHeader(email)
 	escapedTeamName := html.EscapeString(teamName)
 
 	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
@@ -341,13 +341,13 @@ func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string
 		"MIME-Version: 1.0\r\n"+
 		"Content-Type: text/html; charset=UTF-8\r\n"+
 		"\r\n%s",
-		config.EmailFromName, config.SMTPUser, email, subject, htmlContent)
+		config.EmailFromName, config.SMTPUser, sanitizedEmail, subject, htmlContent)
 
 	auth := smtp.PlainAuth("", config.SMTPUser, config.SMTPPassword, config.SMTPHost)
 	addr := fmt.Sprintf("%s:%s", config.SMTPHost, config.SMTPPort)
 
-	slog.Info("Sending magic link via SMTP", "to", email, "smtp", config.SMTPHost)
-	return smtp.SendMail(addr, auth, config.SMTPUser, []string{email}, []byte(msg))
+	slog.Info("Sending magic link via SMTP", "to", sanitizedEmail, "smtp", config.SMTPHost)
+	return smtp.SendMail(addr, auth, config.SMTPUser, []string{sanitizedEmail}, []byte(msg))
 }
 
 // sanitizeEmailHeader removes characters that could be used for header injection
