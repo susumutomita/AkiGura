@@ -284,17 +284,70 @@
 
             <!-- Plan -->
             <div class="bg-white rounded-lg shadow p-6 space-y-4 mb-6">
-                <h3 class="font-semibold text-gray-900">プラン</h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <template x-for="p in planLimits" :key="p.plan">
-                        <div class="border rounded p-3 cursor-pointer" :class="team.plan === p.plan ? 'border-indigo-600 bg-indigo-50' : ''" @click="team.plan = p.plan">
-                            <p class="font-medium" x-text="p.plan.charAt(0).toUpperCase() + p.plan.slice(1)"></p>
-                            <p class="text-xs text-gray-500">
-                                <span x-text="p.max_grounds + 'グラウンド'"></span>
-                                <span x-show="p.weekend_only" class="text-orange-600">（週末のみ）</span>
+                <div class="flex justify-between items-center">
+                    <h3 class="font-semibold text-gray-900">プラン</h3>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">月払い</span>
+                        <button @click="billingInterval = billingInterval === 'monthly' ? 'yearly' : 'monthly'" 
+                                class="relative w-12 h-6 rounded-full transition-colors" 
+                                :class="billingInterval === 'yearly' ? 'bg-indigo-600' : 'bg-gray-300'">
+                            <span class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform" 
+                                  :class="billingInterval === 'yearly' ? 'translate-x-6' : ''"></span>
+                        </button>
+                        <span class="text-sm text-gray-500">年払い</span>
+                        <span x-show="billingInterval === 'yearly'" class="text-xs text-green-600 font-medium">20%オフ</span>
+                    </div>
+                </div>
+                
+                <!-- Current Plan Info -->
+                <div class="bg-gray-50 rounded p-3 text-sm">
+                    <div class="flex justify-between">
+                        <span>現在のプラン:</span>
+                        <span class="font-medium" x-text="team?.plan?.charAt(0).toUpperCase() + team?.plan?.slice(1)"></span>
+                    </div>
+                    <div x-show="team?.billing_interval" class="flex justify-between mt-1">
+                        <span>請求サイクル:</span>
+                        <span x-text="team?.billing_interval === 'yearly' ? '年払い' : '月払い'"></span>
+                    </div>
+                    <div x-show="team?.current_period_end" class="flex justify-between mt-1">
+                        <span>次回更新日:</span>
+                        <span x-text="new Date(team?.current_period_end).toLocaleDateString('ja-JP')"></span>
+                    </div>
+                </div>
+
+                <!-- Plan Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <template x-for="p in plans" :key="p.id">
+                        <div class="border rounded-lg p-4" 
+                             :class="team?.plan === p.id ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600' : 'hover:border-gray-400'">
+                            <p class="font-semibold text-lg" x-text="p.name"></p>
+                            <div class="mt-2">
+                                <p class="text-2xl font-bold">
+                                    <span x-text="'¥' + (billingInterval === 'yearly' ? p.yearly_price : p.monthly_price).toLocaleString()"></span>
+                                    <span class="text-sm font-normal text-gray-500" x-text="billingInterval === 'yearly' ? '/年' : '/月'"></span>
+                                </p>
+                                <p x-show="billingInterval === 'yearly' && p.yearly_savings > 0" class="text-xs text-green-600">
+                                    年間 ¥<span x-text="p.yearly_savings.toLocaleString()"></span> お得
+                                </p>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">
+                                <span x-text="p.max_facilities === -1 ? '無制限' : p.max_facilities + '施設まで'"></span>
                             </p>
+                            <button x-show="team?.plan !== p.id && p.id !== 'free'" 
+                                    @click="selectedPlan = p.id; showUpgradeModal = true"
+                                    class="mt-3 w-full bg-indigo-600 text-white py-2 rounded text-sm hover:bg-indigo-700">
+                                アップグレード
+                            </button>
+                            <span x-show="team?.plan === p.id" class="mt-3 block text-center text-indigo-600 font-medium text-sm">現在のプラン</span>
                         </div>
                     </template>
+                </div>
+
+                <!-- Billing Portal Button -->
+                <div x-show="team?.stripe_subscription_id" class="pt-4 border-t">
+                    <button @click="openBillingPortal()" class="text-indigo-600 hover:underline text-sm">
+                        請求情報・支払い履歴を管理 →
+                    </button>
                 </div>
             </div>
 
@@ -305,6 +358,50 @@
             </div>
         </div>
     </main>
+
+    <!-- Upgrade Modal -->
+    <div x-show="showUpgradeModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold mb-4">プランアップグレード</h3>
+            <div class="space-y-4">
+                <div class="bg-gray-50 rounded p-4">
+                    <p class="text-sm text-gray-600">選択中のプラン</p>
+                    <p class="text-xl font-bold" x-text="plans.find(p => p.id === selectedPlan)?.name"></p>
+                    <p class="text-2xl font-bold text-indigo-600 mt-1">
+                        ¥<span x-text="(billingInterval === 'yearly' ? plans.find(p => p.id === selectedPlan)?.yearly_price : plans.find(p => p.id === selectedPlan)?.monthly_price)?.toLocaleString()"></span>
+                        <span class="text-sm font-normal text-gray-500" x-text="billingInterval === 'yearly' ? '/年' : '/月'"></span>
+                    </p>
+                </div>
+                
+                <!-- Promo Code -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">プロモコード（お持ちの場合）</label>
+                    <div class="flex space-x-2">
+                        <input type="text" x-model="promoCode" @input="promoCodeError = ''; promoCodeValid = null" 
+                               class="flex-1 border rounded px-3 py-2 uppercase" placeholder="PROMO2024">
+                        <button @click="validatePromoCode()" :disabled="!promoCode || promoCodeLoading"
+                                class="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50">
+                            <span x-show="!promoCodeLoading">確認</span>
+                            <span x-show="promoCodeLoading">...</span>
+                        </button>
+                    </div>
+                    <p x-show="promoCodeError" class="text-red-500 text-sm mt-1" x-text="promoCodeError"></p>
+                    <p x-show="promoCodeValid" class="text-green-600 text-sm mt-1">
+                        ✓ <span x-text="promoCodeValid.discount"></span> 適用されます
+                    </p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showUpgradeModal = false; promoCode = ''; promoCodeValid = null; promoCodeError = ''" 
+                        class="px-4 py-2 border rounded">キャンセル</button>
+                <button @click="startCheckout()" :disabled="checkoutLoading"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50">
+                    <span x-show="!checkoutLoading">支払いに進む</span>
+                    <span x-show="checkoutLoading">処理中...</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Add Condition Modal -->
     <div x-show="showConditionModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -385,6 +482,16 @@
             calendarYear: new Date().getFullYear(),
             calendarMonth: new Date().getMonth(),
             selectedDate: null,
+            // Billing state
+            plans: [],
+            billingInterval: 'monthly',
+            showUpgradeModal: false,
+            selectedPlan: null,
+            promoCode: '',
+            promoCodeValid: null,
+            promoCodeError: '',
+            promoCodeLoading: false,
+            checkoutLoading: false,
 
             async init() {
                 const saved = localStorage.getItem('akigura_team');
@@ -530,16 +637,18 @@
             },
 
             async loadMasterData() {
-                const [munRes, groundRes, slotRes, planRes] = await Promise.all([
+                const [munRes, groundRes, slotRes, planRes, plansRes] = await Promise.all([
                     fetch('/api/municipalities'),
                     fetch('/api/grounds'),
                     fetch('/api/slots'),
-                    fetch('/api/plan-limits')
+                    fetch('/api/plan-limits'),
+                    fetch('/api/plans')
                 ]);
                 this.municipalities = await munRes.json() || [];
                 this.grounds = await groundRes.json() || [];
                 this.slots = await slotRes.json() || [];
                 this.planLimits = await planRes.json() || [];
+                this.plans = await plansRes.json() || [];
             },
 
             async loadSlots() {
@@ -644,6 +753,82 @@
                 if (!confirm('この監視条件を削除しますか？')) return;
                 await fetch('/api/conditions/' + id, { method: 'DELETE' });
                 await this.loadData();
+            },
+
+            // Billing methods
+            async validatePromoCode() {
+                if (!this.promoCode) return;
+                this.promoCodeLoading = true;
+                this.promoCodeError = '';
+                this.promoCodeValid = null;
+                try {
+                    const res = await fetch('/api/billing/validate-promo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            code: this.promoCode,
+                            team_id: this.team?.id,
+                            plan: this.selectedPlan
+                        })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        this.promoCodeError = data.error || 'プロモコードが無効です';
+                        return;
+                    }
+                    this.promoCodeValid = data;
+                } catch (e) {
+                    this.promoCodeError = '通信エラーが発生しました';
+                } finally {
+                    this.promoCodeLoading = false;
+                }
+            },
+
+            async startCheckout() {
+                if (!this.team || !this.selectedPlan) return;
+                this.checkoutLoading = true;
+                try {
+                    const res = await fetch('/api/billing/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            team_id: this.team.id,
+                            plan: this.selectedPlan,
+                            interval: this.billingInterval,
+                            promo_code: this.promoCodeValid ? this.promoCode : ''
+                        })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.error || 'チェックアウトの作成に失敗しました');
+                        return;
+                    }
+                    // Redirect to Stripe Checkout
+                    window.location.href = data.url;
+                } catch (e) {
+                    alert('通信エラーが発生しました');
+                } finally {
+                    this.checkoutLoading = false;
+                }
+            },
+
+            async openBillingPortal() {
+                if (!this.team) return;
+                try {
+                    const res = await fetch('/api/billing/portal', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ team_id: this.team.id })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.error || 'ポータルの作成に失敗しました');
+                        return;
+                    }
+                    window.location.href = data.url;
+                } catch (e) {
+                    alert('通信エラーが発生しました');
+                }
             }
         }
     }

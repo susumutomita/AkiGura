@@ -71,6 +71,27 @@ type PlanLimit struct {
 	NotificationPriority   int64  `json:"notification_priority"`
 }
 
+type PromoCode struct {
+	ID            string         `json:"id"`
+	Code          string         `json:"code"`
+	DiscountType  string         `json:"discount_type"`
+	DiscountValue int64          `json:"discount_value"`
+	AppliesTo     sql.NullString `json:"applies_to"`
+	ValidFrom     time.Time      `json:"valid_from"`
+	ValidUntil    sql.NullTime   `json:"valid_until"`
+	MaxUses       sql.NullInt64  `json:"max_uses"`
+	UsesCount     int64          `json:"uses_count"`
+	Enabled       int64          `json:"enabled"`
+	CreatedAt     time.Time      `json:"created_at"`
+}
+
+type PromoCodeUsage struct {
+	ID          string    `json:"id"`
+	PromoCodeID string    `json:"promo_code_id"`
+	TeamID      string    `json:"team_id"`
+	AppliedAt   time.Time `json:"applied_at"`
+}
+
 type ScrapeJob struct {
 	ID             string         `json:"id"`
 	MunicipalityID string         `json:"municipality_id"`
@@ -126,13 +147,17 @@ type SystemMetric struct {
 }
 
 type Team struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Plan      string    `json:"plan"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID                   string         `json:"id"`
+	Name                 string         `json:"name"`
+	Email                string         `json:"email"`
+	Plan                 string         `json:"plan"`
+	Status               string         `json:"status"`
+	StripeCustomerID     sql.NullString `json:"stripe_customer_id"`
+	StripeSubscriptionID sql.NullString `json:"stripe_subscription_id"`
+	BillingInterval      sql.NullString `json:"billing_interval"`
+	CurrentPeriodEnd     sql.NullTime   `json:"current_period_end"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
 }
 
 type Visitor struct {
