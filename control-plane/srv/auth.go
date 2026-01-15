@@ -10,7 +10,10 @@ import (
 	"html"
 	"log/slog"
 	"net/http"
+	"net/mail"
+	"net/smtp"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,15 +27,24 @@ type AuthConfig struct {
 	SendGridKey   string
 	EmailFrom     string
 	EmailFromName string
+	// SMTP settings for Gmail
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUser     string
+	SMTPPassword string
 }
 
 func getAuthConfig() AuthConfig {
 	return AuthConfig{
 		TokenExpiry:   15 * time.Minute,
-		BaseURL:       getEnvOrDefault("BASE_URL", "http://localhost:8000"),
+		BaseURL:       getEnvOrDefault("BASE_URL", "http://localhost:8001"),
 		SendGridKey:   os.Getenv("SENDGRID_API_KEY"),
 		EmailFrom:     getEnvOrDefault("SENDGRID_FROM", "noreply@akigura.jp"),
 		EmailFromName: getEnvOrDefault("SENDGRID_FROM_NAME", "AkiGura"),
+		SMTPHost:      getEnvOrDefault("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort:      getEnvOrDefault("SMTP_PORT", "587"),
+		SMTPUser:      os.Getenv("SMTP_USER"),
+		SMTPPassword:  os.Getenv("SMTP_PASSWORD"),
 	}
 }
 
@@ -113,17 +125,19 @@ func (s *Server) HandleRequestMagicLink(w http.ResponseWriter, r *http.Request) 
 	// Send magic link email
 	magicLink := fmt.Sprintf("%s/auth/verify?token=%s", config.BaseURL, token)
 
-	if err := sendMagicLinkEmail(config, req.Email, team.Name, magicLink); err != nil {
+	err = sendMagicLinkEmail(config, req.Email, team.Name, magicLink)
+	if err != nil {
 		slog.Warn("send magic link email", "error", err, "email", req.Email)
-		// In debug mode, show the link; otherwise return error
-		if os.Getenv("DEBUG") == "true" {
-			s.jsonResponse(w, map[string]string{
-				"message":    "Magic link created (email sending disabled)",
-				"debug_link": magicLink,
-			})
-			return
-		}
 		s.jsonError(w, "認証メールの送信に失敗しました。後でもう一度お試しください。", http.StatusInternalServerError)
+		return
+	}
+
+	// If SendGrid not configured, return the link for testing
+	if config.SendGridKey == "" {
+		s.jsonResponse(w, map[string]string{
+			"message":    "認証メールを送信しました。メールをご確認ください。",
+			"debug_link": magicLink,
+		})
 		return
 	}
 
@@ -211,10 +225,16 @@ func teamToJSON(team dbgen.Team) string {
 	return buf.String()
 }
 
-// sendMagicLinkEmail sends the magic link via SendGrid
+// sendMagicLinkEmail sends the magic link via SMTP or SendGrid
 func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) error {
+	// Try SMTP first (Gmail)
+	if config.SMTPUser != "" && config.SMTPPassword != "" {
+		return sendMagicLinkEmailSMTP(config, email, teamName, magicLink)
+	}
+
+	// Fall back to SendGrid
 	if config.SendGridKey == "" {
-		slog.Info("Magic link (SendGrid not configured)", "email", email, "link", magicLink)
+		slog.Info("Magic link (email not configured)", "email", email, "link", magicLink)
 		return nil
 	}
 
@@ -286,4 +306,60 @@ func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) er
 		return fmt.Errorf("sendgrid error: %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// sendMagicLinkEmailSMTP sends the magic link via SMTP (Gmail)
+func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string) error {
+	// Validate and parse email address to prevent injection
+	parsedAddr, err := mail.ParseAddress(email)
+	if err != nil {
+		return fmt.Errorf("invalid email address: %w", err)
+	}
+	sanitizedEmail := parsedAddr.Address
+	escapedTeamName := html.EscapeString(teamName)
+
+	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #4F46E5; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+    <h1 style="margin: 0;">⚾ AkiGura</h1>
+  </div>
+  <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+    <p>%s 様</p>
+    <p>以下のボタンをクリックしてログインしてください。このリンクは15分間有効です。</p>
+    <p style="text-align: center; margin: 30px 0;">
+      <a href="%s" style="display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">ログインする</a>
+    </p>
+    <p style="color: #6b7280; font-size: 12px;">このメールに心当たりがない場合は、無視してください。</p>
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+    <p style="color: #9ca3af; font-size: 11px;">リンクが機能しない場合は、以下のURLをブラウザに貼り付けてください：<br>%s</p>
+  </div>
+</body>
+</html>`, escapedTeamName, magicLink, magicLink)
+
+	subject := "【AkiGura】ログインリンク"
+
+	msg := fmt.Sprintf("From: %s <%s>\r\n"+
+		"To: %s\r\n"+
+		"Subject: %s\r\n"+
+		"MIME-Version: 1.0\r\n"+
+		"Content-Type: text/html; charset=UTF-8\r\n"+
+		"\r\n%s",
+		config.EmailFromName, config.SMTPUser, sanitizedEmail, subject, htmlContent)
+
+	auth := smtp.PlainAuth("", config.SMTPUser, config.SMTPPassword, config.SMTPHost)
+	addr := fmt.Sprintf("%s:%s", config.SMTPHost, config.SMTPPort)
+
+	slog.Info("Sending magic link via SMTP", "to", sanitizedEmail, "smtp", config.SMTPHost)
+	return smtp.SendMail(addr, auth, config.SMTPUser, []string{sanitizedEmail}, []byte(msg))
+}
+
+// sanitizeEmailHeader removes characters that could be used for header injection
+func sanitizeEmailHeader(s string) string {
+	// Remove CR, LF, and null bytes to prevent header injection
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\x00", "")
+	return s
 }
