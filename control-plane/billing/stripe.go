@@ -13,18 +13,68 @@ import (
 
 // Plan represents a subscription plan
 type Plan struct {
-	ID            string
-	Name          string
-	PriceID       string // Stripe Price ID
-	MonthlyPrice  int    // in JPY
-	MaxFacilities int
+	ID             string
+	Name           string
+	MonthlyPriceID string // Stripe Price ID for monthly
+	YearlyPriceID  string // Stripe Price ID for yearly
+	MonthlyPrice   int    // in JPY
+	YearlyPrice    int    // in JPY (usually ~20% off)
+	MaxFacilities  int
+}
+
+// GetPriceID returns the appropriate Stripe price ID based on interval
+func (p Plan) GetPriceID(interval string) string {
+	if interval == "yearly" {
+		return p.YearlyPriceID
+	}
+	return p.MonthlyPriceID
+}
+
+// GetPrice returns the price for the given interval
+func (p Plan) GetPrice(interval string) int {
+	if interval == "yearly" {
+		return p.YearlyPrice
+	}
+	return p.MonthlyPrice
 }
 
 var Plans = map[string]Plan{
-	"free":     {ID: "free", Name: "Free", PriceID: "", MonthlyPrice: 0, MaxFacilities: 1},
-	"personal": {ID: "personal", Name: "Personal", PriceID: "", MonthlyPrice: 500, MaxFacilities: 5},
-	"pro":      {ID: "pro", Name: "Pro", PriceID: "", MonthlyPrice: 2000, MaxFacilities: 20},
-	"org":      {ID: "org", Name: "Organization", PriceID: "", MonthlyPrice: 10000, MaxFacilities: -1},
+	"free": {
+		ID:             "free",
+		Name:           "Free",
+		MonthlyPriceID: "",
+		YearlyPriceID:  "",
+		MonthlyPrice:   0,
+		YearlyPrice:    0,
+		MaxFacilities:  1,
+	},
+	"personal": {
+		ID:             "personal",
+		Name:           "Personal",
+		MonthlyPriceID: os.Getenv("STRIPE_PRICE_PERSONAL_MONTHLY"),
+		YearlyPriceID:  os.Getenv("STRIPE_PRICE_PERSONAL_YEARLY"),
+		MonthlyPrice:   500,
+		YearlyPrice:    4800, // 20% off (500*12*0.8)
+		MaxFacilities:  5,
+	},
+	"pro": {
+		ID:             "pro",
+		Name:           "Pro",
+		MonthlyPriceID: os.Getenv("STRIPE_PRICE_PRO_MONTHLY"),
+		YearlyPriceID:  os.Getenv("STRIPE_PRICE_PRO_YEARLY"),
+		MonthlyPrice:   2000,
+		YearlyPrice:    19200, // 20% off (2000*12*0.8)
+		MaxFacilities:  20,
+	},
+	"org": {
+		ID:             "org",
+		Name:           "Organization",
+		MonthlyPriceID: os.Getenv("STRIPE_PRICE_ORG_MONTHLY"),
+		YearlyPriceID:  os.Getenv("STRIPE_PRICE_ORG_YEARLY"),
+		MonthlyPrice:   10000,
+		YearlyPrice:    96000, // 20% off (10000*12*0.8)
+		MaxFacilities:  -1,
+	},
 }
 
 // StripeClient handles Stripe API interactions
@@ -68,15 +118,39 @@ func (s *StripeClient) CreateCustomer(ctx context.Context, email, name string) (
 	return result.ID, nil
 }
 
+// CheckoutOptions contains options for creating a checkout session
+type CheckoutOptions struct {
+	CustomerID      string
+	PriceID         string
+	SuccessURL      string
+	CancelURL       string
+	TeamID          string            // metadata
+	AllowPromoCode  bool              // allow user to enter promo code
+	StripeCouponID  string            // pre-applied coupon
+}
+
 // CreateCheckoutSession creates a Stripe Checkout session
-func (s *StripeClient) CreateCheckoutSession(ctx context.Context, customerID, priceID, successURL, cancelURL string) (string, error) {
+func (s *StripeClient) CreateCheckoutSession(ctx context.Context, opts CheckoutOptions) (string, error) {
 	data := url.Values{}
-	data.Set("customer", customerID)
+	data.Set("customer", opts.CustomerID)
 	data.Set("mode", "subscription")
-	data.Set("line_items[0][price]", priceID)
+	data.Set("line_items[0][price]", opts.PriceID)
 	data.Set("line_items[0][quantity]", "1")
-	data.Set("success_url", successURL)
-	data.Set("cancel_url", cancelURL)
+	data.Set("success_url", opts.SuccessURL)
+	data.Set("cancel_url", opts.CancelURL)
+
+	if opts.TeamID != "" {
+		data.Set("metadata[team_id]", opts.TeamID)
+		data.Set("subscription_data[metadata][team_id]", opts.TeamID)
+	}
+
+	if opts.AllowPromoCode {
+		data.Set("allow_promotion_codes", "true")
+	}
+
+	if opts.StripeCouponID != "" {
+		data.Set("discounts[0][coupon]", opts.StripeCouponID)
+	}
 
 	resp, err := s.post(ctx, "/checkout/sessions", data)
 	if err != nil {
@@ -130,6 +204,52 @@ func (s *StripeClient) GetSubscription(ctx context.Context, subscriptionID strin
 func (s *StripeClient) CancelSubscription(ctx context.Context, subscriptionID string) error {
 	_, err := s.delete(ctx, "/subscriptions/"+subscriptionID)
 	return err
+}
+
+// CreateCoupon creates a Stripe coupon
+func (s *StripeClient) CreateCoupon(ctx context.Context, id string, percentOff int, durationMonths int) (string, error) {
+	data := url.Values{}
+	data.Set("id", id)
+	data.Set("percent_off", fmt.Sprintf("%d", percentOff))
+	data.Set("duration", "repeating")
+	data.Set("duration_in_months", fmt.Sprintf("%d", durationMonths))
+	data.Set("currency", "jpy")
+
+	resp, err := s.post(ctx, "/coupons", data)
+	if err != nil {
+		return "", err
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return "", err
+	}
+	return result.ID, nil
+}
+
+// CreateFixedAmountCoupon creates a Stripe coupon with fixed amount off
+func (s *StripeClient) CreateFixedAmountCoupon(ctx context.Context, id string, amountOff int, durationMonths int) (string, error) {
+	data := url.Values{}
+	data.Set("id", id)
+	data.Set("amount_off", fmt.Sprintf("%d", amountOff))
+	data.Set("duration", "repeating")
+	data.Set("duration_in_months", fmt.Sprintf("%d", durationMonths))
+	data.Set("currency", "jpy")
+
+	resp, err := s.post(ctx, "/coupons", data)
+	if err != nil {
+		return "", err
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return "", err
+	}
+	return result.ID, nil
 }
 
 type Subscription struct {

@@ -340,3 +340,72 @@ UPDATE auth_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: DeleteExpiredAuthTokens :exec
 DELETE FROM auth_tokens WHERE expires_at < CURRENT_TIMESTAMP;
+
+-- =============================================================================
+-- Billing
+-- =============================================================================
+
+-- name: UpdateTeamStripeCustomer :exec
+UPDATE teams SET stripe_customer_id = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = ?1;
+
+-- name: UpdateTeamSubscription :exec
+UPDATE teams SET
+    stripe_subscription_id = ?2,
+    plan = ?3,
+    billing_interval = ?4,
+    current_period_end = ?5,
+    status = 'active',
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?1;
+
+-- name: GetTeamByStripeCustomer :one
+SELECT * FROM teams WHERE stripe_customer_id = ?;
+
+-- name: CancelTeamSubscription :exec
+UPDATE teams SET
+    stripe_subscription_id = NULL,
+    plan = 'free',
+    current_period_end = NULL,
+    status = 'active',
+    updated_at = CURRENT_TIMESTAMP
+WHERE stripe_customer_id = ?;
+
+-- =============================================================================
+-- Promo Codes
+-- =============================================================================
+
+-- name: CreatePromoCode :one
+INSERT INTO promo_codes (id, code, discount_type, discount_value, applies_to, valid_from, valid_until, max_uses, enabled, created_at)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 1, CURRENT_TIMESTAMP)
+RETURNING *;
+
+-- name: GetPromoCode :one
+SELECT * FROM promo_codes WHERE id = ?;
+
+-- name: GetPromoCodeByCode :one
+SELECT * FROM promo_codes
+WHERE code = ?
+  AND enabled = 1
+  AND valid_from <= CURRENT_TIMESTAMP
+  AND (valid_until IS NULL OR valid_until > CURRENT_TIMESTAMP)
+  AND (max_uses IS NULL OR uses_count < max_uses);
+
+-- name: ListPromoCodes :many
+SELECT * FROM promo_codes ORDER BY created_at DESC LIMIT ? OFFSET ?;
+
+-- name: IncrementPromoCodeUsage :exec
+UPDATE promo_codes SET uses_count = uses_count + 1 WHERE id = ?;
+
+-- name: CreatePromoCodeUsage :one
+INSERT INTO promo_code_usages (id, promo_code_id, team_id, applied_at)
+VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
+RETURNING *;
+
+-- name: GetPromoCodeUsageByTeam :one
+SELECT * FROM promo_code_usages WHERE promo_code_id = ?1 AND team_id = ?2;
+
+-- name: ListPromoCodeUsagesByTeam :many
+SELECT pcu.*, pc.code, pc.discount_type, pc.discount_value
+FROM promo_code_usages pcu
+JOIN promo_codes pc ON pcu.promo_code_id = pc.id
+WHERE pcu.team_id = ?;

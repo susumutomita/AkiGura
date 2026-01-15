@@ -23,9 +23,14 @@ CREATE TABLE teams (
     email TEXT NOT NULL UNIQUE,
     plan TEXT NOT NULL DEFAULT 'free', -- free, personal, pro, org
     status TEXT NOT NULL DEFAULT 'active', -- active, paused, cancelled
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    billing_interval TEXT DEFAULT 'monthly', -- monthly, yearly
+    current_period_end TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_teams_stripe_customer ON teams(stripe_customer_id);
 
 -- Municipalities (one per scraper)
 CREATE TABLE municipalities (
@@ -176,3 +181,29 @@ CREATE TABLE auth_tokens (
 );
 CREATE INDEX idx_auth_tokens_token ON auth_tokens(token);
 CREATE INDEX idx_auth_tokens_team ON auth_tokens(team_id);
+
+-- Promo Codes
+CREATE TABLE promo_codes (
+    id TEXT PRIMARY KEY,
+    code TEXT NOT NULL UNIQUE,
+    discount_type TEXT NOT NULL, -- percent, fixed
+    discount_value INTEGER NOT NULL, -- percent (e.g., 20) or fixed amount in JPY
+    applies_to TEXT, -- NULL = all plans, or specific plan ID
+    valid_from TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    valid_until TIMESTAMP,
+    max_uses INTEGER, -- NULL = unlimited
+    uses_count INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_promo_codes_code ON promo_codes(code);
+
+-- Promo Code Usage (track which teams used which codes)
+CREATE TABLE promo_code_usages (
+    id TEXT PRIMARY KEY,
+    promo_code_id TEXT NOT NULL REFERENCES promo_codes(id) ON DELETE CASCADE,
+    team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(promo_code_id, team_id)
+);
+CREATE INDEX idx_promo_code_usages_team ON promo_code_usages(team_id);

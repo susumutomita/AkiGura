@@ -11,6 +11,21 @@ import (
 	"time"
 )
 
+const cancelTeamSubscription = `-- name: CancelTeamSubscription :exec
+UPDATE teams SET
+    stripe_subscription_id = NULL,
+    plan = 'free',
+    current_period_end = NULL,
+    status = 'active',
+    updated_at = CURRENT_TIMESTAMP
+WHERE stripe_customer_id = ?
+`
+
+func (q *Queries) CancelTeamSubscription(ctx context.Context, stripeCustomerID sql.NullString) error {
+	_, err := q.db.ExecContext(ctx, cancelTeamSubscription, stripeCustomerID)
+	return err
+}
+
 const countFacilities = `-- name: CountFacilities :one
 SELECT COUNT(*) as count FROM facilities
 `
@@ -440,6 +455,79 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 	return i, err
 }
 
+const createPromoCode = `-- name: CreatePromoCode :one
+
+INSERT INTO promo_codes (id, code, discount_type, discount_value, applies_to, valid_from, valid_until, max_uses, enabled, created_at)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 1, CURRENT_TIMESTAMP)
+RETURNING id, code, discount_type, discount_value, applies_to, valid_from, valid_until, max_uses, uses_count, enabled, created_at
+`
+
+type CreatePromoCodeParams struct {
+	ID            string         `json:"id"`
+	Code          string         `json:"code"`
+	DiscountType  string         `json:"discount_type"`
+	DiscountValue int64          `json:"discount_value"`
+	AppliesTo     sql.NullString `json:"applies_to"`
+	ValidFrom     time.Time      `json:"valid_from"`
+	ValidUntil    sql.NullTime   `json:"valid_until"`
+	MaxUses       sql.NullInt64  `json:"max_uses"`
+}
+
+// =============================================================================
+// Promo Codes
+// =============================================================================
+func (q *Queries) CreatePromoCode(ctx context.Context, arg CreatePromoCodeParams) (PromoCode, error) {
+	row := q.db.QueryRowContext(ctx, createPromoCode,
+		arg.ID,
+		arg.Code,
+		arg.DiscountType,
+		arg.DiscountValue,
+		arg.AppliesTo,
+		arg.ValidFrom,
+		arg.ValidUntil,
+		arg.MaxUses,
+	)
+	var i PromoCode
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.DiscountType,
+		&i.DiscountValue,
+		&i.AppliesTo,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.MaxUses,
+		&i.UsesCount,
+		&i.Enabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createPromoCodeUsage = `-- name: CreatePromoCodeUsage :one
+INSERT INTO promo_code_usages (id, promo_code_id, team_id, applied_at)
+VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
+RETURNING id, promo_code_id, team_id, applied_at
+`
+
+type CreatePromoCodeUsageParams struct {
+	ID          string `json:"id"`
+	PromoCodeID string `json:"promo_code_id"`
+	TeamID      string `json:"team_id"`
+}
+
+func (q *Queries) CreatePromoCodeUsage(ctx context.Context, arg CreatePromoCodeUsageParams) (PromoCodeUsage, error) {
+	row := q.db.QueryRowContext(ctx, createPromoCodeUsage, arg.ID, arg.PromoCodeID, arg.TeamID)
+	var i PromoCodeUsage
+	err := row.Scan(
+		&i.ID,
+		&i.PromoCodeID,
+		&i.TeamID,
+		&i.AppliedAt,
+	)
+	return i, err
+}
+
 const createScrapeJob = `-- name: CreateScrapeJob :one
 
 INSERT INTO scrape_jobs (id, municipality_id, status, created_at)
@@ -552,7 +640,7 @@ const createTeam = `-- name: CreateTeam :one
 
 INSERT INTO teams (id, name, email, plan, status, created_at, updated_at)
 VALUES (?1, ?2, ?3, ?4, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, name, email, "plan", status, created_at, updated_at
+RETURNING id, name, email, "plan", status, stripe_customer_id, stripe_subscription_id, billing_interval, current_period_end, created_at, updated_at
 `
 
 type CreateTeamParams struct {
@@ -579,6 +667,10 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 		&i.Email,
 		&i.Plan,
 		&i.Status,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.BillingInterval,
+		&i.CurrentPeriodEnd,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -897,6 +989,78 @@ func (q *Queries) GetPlanLimits(ctx context.Context, plan string) (PlanLimit, er
 	return i, err
 }
 
+const getPromoCode = `-- name: GetPromoCode :one
+SELECT id, code, discount_type, discount_value, applies_to, valid_from, valid_until, max_uses, uses_count, enabled, created_at FROM promo_codes WHERE id = ?
+`
+
+func (q *Queries) GetPromoCode(ctx context.Context, id string) (PromoCode, error) {
+	row := q.db.QueryRowContext(ctx, getPromoCode, id)
+	var i PromoCode
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.DiscountType,
+		&i.DiscountValue,
+		&i.AppliesTo,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.MaxUses,
+		&i.UsesCount,
+		&i.Enabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getPromoCodeByCode = `-- name: GetPromoCodeByCode :one
+SELECT id, code, discount_type, discount_value, applies_to, valid_from, valid_until, max_uses, uses_count, enabled, created_at FROM promo_codes
+WHERE code = ?
+  AND enabled = 1
+  AND valid_from <= CURRENT_TIMESTAMP
+  AND (valid_until IS NULL OR valid_until > CURRENT_TIMESTAMP)
+  AND (max_uses IS NULL OR uses_count < max_uses)
+`
+
+func (q *Queries) GetPromoCodeByCode(ctx context.Context, code string) (PromoCode, error) {
+	row := q.db.QueryRowContext(ctx, getPromoCodeByCode, code)
+	var i PromoCode
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.DiscountType,
+		&i.DiscountValue,
+		&i.AppliesTo,
+		&i.ValidFrom,
+		&i.ValidUntil,
+		&i.MaxUses,
+		&i.UsesCount,
+		&i.Enabled,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getPromoCodeUsageByTeam = `-- name: GetPromoCodeUsageByTeam :one
+SELECT id, promo_code_id, team_id, applied_at FROM promo_code_usages WHERE promo_code_id = ?1 AND team_id = ?2
+`
+
+type GetPromoCodeUsageByTeamParams struct {
+	PromoCodeID string `json:"promo_code_id"`
+	TeamID      string `json:"team_id"`
+}
+
+func (q *Queries) GetPromoCodeUsageByTeam(ctx context.Context, arg GetPromoCodeUsageByTeamParams) (PromoCodeUsage, error) {
+	row := q.db.QueryRowContext(ctx, getPromoCodeUsageByTeam, arg.PromoCodeID, arg.TeamID)
+	var i PromoCodeUsage
+	err := row.Scan(
+		&i.ID,
+		&i.PromoCodeID,
+		&i.TeamID,
+		&i.AppliedAt,
+	)
+	return i, err
+}
+
 const getScrapeJob = `-- name: GetScrapeJob :one
 SELECT id, municipality_id, status, slots_found, error_message, scrape_status, diagnostics, started_at, completed_at, created_at FROM scrape_jobs WHERE id = ?
 `
@@ -964,7 +1128,7 @@ func (q *Queries) GetSupportTicket(ctx context.Context, id string) (SupportTicke
 }
 
 const getTeam = `-- name: GetTeam :one
-SELECT id, name, email, "plan", status, created_at, updated_at FROM teams WHERE id = ?
+SELECT id, name, email, "plan", status, stripe_customer_id, stripe_subscription_id, billing_interval, current_period_end, created_at, updated_at FROM teams WHERE id = ?
 `
 
 func (q *Queries) GetTeam(ctx context.Context, id string) (Team, error) {
@@ -976,6 +1140,10 @@ func (q *Queries) GetTeam(ctx context.Context, id string) (Team, error) {
 		&i.Email,
 		&i.Plan,
 		&i.Status,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.BillingInterval,
+		&i.CurrentPeriodEnd,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -983,7 +1151,7 @@ func (q *Queries) GetTeam(ctx context.Context, id string) (Team, error) {
 }
 
 const getTeamByEmail = `-- name: GetTeamByEmail :one
-SELECT id, name, email, "plan", status, created_at, updated_at FROM teams WHERE email = ?
+SELECT id, name, email, "plan", status, stripe_customer_id, stripe_subscription_id, billing_interval, current_period_end, created_at, updated_at FROM teams WHERE email = ?
 `
 
 func (q *Queries) GetTeamByEmail(ctx context.Context, email string) (Team, error) {
@@ -995,6 +1163,33 @@ func (q *Queries) GetTeamByEmail(ctx context.Context, email string) (Team, error
 		&i.Email,
 		&i.Plan,
 		&i.Status,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.BillingInterval,
+		&i.CurrentPeriodEnd,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getTeamByStripeCustomer = `-- name: GetTeamByStripeCustomer :one
+SELECT id, name, email, "plan", status, stripe_customer_id, stripe_subscription_id, billing_interval, current_period_end, created_at, updated_at FROM teams WHERE stripe_customer_id = ?
+`
+
+func (q *Queries) GetTeamByStripeCustomer(ctx context.Context, stripeCustomerID sql.NullString) (Team, error) {
+	row := q.db.QueryRowContext(ctx, getTeamByStripeCustomer, stripeCustomerID)
+	var i Team
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Plan,
+		&i.Status,
+		&i.StripeCustomerID,
+		&i.StripeSubscriptionID,
+		&i.BillingInterval,
+		&i.CurrentPeriodEnd,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -1038,6 +1233,15 @@ func (q *Queries) GetWatchCondition(ctx context.Context, id string) (WatchCondit
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const incrementPromoCodeUsage = `-- name: IncrementPromoCodeUsage :exec
+UPDATE promo_codes SET uses_count = uses_count + 1 WHERE id = ?
+`
+
+func (q *Queries) IncrementPromoCodeUsage(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, incrementPromoCodeUsage, id)
+	return err
 }
 
 const listAllMunicipalities = `-- name: ListAllMunicipalities :many
@@ -1359,6 +1563,98 @@ func (q *Queries) ListOpenSupportTickets(ctx context.Context) ([]SupportTicket, 
 	return items, nil
 }
 
+const listPromoCodeUsagesByTeam = `-- name: ListPromoCodeUsagesByTeam :many
+SELECT pcu.id, pcu.promo_code_id, pcu.team_id, pcu.applied_at, pc.code, pc.discount_type, pc.discount_value
+FROM promo_code_usages pcu
+JOIN promo_codes pc ON pcu.promo_code_id = pc.id
+WHERE pcu.team_id = ?
+`
+
+type ListPromoCodeUsagesByTeamRow struct {
+	ID            string    `json:"id"`
+	PromoCodeID   string    `json:"promo_code_id"`
+	TeamID        string    `json:"team_id"`
+	AppliedAt     time.Time `json:"applied_at"`
+	Code          string    `json:"code"`
+	DiscountType  string    `json:"discount_type"`
+	DiscountValue int64     `json:"discount_value"`
+}
+
+func (q *Queries) ListPromoCodeUsagesByTeam(ctx context.Context, teamID string) ([]ListPromoCodeUsagesByTeamRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPromoCodeUsagesByTeam, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPromoCodeUsagesByTeamRow{}
+	for rows.Next() {
+		var i ListPromoCodeUsagesByTeamRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PromoCodeID,
+			&i.TeamID,
+			&i.AppliedAt,
+			&i.Code,
+			&i.DiscountType,
+			&i.DiscountValue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPromoCodes = `-- name: ListPromoCodes :many
+SELECT id, code, discount_type, discount_value, applies_to, valid_from, valid_until, max_uses, uses_count, enabled, created_at FROM promo_codes ORDER BY created_at DESC LIMIT ? OFFSET ?
+`
+
+type ListPromoCodesParams struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+}
+
+func (q *Queries) ListPromoCodes(ctx context.Context, arg ListPromoCodesParams) ([]PromoCode, error) {
+	rows, err := q.db.QueryContext(ctx, listPromoCodes, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PromoCode{}
+	for rows.Next() {
+		var i PromoCode
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.DiscountType,
+			&i.DiscountValue,
+			&i.AppliesTo,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.MaxUses,
+			&i.UsesCount,
+			&i.Enabled,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecentScrapeJobs = `-- name: ListRecentScrapeJobs :many
 SELECT sj.id, sj.municipality_id, sj.status, sj.slots_found, sj.error_message, sj.scrape_status, sj.diagnostics, sj.started_at, sj.completed_at, sj.created_at, m.name as municipality_name, m.scraper_type
 FROM scrape_jobs sj
@@ -1649,7 +1945,7 @@ func (q *Queries) ListSupportTickets(ctx context.Context, arg ListSupportTickets
 }
 
 const listTeams = `-- name: ListTeams :many
-SELECT id, name, email, "plan", status, created_at, updated_at FROM teams ORDER BY created_at DESC LIMIT ? OFFSET ?
+SELECT id, name, email, "plan", status, stripe_customer_id, stripe_subscription_id, billing_interval, current_period_end, created_at, updated_at FROM teams ORDER BY created_at DESC LIMIT ? OFFSET ?
 `
 
 type ListTeamsParams struct {
@@ -1672,6 +1968,10 @@ func (q *Queries) ListTeams(ctx context.Context, arg ListTeamsParams) ([]Team, e
 			&i.Email,
 			&i.Plan,
 			&i.Status,
+			&i.StripeCustomerID,
+			&i.StripeSubscriptionID,
+			&i.BillingInterval,
+			&i.CurrentPeriodEnd,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -1961,6 +2261,54 @@ func (q *Queries) UpdateTeam(ctx context.Context, arg UpdateTeamParams) error {
 		arg.Email,
 		arg.Plan,
 		arg.Status,
+	)
+	return err
+}
+
+const updateTeamStripeCustomer = `-- name: UpdateTeamStripeCustomer :exec
+
+UPDATE teams SET stripe_customer_id = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = ?1
+`
+
+type UpdateTeamStripeCustomerParams struct {
+	ID               string         `json:"id"`
+	StripeCustomerID sql.NullString `json:"stripe_customer_id"`
+}
+
+// =============================================================================
+// Billing
+// =============================================================================
+func (q *Queries) UpdateTeamStripeCustomer(ctx context.Context, arg UpdateTeamStripeCustomerParams) error {
+	_, err := q.db.ExecContext(ctx, updateTeamStripeCustomer, arg.ID, arg.StripeCustomerID)
+	return err
+}
+
+const updateTeamSubscription = `-- name: UpdateTeamSubscription :exec
+UPDATE teams SET
+    stripe_subscription_id = ?2,
+    plan = ?3,
+    billing_interval = ?4,
+    current_period_end = ?5,
+    status = 'active',
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?1
+`
+
+type UpdateTeamSubscriptionParams struct {
+	ID                   string         `json:"id"`
+	StripeSubscriptionID sql.NullString `json:"stripe_subscription_id"`
+	Plan                 string         `json:"plan"`
+	BillingInterval      sql.NullString `json:"billing_interval"`
+	CurrentPeriodEnd     sql.NullTime   `json:"current_period_end"`
+}
+
+func (q *Queries) UpdateTeamSubscription(ctx context.Context, arg UpdateTeamSubscriptionParams) error {
+	_, err := q.db.ExecContext(ctx, updateTeamSubscription,
+		arg.ID,
+		arg.StripeSubscriptionID,
+		arg.Plan,
+		arg.BillingInterval,
+		arg.CurrentPeriodEnd,
 	)
 	return err
 }

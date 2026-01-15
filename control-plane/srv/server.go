@@ -122,6 +122,7 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("POST /api/billing/checkout", s.HandleCreateCheckout)
 	mux.HandleFunc("POST /api/billing/portal", s.HandleBillingPortal)
 	mux.HandleFunc("POST /api/billing/webhook", s.HandleStripeWebhook)
+	mux.HandleFunc("POST /api/billing/validate-promo", s.HandleValidatePromoCode)
 	// Auth endpoints
 	mux.HandleFunc("POST /api/auth/magic-link", s.HandleRequestMagicLink)
 	mux.HandleFunc("GET /auth/verify", s.HandleVerifyMagicLink)
