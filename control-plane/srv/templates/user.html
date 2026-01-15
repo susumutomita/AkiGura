@@ -67,7 +67,7 @@
     <main x-show="team" x-cloak class="max-w-4xl mx-auto px-4 py-8">
         <!-- Tabs -->
         <div class="flex space-x-4 border-b mb-6 overflow-x-auto">
-            <button @click="tab = 'slots'" :class="{'border-indigo-600 text-indigo-600': tab === 'slots'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">空き状況</button>
+            <button @click="tab = 'slots'" :class="{'border-indigo-600 text-indigo-600': tab === 'slots'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">空きコマ</button>
             <button @click="tab = 'conditions'" :class="{'border-indigo-600 text-indigo-600': tab === 'conditions'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">監視条件</button>
             <button @click="tab = 'notifications'" :class="{'border-indigo-600 text-indigo-600': tab === 'notifications'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">通知履歴</button>
             <button @click="tab = 'settings'" :class="{'border-indigo-600 text-indigo-600': tab === 'settings'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">設定</button>
@@ -76,7 +76,13 @@
         <!-- Available Slots (Calendar View) -->
         <div x-show="tab === 'slots'">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
-                <h2 class="text-lg font-bold">空き状況カレンダー</h2>
+                <div>
+                    <h2 class="text-lg font-bold">空きコマ一覧</h2>
+                    <p class="text-xs text-gray-500 mt-1" x-show="lastUpdate">
+                        最終更新: <span x-text="lastUpdate?.time"></span>
+                        <span x-show="lastUpdate?.count !== undefined" class="ml-1">（<span x-text="lastUpdate?.count"></span>件取得）</span>
+                    </p>
+                </div>
                 <div class="flex flex-col sm:flex-row gap-2">
                     <select x-model="selectedMunicipality" @change="filterSlots()" class="border rounded px-3 py-2 text-sm">
                         <option value="">全ての自治体</option>
@@ -90,7 +96,10 @@
                             <option :value="g.id" x-text="g.name"></option>
                         </template>
                     </select>
-                    <button @click="loadSlots()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm">更新</button>
+                    <button @click="refreshSlots()" :disabled="refreshing" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm disabled:opacity-50 flex items-center gap-1">
+                        <svg x-show="refreshing" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span x-text="refreshing ? '更新中...' : '最新に更新'"></span>
+                    </button>
                 </div>
             </div>
 
@@ -351,6 +360,35 @@
                 </div>
             </div>
 
+            <!-- Update Log -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-900">更新ログ</h3>
+                    <button @click="loadJobs()" class="text-indigo-600 hover:underline text-sm">更新</button>
+                </div>
+                <p class="text-sm text-gray-500 mb-3">空きコマ情報の取得履歴です。</p>
+                <div class="space-y-2 max-h-48 overflow-y-auto">
+                    <template x-if="jobs.length === 0">
+                        <p class="text-sm text-gray-400">まだ更新履歴がありません</p>
+                    </template>
+                    <template x-for="job in jobs.slice(0, 10)" :key="job.id">
+                        <div class="flex items-center justify-between text-sm py-2 border-b last:border-0">
+                            <div class="flex items-center gap-2">
+                                <span x-show="job.status === 'completed'" class="w-2 h-2 rounded-full bg-green-500"></span>
+                                <span x-show="job.status === 'failed'" class="w-2 h-2 rounded-full bg-red-500"></span>
+                                <span x-show="job.status === 'running'" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                                <span x-show="job.status === 'pending'" class="w-2 h-2 rounded-full bg-gray-300"></span>
+                                <span class="text-gray-700" x-text="job.municipality_name"></span>
+                            </div>
+                            <div class="flex items-center gap-3 text-gray-500">
+                                <span x-show="job.status === 'completed'" x-text="job.slots_found + '件'"></span>
+                                <span x-text="formatJobTime(job.created_at)"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
             <!-- Danger Zone -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="font-semibold text-red-600 mb-4">デンジャーゾーン</h3>
@@ -482,6 +520,10 @@
             calendarYear: new Date().getFullYear(),
             calendarMonth: new Date().getMonth(),
             selectedDate: null,
+            // Update status
+            lastUpdate: null,
+            refreshing: false,
+            jobs: [],
             // Billing state
             plans: [],
             billingInterval: 'monthly',
@@ -500,6 +542,8 @@
                     await this.loadData();
                 }
                 await this.loadMasterData();
+                await this.loadJobs();
+                this.updateLastUpdateInfo();
             },
 
             // Calendar methods
@@ -753,6 +797,64 @@
                 if (!confirm('この監視条件を削除しますか？')) return;
                 await fetch('/api/conditions/' + id, { method: 'DELETE' });
                 await this.loadData();
+            },
+
+            // Update/Refresh methods
+            async loadJobs() {
+                try {
+                    const res = await fetch('/api/jobs?limit=20');
+                    this.jobs = await res.json() || [];
+                } catch (e) {
+                    console.error('Failed to load jobs', e);
+                }
+            },
+
+            async refreshSlots() {
+                this.refreshing = true;
+                try {
+                    // Trigger scrape for selected municipality or all
+                    const body = this.selectedMunicipality 
+                        ? { municipality_id: this.selectedMunicipality }
+                        : {};
+                    await fetch('/api/scrape', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    // Wait a bit for scrape to complete
+                    await new Promise(r => setTimeout(r, 3000));
+                    // Reload data
+                    await this.loadSlots();
+                    await this.loadJobs();
+                    this.updateLastUpdateInfo();
+                } catch (e) {
+                    console.error('Failed to refresh', e);
+                } finally {
+                    this.refreshing = false;
+                }
+            },
+
+            updateLastUpdateInfo() {
+                if (this.jobs.length > 0) {
+                    const latest = this.jobs.find(j => j.status === 'completed');
+                    if (latest) {
+                        this.lastUpdate = {
+                            time: this.formatJobTime(latest.completed_at || latest.created_at),
+                            count: latest.slots_found
+                        };
+                    }
+                }
+            },
+
+            formatJobTime(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                const now = new Date();
+                const diff = now - d;
+                if (diff < 60000) return 'たった今';
+                if (diff < 3600000) return Math.floor(diff / 60000) + '分前';
+                if (diff < 86400000) return Math.floor(diff / 3600000) + '時間前';
+                return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
             },
 
             // Billing methods
