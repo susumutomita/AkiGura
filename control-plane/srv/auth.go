@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/smtp"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -308,6 +309,8 @@ func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) er
 
 // sendMagicLinkEmailSMTP sends the magic link via SMTP (Gmail)
 func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string) error {
+	// Sanitize inputs to prevent header injection
+	email = sanitizeEmailHeader(email)
 	escapedTeamName := html.EscapeString(teamName)
 
 	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
@@ -345,4 +348,13 @@ func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string
 
 	slog.Info("Sending magic link via SMTP", "to", email, "smtp", config.SMTPHost)
 	return smtp.SendMail(addr, auth, config.SMTPUser, []string{email}, []byte(msg))
+}
+
+// sanitizeEmailHeader removes characters that could be used for header injection
+func sanitizeEmailHeader(s string) string {
+	// Remove CR, LF, and null bytes to prevent header injection
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\x00", "")
+	return s
 }
