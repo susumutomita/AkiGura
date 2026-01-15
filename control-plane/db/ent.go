@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"entgo.io/ent/dialect"
@@ -24,10 +23,11 @@ func OpenEnt(ctx context.Context, path string) (*ent.Client, error) {
 	drv := entsql.OpenDB(dialect.SQLite, db)
 	client := ent.NewClient(ent.Driver(drv))
 
-	// Auto-migrate schema
-	if err := client.Schema.Create(ctx); err != nil {
-		return nil, fmt.Errorf("failed to create schema: %w", err)
-	}
+	// Skip auto-migration - use sqlc migrations instead
+	// The Ent schema is kept in sync manually with existing DB schema
+	// if err := client.Schema.Create(ctx); err != nil {
+	// 	return nil, fmt.Errorf("failed to create schema: %w", err)
+	// }
 
 	slog.Info("db: ent client initialized")
 	return client, nil

@@ -238,12 +238,12 @@ func (s *Server) HandlePlans(w http.ResponseWriter, r *http.Request) {
 	plans := make([]map[string]interface{}, 0)
 	for _, p := range billing.Plans {
 		plans = append(plans, map[string]interface{}{
-			"id":              p.ID,
-			"name":            p.Name,
-			"monthly_price":   p.MonthlyPrice,
-			"yearly_price":    p.YearlyPrice,
-			"max_facilities":  p.MaxFacilities,
-			"yearly_savings":  p.MonthlyPrice*12 - p.YearlyPrice,
+			"id":             p.ID,
+			"name":           p.Name,
+			"monthly_price":  p.MonthlyPrice,
+			"yearly_price":   p.YearlyPrice,
+			"max_facilities": p.MaxFacilities,
+			"yearly_savings": p.MonthlyPrice*12 - p.YearlyPrice,
 		})
 	}
 	s.jsonResponse(w, plans)
@@ -294,10 +294,10 @@ func (s *Server) HandleValidatePromoCode(w http.ResponseWriter, r *http.Request)
 	}
 
 	s.jsonResponse(w, map[string]interface{}{
-		"valid":       true,
-		"code":        promoCode.Code,
-		"discount":    discountDescription,
-		"type":        promoCode.DiscountType,
-		"value":       promoCode.DiscountValue,
+		"valid":    true,
+		"code":     promoCode.Code,
+		"discount": discountDescription,
+		"type":     promoCode.DiscountType,
+		"value":    promoCode.DiscountValue,
 	})
 }

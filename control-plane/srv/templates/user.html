@@ -5,42 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AkiGura - グラウンド空き監視</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        field: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        energy: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <style>[x-cloak] { display: none !important; }</style>
+    <style>
+        [x-cloak] { display: none !important; }
+        .gradient-field { background: linear-gradient(135deg, #166534 0%, #22c55e 100%); }
+        .gradient-energy { background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%); }
+        .gradient-header { background: linear-gradient(135deg, #14532d 0%, #166534 50%, #15803d 100%); }
+        .field-pattern {
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 20px,
+                rgba(255,255,255,0.03) 20px,
+                rgba(255,255,255,0.03) 40px
+            );
+        }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1); }
+        .btn-sports {
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+            transition: all 0.2s ease;
+        }
+        .btn-sports:hover {
+            background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(22, 163, 74, 0.4);
+        }
+        .btn-sports:active { transform: translateY(0); }
+        .btn-energy {
+            background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+            transition: all 0.2s ease;
+        }
+        .btn-energy:hover {
+            background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(234, 88, 12, 0.4);
+        }
+        .slot-badge {
+            background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+            animation: pulse-subtle 2s infinite;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen" x-data="userApp()" x-init="init()">
+<body class="bg-gray-100 min-h-screen" x-data="userApp()" x-init="init()">
     <!-- Header -->
-    <header class="bg-indigo-600 text-white shadow-lg">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold">⚾ AkiGura</h1>
-            <div x-show="team" class="text-sm">
-                <span x-text="team?.name"></span>
-                <span class="ml-2 px-2 py-1 bg-indigo-500 rounded text-xs" x-text="team?.plan"></span>
+    <header class="gradient-header field-pattern text-white shadow-xl">
+        <div class="max-w-5xl mx-auto px-4 py-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-2xl">⚾</div>
+                <h1 class="text-2xl font-black tracking-tight">AkiGura</h1>
+            </div>
+            <div x-show="team" class="flex items-center gap-3">
+                <span class="font-semibold" x-text="team?.name"></span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                      :class="{
+                          'bg-gray-600': team?.plan === 'free',
+                          'bg-energy-500': team?.plan === 'personal',
+                          'bg-field-500': team?.plan === 'pro',
+                          'bg-gradient-to-r from-energy-500 to-field-500': team?.plan === 'org'
+                      }"
+                      x-text="team?.plan"></span>
             </div>
         </div>
     </header>
 
     <!-- Login Form -->
-    <div x-show="!team && !emailSent" x-cloak class="max-w-md mx-auto mt-20 p-6 bg-white rounded-lg shadow">
-        <h2 class="text-xl font-bold mb-4">ログイン / 新規登録</h2>
-        <p class="text-sm text-gray-600 mb-4">メールアドレスを入力すると、ログインリンクをお送りします。</p>
+    <div x-show="!team && !emailSent" x-cloak class="max-w-md mx-auto mt-16 p-8 bg-white rounded-2xl shadow-xl card-hover">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full gradient-field flex items-center justify-center text-3xl text-white">⚾</div>
+            <h2 class="text-2xl font-black text-gray-800">ログイン / 新規登録</h2>
+            <p class="text-gray-500 mt-2">グラウンドの空きを自動で監視</p>
+        </div>
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
-                <input type="email" x-model="loginEmail" @keyup.enter="login()" class="mt-1 block w-full border rounded px-3 py-2" placeholder="team@example.com">
+                <label class="block text-sm font-bold text-gray-700 mb-1">メールアドレス</label>
+                <input type="email" x-model="loginEmail" @keyup.enter="login()" 
+                       class="block w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-field-500 focus:ring-2 focus:ring-field-200 transition-all" 
+                       placeholder="team@example.com">
             </div>
             <div x-show="isRegister">
-                <label class="block text-sm font-medium text-gray-700">チーム名（新規登録の場合）</label>
-                <input type="text" x-model="loginName" class="mt-1 block w-full border rounded px-3 py-2" placeholder="東京ファイターズ">
+                <label class="block text-sm font-bold text-gray-700 mb-1">チーム名</label>
+                <input type="text" x-model="loginName" 
+                       class="block w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-field-500 focus:ring-2 focus:ring-field-200 transition-all" 
+                       placeholder="東京ファイターズ">
             </div>
-            <button @click="login()" :disabled="loginLoading" class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span x-show="!loginLoading" x-text="isRegister ? 'ログインリンクを送信' : 'ログインリンクを送信'"></span>
-                <span x-show="loginLoading">送信中...</span>
+            <button @click="login()" :disabled="loginLoading" 
+                    class="w-full btn-sports text-white py-3 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg">
+                <span x-show="!loginLoading">📧 ログインリンクを送信</span>
+                <span x-show="loginLoading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    送信中...
+                </span>
             </button>
             <p class="text-center text-sm text-gray-500">
-                <a href="#" @click.prevent="isRegister = !isRegister" class="text-indigo-600 hover:underline" x-text="isRegister ? '既存アカウントでログイン' : '新規登録はこちら'"></a>
+                <a href="#" @click.prevent="isRegister = !isRegister" class="text-field-600 font-semibold hover:text-field-700" x-text="isRegister ? '← 既存アカウントでログイン' : '新規登録はこちら →'"></a>
             </p>
-            <p x-show="loginError" class="text-red-500 text-sm" x-text="loginError"></p>
+            <p x-show="loginError" class="text-red-500 text-sm font-semibold bg-red-50 p-3 rounded-lg" x-text="loginError"></p>
         </div>
     </div>
 
@@ -66,56 +164,88 @@
     <!-- Main Content -->
     <main x-show="team" x-cloak class="max-w-4xl mx-auto px-4 py-8">
         <!-- Tabs -->
-        <div class="flex space-x-4 border-b mb-6 overflow-x-auto">
-            <button @click="tab = 'slots'" :class="{'border-indigo-600 text-indigo-600': tab === 'slots'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">空きコマ</button>
-            <button @click="tab = 'conditions'" :class="{'border-indigo-600 text-indigo-600': tab === 'conditions'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">監視条件</button>
-            <button @click="tab = 'notifications'" :class="{'border-indigo-600 text-indigo-600': tab === 'notifications'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">通知履歴</button>
-            <button @click="tab = 'settings'" :class="{'border-indigo-600 text-indigo-600': tab === 'settings'}" class="pb-2 px-1 border-b-2 border-transparent whitespace-nowrap">設定</button>
+        <div class="flex gap-2 mb-6 overflow-x-auto bg-white rounded-2xl p-2 shadow-sm">
+            <button @click="tab = 'slots'" 
+                    :class="tab === 'slots' ? 'bg-field-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'" 
+                    class="px-5 py-2.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                <span>📅</span> 空きコマ
+            </button>
+            <button @click="tab = 'conditions'" 
+                    :class="tab === 'conditions' ? 'bg-field-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'" 
+                    class="px-5 py-2.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                <span>🔍</span> 監視条件
+            </button>
+            <button @click="tab = 'notifications'" 
+                    :class="tab === 'notifications' ? 'bg-field-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'" 
+                    class="px-5 py-2.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                <span>🔔</span> 通知履歴
+            </button>
+            <button @click="tab = 'settings'" 
+                    :class="tab === 'settings' ? 'bg-field-500 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'" 
+                    class="px-5 py-2.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-2">
+                <span>⚙️</span> 設定
+            </button>
         </div>
 
         <!-- Available Slots (Calendar View) -->
         <div x-show="tab === 'slots'">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
-                <div>
-                    <h2 class="text-lg font-bold">空きコマ一覧</h2>
-                    <p class="text-xs text-gray-500 mt-1" x-show="lastUpdate">
-                        最終更新: <span x-text="lastUpdate?.time"></span>
-                        <span x-show="lastUpdate?.count !== undefined" class="ml-1">（<span x-text="lastUpdate?.count"></span>件取得）</span>
-                    </p>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <select x-model="selectedMunicipality" @change="filterSlots()" class="border rounded px-3 py-2 text-sm">
-                        <option value="">全ての自治体</option>
-                        <template x-for="m in municipalities" :key="m.id">
-                            <option :value="m.id" x-text="m.name"></option>
-                        </template>
-                    </select>
-                    <select x-model="selectedGround" @change="filterSlots()" class="border rounded px-3 py-2 text-sm">
-                        <option value="">全てのグラウンド</option>
-                        <template x-for="g in filteredGrounds" :key="g.id">
-                            <option :value="g.id" x-text="g.name"></option>
-                        </template>
-                    </select>
-                    <button @click="refreshSlots()" :disabled="refreshing" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm disabled:opacity-50 flex items-center gap-1">
-                        <svg x-show="refreshing" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span x-text="refreshing ? '更新中...' : '最新に更新'"></span>
-                    </button>
+            <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+                <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg gradient-field flex items-center justify-center text-white text-sm">🏟️</span>
+                            空きコマ一覧
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1 flex items-center gap-2" x-show="lastUpdate">
+                            <span class="w-2 h-2 rounded-full bg-field-500 animate-pulse"></span>
+                            最終更新: <span class="font-semibold" x-text="lastUpdate?.time"></span>
+                            <span x-show="lastUpdate?.count !== undefined" class="text-field-600 font-bold">（<span x-text="lastUpdate?.count"></span>件）</span>
+                        </p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <select x-model="selectedMunicipality" @change="filterSlots()" 
+                                class="border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-field-500 focus:ring-2 focus:ring-field-200 transition-all">
+                            <option value="">📍 全ての自治体</option>
+                            <template x-for="m in municipalities" :key="m.id">
+                                <option :value="m.id" x-text="m.name"></option>
+                            </template>
+                        </select>
+                        <select x-model="selectedGround" @change="filterSlots()" 
+                                class="border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-field-500 focus:ring-2 focus:ring-field-200 transition-all">
+                            <option value="">⚾ 全てのグラウンド</option>
+                            <template x-for="g in filteredGrounds" :key="g.id">
+                                <option :value="g.id" x-text="g.name"></option>
+                            </template>
+                        </select>
+                        <button @click="refreshSlots()" :disabled="refreshing" 
+                                class="btn-energy text-white px-6 py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg">
+                            <svg x-show="refreshing" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span x-show="!refreshing">🔄</span>
+                            <span x-text="refreshing ? '更新中...' : '最新に更新'"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Calendar Navigation -->
-            <div class="flex justify-between items-center mb-4">
-                <button @click="prevMonth()" class="p-2 hover:bg-gray-100 rounded">&larr; 前月</button>
-                <h3 class="text-lg font-semibold" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
-                <button @click="nextMonth()" class="p-2 hover:bg-gray-100 rounded">翌月 &rarr;</button>
+            <div class="flex justify-between items-center mb-4 bg-white rounded-2xl shadow-sm p-4">
+                <button @click="prevMonth()" class="px-4 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition-all flex items-center gap-1">
+                    <span>◀</span> 前月
+                </button>
+                <h3 class="text-xl font-black text-gray-800" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
+                <button @click="nextMonth()" class="px-4 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition-all flex items-center gap-1">
+                    翌月 <span>▶</span>
+                </button>
             </div>
 
             <!-- Calendar Grid -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <!-- Week days header -->
-                <div class="grid grid-cols-7 bg-gray-50 border-b">
+                <div class="grid grid-cols-7 gradient-header">
                     <template x-for="day in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
-                        <div class="py-2 text-center text-sm font-medium" :class="day === '日' ? 'text-red-500' : day === '土' ? 'text-blue-500' : 'text-gray-700'" x-text="day"></div>
+                        <div class="py-3 text-center text-sm font-bold" 
+                             :class="day === '日' ? 'text-red-300' : day === '土' ? 'text-blue-300' : 'text-white/90'" 
+                             x-text="day"></div>
                     </template>
                 </div>
                 <!-- Calendar days -->
