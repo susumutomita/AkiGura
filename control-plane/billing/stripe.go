@@ -120,13 +120,13 @@ func (s *StripeClient) CreateCustomer(ctx context.Context, email, name string) (
 
 // CheckoutOptions contains options for creating a checkout session
 type CheckoutOptions struct {
-	CustomerID      string
-	PriceID         string
-	SuccessURL      string
-	CancelURL       string
-	TeamID          string            // metadata
-	AllowPromoCode  bool              // allow user to enter promo code
-	StripeCouponID  string            // pre-applied coupon
+	CustomerID     string
+	PriceID        string
+	SuccessURL     string
+	CancelURL      string
+	TeamID         string // metadata
+	AllowPromoCode bool   // allow user to enter promo code
+	StripeCouponID string // pre-applied coupon
 }
 
 // CreateCheckoutSession creates a Stripe Checkout session

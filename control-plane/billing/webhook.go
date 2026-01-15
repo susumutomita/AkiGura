@@ -90,7 +90,7 @@ func (h *WebhookHandler) handleSubscriptionUpdated(ctx context.Context, data jso
 		Items            struct {
 			Data []struct {
 				Price struct {
-					ID       string `json:"id"`
+					ID        string `json:"id"`
 					Recurring struct {
 						Interval string `json:"interval"`
 					} `json:"recurring"`

@@ -116,8 +116,8 @@ func (s *Server) HandleValidatePromoCodeEnt(w http.ResponseWriter, r *http.Reque
 	if req.TeamID != "" {
 		exists, err := s.Ent.PromoCodeUsage.Query().
 			Where(
-				// promocodeusage.HasPromoCodeWith(promocode.IDEQ(pc.ID)),
-				// promocodeusage.HasTeamWith(team.IDEQ(req.TeamID)),
+			// promocodeusage.HasPromoCodeWith(promocode.IDEQ(pc.ID)),
+			// promocodeusage.HasTeamWith(team.IDEQ(req.TeamID)),
 			).
 			Exist(r.Context())
 		if err == nil && exists {
