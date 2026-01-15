@@ -760,6 +760,10 @@
                     this.loginError = 'メールアドレスを入力してください';
                     return;
                 }
+                if (this.isRegister && !this.loginName.trim()) {
+                    this.loginError = 'チーム名を入力してください';
+                    return;
+                }
                 
                 this.loginLoading = true;
                 try {
