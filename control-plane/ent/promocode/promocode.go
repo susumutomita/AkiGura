@@ -45,7 +45,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "promocodeusage" package.
 	UsagesInverseTable = "promo_code_usages"
 	// UsagesColumn is the table column denoting the usages relation/edge.
-	UsagesColumn = "promo_code_usages"
+	UsagesColumn = "promo_code_id"
 )
 
 // Columns holds all SQL columns for promocode fields.

@@ -28,6 +28,20 @@ func (_u *SupportMessageUpdate) Where(ps ...predicate.SupportMessage) *SupportMe
 	return _u
 }
 
+// SetTicketID sets the "ticket_id" field.
+func (_u *SupportMessageUpdate) SetTicketID(v string) *SupportMessageUpdate {
+	_u.mutation.SetTicketID(v)
+	return _u
+}
+
+// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
+func (_u *SupportMessageUpdate) SetNillableTicketID(v *string) *SupportMessageUpdate {
+	if v != nil {
+		_u.SetTicketID(*v)
+	}
+	return _u
+}
+
 // SetRole sets the "role" field.
 func (_u *SupportMessageUpdate) SetRole(v supportmessage.Role) *SupportMessageUpdate {
 	_u.mutation.SetRole(v)
@@ -53,12 +67,6 @@ func (_u *SupportMessageUpdate) SetNillableContent(v *string) *SupportMessageUpd
 	if v != nil {
 		_u.SetContent(*v)
 	}
-	return _u
-}
-
-// SetTicketID sets the "ticket" edge to the SupportTicket entity by ID.
-func (_u *SupportMessageUpdate) SetTicketID(id string) *SupportMessageUpdate {
-	_u.mutation.SetTicketID(id)
 	return _u
 }
 
@@ -107,6 +115,11 @@ func (_u *SupportMessageUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *SupportMessageUpdate) check() error {
+	if v, ok := _u.mutation.TicketID(); ok {
+		if err := supportmessage.TicketIDValidator(v); err != nil {
+			return &ValidationError{Name: "ticket_id", err: fmt.Errorf(`ent: validator failed for field "SupportMessage.ticket_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Role(); ok {
 		if err := supportmessage.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "SupportMessage.role": %w`, err)}
@@ -190,6 +203,20 @@ type SupportMessageUpdateOne struct {
 	mutation *SupportMessageMutation
 }
 
+// SetTicketID sets the "ticket_id" field.
+func (_u *SupportMessageUpdateOne) SetTicketID(v string) *SupportMessageUpdateOne {
+	_u.mutation.SetTicketID(v)
+	return _u
+}
+
+// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
+func (_u *SupportMessageUpdateOne) SetNillableTicketID(v *string) *SupportMessageUpdateOne {
+	if v != nil {
+		_u.SetTicketID(*v)
+	}
+	return _u
+}
+
 // SetRole sets the "role" field.
 func (_u *SupportMessageUpdateOne) SetRole(v supportmessage.Role) *SupportMessageUpdateOne {
 	_u.mutation.SetRole(v)
@@ -215,12 +242,6 @@ func (_u *SupportMessageUpdateOne) SetNillableContent(v *string) *SupportMessage
 	if v != nil {
 		_u.SetContent(*v)
 	}
-	return _u
-}
-
-// SetTicketID sets the "ticket" edge to the SupportTicket entity by ID.
-func (_u *SupportMessageUpdateOne) SetTicketID(id string) *SupportMessageUpdateOne {
-	_u.mutation.SetTicketID(id)
 	return _u
 }
 
@@ -282,6 +303,11 @@ func (_u *SupportMessageUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *SupportMessageUpdateOne) check() error {
+	if v, ok := _u.mutation.TicketID(); ok {
+		if err := supportmessage.TicketIDValidator(v); err != nil {
+			return &ValidationError{Name: "ticket_id", err: fmt.Errorf(`ent: validator failed for field "SupportMessage.ticket_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Role(); ok {
 		if err := supportmessage.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "SupportMessage.role": %w`, err)}

@@ -65,6 +65,16 @@ func IDContainsFold(id string) predicate.WatchCondition {
 	return predicate.WatchCondition(sql.FieldContainsFold(FieldID, id))
 }
 
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldEQ(FieldTeamID, v))
+}
+
+// FacilityID applies equality check predicate on the "facility_id" field. It's identical to FacilityIDEQ.
+func FacilityID(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldEQ(FieldFacilityID, v))
+}
+
 // DaysOfWeek applies equality check predicate on the "days_of_week" field. It's identical to DaysOfWeekEQ.
 func DaysOfWeek(v string) predicate.WatchCondition {
 	return predicate.WatchCondition(sql.FieldEQ(FieldDaysOfWeek, v))
@@ -103,6 +113,136 @@ func CreatedAt(v time.Time) predicate.WatchCondition {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.WatchCondition {
 	return predicate.WatchCondition(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// TeamIDGT applies the GT predicate on the "team_id" field.
+func TeamIDGT(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldGT(FieldTeamID, v))
+}
+
+// TeamIDGTE applies the GTE predicate on the "team_id" field.
+func TeamIDGTE(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldGTE(FieldTeamID, v))
+}
+
+// TeamIDLT applies the LT predicate on the "team_id" field.
+func TeamIDLT(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldLT(FieldTeamID, v))
+}
+
+// TeamIDLTE applies the LTE predicate on the "team_id" field.
+func TeamIDLTE(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldLTE(FieldTeamID, v))
+}
+
+// TeamIDContains applies the Contains predicate on the "team_id" field.
+func TeamIDContains(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldContains(FieldTeamID, v))
+}
+
+// TeamIDHasPrefix applies the HasPrefix predicate on the "team_id" field.
+func TeamIDHasPrefix(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldHasPrefix(FieldTeamID, v))
+}
+
+// TeamIDHasSuffix applies the HasSuffix predicate on the "team_id" field.
+func TeamIDHasSuffix(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldHasSuffix(FieldTeamID, v))
+}
+
+// TeamIDEqualFold applies the EqualFold predicate on the "team_id" field.
+func TeamIDEqualFold(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldEqualFold(FieldTeamID, v))
+}
+
+// TeamIDContainsFold applies the ContainsFold predicate on the "team_id" field.
+func TeamIDContainsFold(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldContainsFold(FieldTeamID, v))
+}
+
+// FacilityIDEQ applies the EQ predicate on the "facility_id" field.
+func FacilityIDEQ(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldEQ(FieldFacilityID, v))
+}
+
+// FacilityIDNEQ applies the NEQ predicate on the "facility_id" field.
+func FacilityIDNEQ(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldNEQ(FieldFacilityID, v))
+}
+
+// FacilityIDIn applies the In predicate on the "facility_id" field.
+func FacilityIDIn(vs ...string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldIn(FieldFacilityID, vs...))
+}
+
+// FacilityIDNotIn applies the NotIn predicate on the "facility_id" field.
+func FacilityIDNotIn(vs ...string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldNotIn(FieldFacilityID, vs...))
+}
+
+// FacilityIDGT applies the GT predicate on the "facility_id" field.
+func FacilityIDGT(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldGT(FieldFacilityID, v))
+}
+
+// FacilityIDGTE applies the GTE predicate on the "facility_id" field.
+func FacilityIDGTE(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldGTE(FieldFacilityID, v))
+}
+
+// FacilityIDLT applies the LT predicate on the "facility_id" field.
+func FacilityIDLT(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldLT(FieldFacilityID, v))
+}
+
+// FacilityIDLTE applies the LTE predicate on the "facility_id" field.
+func FacilityIDLTE(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldLTE(FieldFacilityID, v))
+}
+
+// FacilityIDContains applies the Contains predicate on the "facility_id" field.
+func FacilityIDContains(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldContains(FieldFacilityID, v))
+}
+
+// FacilityIDHasPrefix applies the HasPrefix predicate on the "facility_id" field.
+func FacilityIDHasPrefix(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldHasPrefix(FieldFacilityID, v))
+}
+
+// FacilityIDHasSuffix applies the HasSuffix predicate on the "facility_id" field.
+func FacilityIDHasSuffix(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldHasSuffix(FieldFacilityID, v))
+}
+
+// FacilityIDEqualFold applies the EqualFold predicate on the "facility_id" field.
+func FacilityIDEqualFold(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldEqualFold(FieldFacilityID, v))
+}
+
+// FacilityIDContainsFold applies the ContainsFold predicate on the "facility_id" field.
+func FacilityIDContainsFold(v string) predicate.WatchCondition {
+	return predicate.WatchCondition(sql.FieldContainsFold(FieldFacilityID, v))
 }
 
 // DaysOfWeekEQ applies the EQ predicate on the "days_of_week" field.

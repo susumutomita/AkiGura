@@ -24,7 +24,6 @@ type ScrapeJobQuery struct {
 	inters           []Interceptor
 	predicates       []predicate.ScrapeJob
 	withMunicipality *MunicipalityQuery
-	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -299,12 +298,12 @@ func (_q *ScrapeJobQuery) WithMunicipality(opts ...func(*MunicipalityQuery)) *Sc
 // Example:
 //
 //	var v []struct {
-//		Status scrapejob.Status `json:"status,omitempty"`
+//		MunicipalityID string `json:"municipality_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ScrapeJob.Query().
-//		GroupBy(scrapejob.FieldStatus).
+//		GroupBy(scrapejob.FieldMunicipalityID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *ScrapeJobQuery) GroupBy(field string, fields ...string) *ScrapeJobGroupBy {
@@ -322,11 +321,11 @@ func (_q *ScrapeJobQuery) GroupBy(field string, fields ...string) *ScrapeJobGrou
 // Example:
 //
 //	var v []struct {
-//		Status scrapejob.Status `json:"status,omitempty"`
+//		MunicipalityID string `json:"municipality_id,omitempty"`
 //	}
 //
 //	client.ScrapeJob.Query().
-//		Select(scrapejob.FieldStatus).
+//		Select(scrapejob.FieldMunicipalityID).
 //		Scan(ctx, &v)
 func (_q *ScrapeJobQuery) Select(fields ...string) *ScrapeJobSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -370,18 +369,11 @@ func (_q *ScrapeJobQuery) prepareQuery(ctx context.Context) error {
 func (_q *ScrapeJobQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ScrapeJob, error) {
 	var (
 		nodes       = []*ScrapeJob{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
 			_q.withMunicipality != nil,
 		}
 	)
-	if _q.withMunicipality != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, scrapejob.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*ScrapeJob).scanValues(nil, columns)
 	}
@@ -413,10 +405,7 @@ func (_q *ScrapeJobQuery) loadMunicipality(ctx context.Context, query *Municipal
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*ScrapeJob)
 	for i := range nodes {
-		if nodes[i].municipality_scrape_jobs == nil {
-			continue
-		}
-		fk := *nodes[i].municipality_scrape_jobs
+		fk := nodes[i].MunicipalityID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -433,7 +422,7 @@ func (_q *ScrapeJobQuery) loadMunicipality(ctx context.Context, query *Municipal
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "municipality_scrape_jobs" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "municipality_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -466,6 +455,9 @@ func (_q *ScrapeJobQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != scrapejob.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withMunicipality != nil {
+			_spec.Node.AddColumnOnce(scrapejob.FieldMunicipalityID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

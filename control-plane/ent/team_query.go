@@ -589,7 +589,9 @@ func (_q *TeamQuery) loadWatchConditions(ctx context.Context, query *WatchCondit
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(watchcondition.FieldTeamID)
+	}
 	query.Where(predicate.WatchCondition(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.WatchConditionsColumn), fks...))
 	}))
@@ -598,13 +600,10 @@ func (_q *TeamQuery) loadWatchConditions(ctx context.Context, query *WatchCondit
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.team_watch_conditions
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_watch_conditions" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TeamID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_watch_conditions" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -620,7 +619,9 @@ func (_q *TeamQuery) loadNotifications(ctx context.Context, query *NotificationQ
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(notification.FieldTeamID)
+	}
 	query.Where(predicate.Notification(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.NotificationsColumn), fks...))
 	}))
@@ -629,13 +630,10 @@ func (_q *TeamQuery) loadNotifications(ctx context.Context, query *NotificationQ
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.team_notifications
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_notifications" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TeamID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_notifications" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -651,7 +649,9 @@ func (_q *TeamQuery) loadAuthTokens(ctx context.Context, query *AuthTokenQuery, 
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(authtoken.FieldTeamID)
+	}
 	query.Where(predicate.AuthToken(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.AuthTokensColumn), fks...))
 	}))
@@ -660,13 +660,10 @@ func (_q *TeamQuery) loadAuthTokens(ctx context.Context, query *AuthTokenQuery, 
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.team_auth_tokens
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_auth_tokens" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TeamID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_auth_tokens" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -682,7 +679,9 @@ func (_q *TeamQuery) loadSupportTickets(ctx context.Context, query *SupportTicke
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(supportticket.FieldTeamID)
+	}
 	query.Where(predicate.SupportTicket(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.SupportTicketsColumn), fks...))
 	}))
@@ -691,13 +690,13 @@ func (_q *TeamQuery) loadSupportTickets(ctx context.Context, query *SupportTicke
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.team_support_tickets
+		fk := n.TeamID
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_support_tickets" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "team_id" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_support_tickets" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -713,7 +712,9 @@ func (_q *TeamQuery) loadPromoCodeUsages(ctx context.Context, query *PromoCodeUs
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(promocodeusage.FieldTeamID)
+	}
 	query.Where(predicate.PromoCodeUsage(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.PromoCodeUsagesColumn), fks...))
 	}))
@@ -722,13 +723,10 @@ func (_q *TeamQuery) loadPromoCodeUsages(ctx context.Context, query *PromoCodeUs
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.team_promo_code_usages
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_promo_code_usages" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TeamID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_promo_code_usages" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

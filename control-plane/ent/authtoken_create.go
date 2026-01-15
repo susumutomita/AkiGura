@@ -21,6 +21,12 @@ type AuthTokenCreate struct {
 	hooks    []Hook
 }
 
+// SetTeamID sets the "team_id" field.
+func (_c *AuthTokenCreate) SetTeamID(v string) *AuthTokenCreate {
+	_c.mutation.SetTeamID(v)
+	return _c
+}
+
 // SetToken sets the "token" field.
 func (_c *AuthTokenCreate) SetToken(v string) *AuthTokenCreate {
 	_c.mutation.SetToken(v)
@@ -64,12 +70,6 @@ func (_c *AuthTokenCreate) SetNillableCreatedAt(v *time.Time) *AuthTokenCreate {
 // SetID sets the "id" field.
 func (_c *AuthTokenCreate) SetID(v string) *AuthTokenCreate {
 	_c.mutation.SetID(v)
-	return _c
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_c *AuthTokenCreate) SetTeamID(id string) *AuthTokenCreate {
-	_c.mutation.SetTeamID(id)
 	return _c
 }
 
@@ -121,6 +121,14 @@ func (_c *AuthTokenCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *AuthTokenCreate) check() error {
+	if _, ok := _c.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "AuthToken.team_id"`)}
+	}
+	if v, ok := _c.mutation.TeamID(); ok {
+		if err := authtoken.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "AuthToken.team_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Token(); !ok {
 		return &ValidationError{Name: "token", err: errors.New(`ent: missing required field "AuthToken.token"`)}
 	}
@@ -203,7 +211,7 @@ func (_c *AuthTokenCreate) createSpec() (*AuthToken, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_auth_tokens = &nodes[0]
+		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

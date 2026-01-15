@@ -14,6 +14,8 @@ const (
 	Label = "auth_token"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldTeamID holds the string denoting the team_id field in the database.
+	FieldTeamID = "team_id"
 	// FieldToken holds the string denoting the token field in the database.
 	FieldToken = "token"
 	// FieldExpiresAt holds the string denoting the expires_at field in the database.
@@ -32,22 +34,17 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
-	TeamColumn = "team_auth_tokens"
+	TeamColumn = "team_id"
 )
 
 // Columns holds all SQL columns for authtoken fields.
 var Columns = []string{
 	FieldID,
+	FieldTeamID,
 	FieldToken,
 	FieldExpiresAt,
 	FieldUsedAt,
 	FieldCreatedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "auth_tokens"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"team_auth_tokens",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -57,15 +54,12 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
-			return true
-		}
-	}
 	return false
 }
 
 var (
+	// TeamIDValidator is a validator for the "team_id" field. It is called by the builders before save.
+	TeamIDValidator func(string) error
 	// TokenValidator is a validator for the "token" field. It is called by the builders before save.
 	TokenValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -78,6 +72,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByTeamID orders the results by the team_id field.
+func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
 }
 
 // ByToken orders the results by the token field.

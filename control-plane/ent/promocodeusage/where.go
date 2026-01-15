@@ -65,9 +65,149 @@ func IDContainsFold(id string) predicate.PromoCodeUsage {
 	return predicate.PromoCodeUsage(sql.FieldContainsFold(FieldID, id))
 }
 
+// PromoCodeID applies equality check predicate on the "promo_code_id" field. It's identical to PromoCodeIDEQ.
+func PromoCodeID(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldEQ(FieldPromoCodeID, v))
+}
+
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldEQ(FieldTeamID, v))
+}
+
 // AppliedAt applies equality check predicate on the "applied_at" field. It's identical to AppliedAtEQ.
 func AppliedAt(v time.Time) predicate.PromoCodeUsage {
 	return predicate.PromoCodeUsage(sql.FieldEQ(FieldAppliedAt, v))
+}
+
+// PromoCodeIDEQ applies the EQ predicate on the "promo_code_id" field.
+func PromoCodeIDEQ(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldEQ(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDNEQ applies the NEQ predicate on the "promo_code_id" field.
+func PromoCodeIDNEQ(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldNEQ(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDIn applies the In predicate on the "promo_code_id" field.
+func PromoCodeIDIn(vs ...string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldIn(FieldPromoCodeID, vs...))
+}
+
+// PromoCodeIDNotIn applies the NotIn predicate on the "promo_code_id" field.
+func PromoCodeIDNotIn(vs ...string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldNotIn(FieldPromoCodeID, vs...))
+}
+
+// PromoCodeIDGT applies the GT predicate on the "promo_code_id" field.
+func PromoCodeIDGT(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldGT(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDGTE applies the GTE predicate on the "promo_code_id" field.
+func PromoCodeIDGTE(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldGTE(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDLT applies the LT predicate on the "promo_code_id" field.
+func PromoCodeIDLT(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldLT(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDLTE applies the LTE predicate on the "promo_code_id" field.
+func PromoCodeIDLTE(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldLTE(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDContains applies the Contains predicate on the "promo_code_id" field.
+func PromoCodeIDContains(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldContains(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDHasPrefix applies the HasPrefix predicate on the "promo_code_id" field.
+func PromoCodeIDHasPrefix(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldHasPrefix(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDHasSuffix applies the HasSuffix predicate on the "promo_code_id" field.
+func PromoCodeIDHasSuffix(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldHasSuffix(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDEqualFold applies the EqualFold predicate on the "promo_code_id" field.
+func PromoCodeIDEqualFold(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldEqualFold(FieldPromoCodeID, v))
+}
+
+// PromoCodeIDContainsFold applies the ContainsFold predicate on the "promo_code_id" field.
+func PromoCodeIDContainsFold(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldContainsFold(FieldPromoCodeID, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// TeamIDGT applies the GT predicate on the "team_id" field.
+func TeamIDGT(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldGT(FieldTeamID, v))
+}
+
+// TeamIDGTE applies the GTE predicate on the "team_id" field.
+func TeamIDGTE(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldGTE(FieldTeamID, v))
+}
+
+// TeamIDLT applies the LT predicate on the "team_id" field.
+func TeamIDLT(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldLT(FieldTeamID, v))
+}
+
+// TeamIDLTE applies the LTE predicate on the "team_id" field.
+func TeamIDLTE(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldLTE(FieldTeamID, v))
+}
+
+// TeamIDContains applies the Contains predicate on the "team_id" field.
+func TeamIDContains(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldContains(FieldTeamID, v))
+}
+
+// TeamIDHasPrefix applies the HasPrefix predicate on the "team_id" field.
+func TeamIDHasPrefix(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldHasPrefix(FieldTeamID, v))
+}
+
+// TeamIDHasSuffix applies the HasSuffix predicate on the "team_id" field.
+func TeamIDHasSuffix(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldHasSuffix(FieldTeamID, v))
+}
+
+// TeamIDEqualFold applies the EqualFold predicate on the "team_id" field.
+func TeamIDEqualFold(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldEqualFold(FieldTeamID, v))
+}
+
+// TeamIDContainsFold applies the ContainsFold predicate on the "team_id" field.
+func TeamIDContainsFold(v string) predicate.PromoCodeUsage {
+	return predicate.PromoCodeUsage(sql.FieldContainsFold(FieldTeamID, v))
 }
 
 // AppliedAtEQ applies the EQ predicate on the "applied_at" field.

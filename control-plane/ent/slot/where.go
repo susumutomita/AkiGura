@@ -65,6 +65,21 @@ func IDContainsFold(id string) predicate.Slot {
 	return predicate.Slot(sql.FieldContainsFold(FieldID, id))
 }
 
+// FacilityID applies equality check predicate on the "facility_id" field. It's identical to FacilityIDEQ.
+func FacilityID(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEQ(FieldFacilityID, v))
+}
+
+// MunicipalityID applies equality check predicate on the "municipality_id" field. It's identical to MunicipalityIDEQ.
+func MunicipalityID(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEQ(FieldMunicipalityID, v))
+}
+
+// GroundID applies equality check predicate on the "ground_id" field. It's identical to GroundIDEQ.
+func GroundID(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEQ(FieldGroundID, v))
+}
+
 // SlotDate applies equality check predicate on the "slot_date" field. It's identical to SlotDateEQ.
 func SlotDate(v time.Time) predicate.Slot {
 	return predicate.Slot(sql.FieldEQ(FieldSlotDate, v))
@@ -93,6 +108,231 @@ func RawText(v string) predicate.Slot {
 // ScrapedAt applies equality check predicate on the "scraped_at" field. It's identical to ScrapedAtEQ.
 func ScrapedAt(v time.Time) predicate.Slot {
 	return predicate.Slot(sql.FieldEQ(FieldScrapedAt, v))
+}
+
+// FacilityIDEQ applies the EQ predicate on the "facility_id" field.
+func FacilityIDEQ(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEQ(FieldFacilityID, v))
+}
+
+// FacilityIDNEQ applies the NEQ predicate on the "facility_id" field.
+func FacilityIDNEQ(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldNEQ(FieldFacilityID, v))
+}
+
+// FacilityIDIn applies the In predicate on the "facility_id" field.
+func FacilityIDIn(vs ...string) predicate.Slot {
+	return predicate.Slot(sql.FieldIn(FieldFacilityID, vs...))
+}
+
+// FacilityIDNotIn applies the NotIn predicate on the "facility_id" field.
+func FacilityIDNotIn(vs ...string) predicate.Slot {
+	return predicate.Slot(sql.FieldNotIn(FieldFacilityID, vs...))
+}
+
+// FacilityIDGT applies the GT predicate on the "facility_id" field.
+func FacilityIDGT(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldGT(FieldFacilityID, v))
+}
+
+// FacilityIDGTE applies the GTE predicate on the "facility_id" field.
+func FacilityIDGTE(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldGTE(FieldFacilityID, v))
+}
+
+// FacilityIDLT applies the LT predicate on the "facility_id" field.
+func FacilityIDLT(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldLT(FieldFacilityID, v))
+}
+
+// FacilityIDLTE applies the LTE predicate on the "facility_id" field.
+func FacilityIDLTE(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldLTE(FieldFacilityID, v))
+}
+
+// FacilityIDContains applies the Contains predicate on the "facility_id" field.
+func FacilityIDContains(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldContains(FieldFacilityID, v))
+}
+
+// FacilityIDHasPrefix applies the HasPrefix predicate on the "facility_id" field.
+func FacilityIDHasPrefix(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldHasPrefix(FieldFacilityID, v))
+}
+
+// FacilityIDHasSuffix applies the HasSuffix predicate on the "facility_id" field.
+func FacilityIDHasSuffix(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldHasSuffix(FieldFacilityID, v))
+}
+
+// FacilityIDIsNil applies the IsNil predicate on the "facility_id" field.
+func FacilityIDIsNil() predicate.Slot {
+	return predicate.Slot(sql.FieldIsNull(FieldFacilityID))
+}
+
+// FacilityIDNotNil applies the NotNil predicate on the "facility_id" field.
+func FacilityIDNotNil() predicate.Slot {
+	return predicate.Slot(sql.FieldNotNull(FieldFacilityID))
+}
+
+// FacilityIDEqualFold applies the EqualFold predicate on the "facility_id" field.
+func FacilityIDEqualFold(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEqualFold(FieldFacilityID, v))
+}
+
+// FacilityIDContainsFold applies the ContainsFold predicate on the "facility_id" field.
+func FacilityIDContainsFold(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldContainsFold(FieldFacilityID, v))
+}
+
+// MunicipalityIDEQ applies the EQ predicate on the "municipality_id" field.
+func MunicipalityIDEQ(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEQ(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDNEQ applies the NEQ predicate on the "municipality_id" field.
+func MunicipalityIDNEQ(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldNEQ(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDIn applies the In predicate on the "municipality_id" field.
+func MunicipalityIDIn(vs ...string) predicate.Slot {
+	return predicate.Slot(sql.FieldIn(FieldMunicipalityID, vs...))
+}
+
+// MunicipalityIDNotIn applies the NotIn predicate on the "municipality_id" field.
+func MunicipalityIDNotIn(vs ...string) predicate.Slot {
+	return predicate.Slot(sql.FieldNotIn(FieldMunicipalityID, vs...))
+}
+
+// MunicipalityIDGT applies the GT predicate on the "municipality_id" field.
+func MunicipalityIDGT(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldGT(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDGTE applies the GTE predicate on the "municipality_id" field.
+func MunicipalityIDGTE(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldGTE(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDLT applies the LT predicate on the "municipality_id" field.
+func MunicipalityIDLT(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldLT(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDLTE applies the LTE predicate on the "municipality_id" field.
+func MunicipalityIDLTE(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldLTE(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDContains applies the Contains predicate on the "municipality_id" field.
+func MunicipalityIDContains(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldContains(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDHasPrefix applies the HasPrefix predicate on the "municipality_id" field.
+func MunicipalityIDHasPrefix(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldHasPrefix(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDHasSuffix applies the HasSuffix predicate on the "municipality_id" field.
+func MunicipalityIDHasSuffix(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldHasSuffix(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDIsNil applies the IsNil predicate on the "municipality_id" field.
+func MunicipalityIDIsNil() predicate.Slot {
+	return predicate.Slot(sql.FieldIsNull(FieldMunicipalityID))
+}
+
+// MunicipalityIDNotNil applies the NotNil predicate on the "municipality_id" field.
+func MunicipalityIDNotNil() predicate.Slot {
+	return predicate.Slot(sql.FieldNotNull(FieldMunicipalityID))
+}
+
+// MunicipalityIDEqualFold applies the EqualFold predicate on the "municipality_id" field.
+func MunicipalityIDEqualFold(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEqualFold(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDContainsFold applies the ContainsFold predicate on the "municipality_id" field.
+func MunicipalityIDContainsFold(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldContainsFold(FieldMunicipalityID, v))
+}
+
+// GroundIDEQ applies the EQ predicate on the "ground_id" field.
+func GroundIDEQ(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEQ(FieldGroundID, v))
+}
+
+// GroundIDNEQ applies the NEQ predicate on the "ground_id" field.
+func GroundIDNEQ(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldNEQ(FieldGroundID, v))
+}
+
+// GroundIDIn applies the In predicate on the "ground_id" field.
+func GroundIDIn(vs ...string) predicate.Slot {
+	return predicate.Slot(sql.FieldIn(FieldGroundID, vs...))
+}
+
+// GroundIDNotIn applies the NotIn predicate on the "ground_id" field.
+func GroundIDNotIn(vs ...string) predicate.Slot {
+	return predicate.Slot(sql.FieldNotIn(FieldGroundID, vs...))
+}
+
+// GroundIDGT applies the GT predicate on the "ground_id" field.
+func GroundIDGT(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldGT(FieldGroundID, v))
+}
+
+// GroundIDGTE applies the GTE predicate on the "ground_id" field.
+func GroundIDGTE(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldGTE(FieldGroundID, v))
+}
+
+// GroundIDLT applies the LT predicate on the "ground_id" field.
+func GroundIDLT(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldLT(FieldGroundID, v))
+}
+
+// GroundIDLTE applies the LTE predicate on the "ground_id" field.
+func GroundIDLTE(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldLTE(FieldGroundID, v))
+}
+
+// GroundIDContains applies the Contains predicate on the "ground_id" field.
+func GroundIDContains(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldContains(FieldGroundID, v))
+}
+
+// GroundIDHasPrefix applies the HasPrefix predicate on the "ground_id" field.
+func GroundIDHasPrefix(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldHasPrefix(FieldGroundID, v))
+}
+
+// GroundIDHasSuffix applies the HasSuffix predicate on the "ground_id" field.
+func GroundIDHasSuffix(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldHasSuffix(FieldGroundID, v))
+}
+
+// GroundIDIsNil applies the IsNil predicate on the "ground_id" field.
+func GroundIDIsNil() predicate.Slot {
+	return predicate.Slot(sql.FieldIsNull(FieldGroundID))
+}
+
+// GroundIDNotNil applies the NotNil predicate on the "ground_id" field.
+func GroundIDNotNil() predicate.Slot {
+	return predicate.Slot(sql.FieldNotNull(FieldGroundID))
+}
+
+// GroundIDEqualFold applies the EqualFold predicate on the "ground_id" field.
+func GroundIDEqualFold(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldEqualFold(FieldGroundID, v))
+}
+
+// GroundIDContainsFold applies the ContainsFold predicate on the "ground_id" field.
+func GroundIDContainsFold(v string) predicate.Slot {
+	return predicate.Slot(sql.FieldContainsFold(FieldGroundID, v))
 }
 
 // SlotDateEQ applies the EQ predicate on the "slot_date" field.

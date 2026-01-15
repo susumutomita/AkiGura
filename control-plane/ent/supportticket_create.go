@@ -22,6 +22,20 @@ type SupportTicketCreate struct {
 	hooks    []Hook
 }
 
+// SetTeamID sets the "team_id" field.
+func (_c *SupportTicketCreate) SetTeamID(v string) *SupportTicketCreate {
+	_c.mutation.SetTeamID(v)
+	return _c
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_c *SupportTicketCreate) SetNillableTeamID(v *string) *SupportTicketCreate {
+	if v != nil {
+		_c.SetTeamID(*v)
+	}
+	return _c
+}
+
 // SetEmail sets the "email" field.
 func (_c *SupportTicketCreate) SetEmail(v string) *SupportTicketCreate {
 	_c.mutation.SetEmail(v)
@@ -121,20 +135,6 @@ func (_c *SupportTicketCreate) SetNillableUpdatedAt(v *time.Time) *SupportTicket
 // SetID sets the "id" field.
 func (_c *SupportTicketCreate) SetID(v string) *SupportTicketCreate {
 	_c.mutation.SetID(v)
-	return _c
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_c *SupportTicketCreate) SetTeamID(id string) *SupportTicketCreate {
-	_c.mutation.SetTeamID(id)
-	return _c
-}
-
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (_c *SupportTicketCreate) SetNillableTeamID(id *string) *SupportTicketCreate {
-	if id != nil {
-		_c = _c.SetTeamID(*id)
-	}
 	return _c
 }
 
@@ -332,7 +332,7 @@ func (_c *SupportTicketCreate) createSpec() (*SupportTicket, *sqlgraph.CreateSpe
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_support_tickets = &nodes[0]
+		_node.TeamID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.MessagesIDs(); len(nodes) > 0 {

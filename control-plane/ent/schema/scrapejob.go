@@ -20,6 +20,8 @@ func (ScrapeJob) Fields() []ent.Field {
 		field.String("id").
 			Unique().
 			Immutable(),
+		field.String("municipality_id").
+			NotEmpty(),
 		field.Enum("status").
 			Values("pending", "running", "completed", "failed").
 			Default("pending"),
@@ -51,6 +53,7 @@ func (ScrapeJob) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("municipality", Municipality.Type).
 			Ref("scrape_jobs").
+			Field("municipality_id").
 			Unique().
 			Required(),
 	}
@@ -59,7 +62,7 @@ func (ScrapeJob) Edges() []ent.Edge {
 // Indexes of the ScrapeJob.
 func (ScrapeJob) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Edges("municipality"),
+		index.Fields("municipality_id"),
 		index.Fields("status"),
 	}
 }

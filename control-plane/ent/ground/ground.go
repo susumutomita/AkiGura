@@ -14,6 +14,8 @@ const (
 	Label = "ground"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldMunicipalityID holds the string denoting the municipality_id field in the database.
+	FieldMunicipalityID = "municipality_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldCourtPattern holds the string denoting the court_pattern field in the database.
@@ -34,29 +36,24 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "municipality" package.
 	MunicipalityInverseTable = "municipalities"
 	// MunicipalityColumn is the table column denoting the municipality relation/edge.
-	MunicipalityColumn = "municipality_grounds"
+	MunicipalityColumn = "municipality_id"
 	// SlotsTable is the table that holds the slots relation/edge.
 	SlotsTable = "slots"
 	// SlotsInverseTable is the table name for the Slot entity.
 	// It exists in this package in order to avoid circular dependency with the "slot" package.
 	SlotsInverseTable = "slots"
 	// SlotsColumn is the table column denoting the slots relation/edge.
-	SlotsColumn = "ground_slots"
+	SlotsColumn = "ground_id"
 )
 
 // Columns holds all SQL columns for ground fields.
 var Columns = []string{
 	FieldID,
+	FieldMunicipalityID,
 	FieldName,
 	FieldCourtPattern,
 	FieldEnabled,
 	FieldCreatedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "grounds"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"municipality_grounds",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -66,15 +63,12 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
-			return true
-		}
-	}
 	return false
 }
 
 var (
+	// MunicipalityIDValidator is a validator for the "municipality_id" field. It is called by the builders before save.
+	MunicipalityIDValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// DefaultEnabled holds the default value on creation for the "enabled" field.
@@ -89,6 +83,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByMunicipalityID orders the results by the municipality_id field.
+func ByMunicipalityID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMunicipalityID, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

@@ -24,6 +24,48 @@ type SlotCreate struct {
 	hooks    []Hook
 }
 
+// SetFacilityID sets the "facility_id" field.
+func (_c *SlotCreate) SetFacilityID(v string) *SlotCreate {
+	_c.mutation.SetFacilityID(v)
+	return _c
+}
+
+// SetNillableFacilityID sets the "facility_id" field if the given value is not nil.
+func (_c *SlotCreate) SetNillableFacilityID(v *string) *SlotCreate {
+	if v != nil {
+		_c.SetFacilityID(*v)
+	}
+	return _c
+}
+
+// SetMunicipalityID sets the "municipality_id" field.
+func (_c *SlotCreate) SetMunicipalityID(v string) *SlotCreate {
+	_c.mutation.SetMunicipalityID(v)
+	return _c
+}
+
+// SetNillableMunicipalityID sets the "municipality_id" field if the given value is not nil.
+func (_c *SlotCreate) SetNillableMunicipalityID(v *string) *SlotCreate {
+	if v != nil {
+		_c.SetMunicipalityID(*v)
+	}
+	return _c
+}
+
+// SetGroundID sets the "ground_id" field.
+func (_c *SlotCreate) SetGroundID(v string) *SlotCreate {
+	_c.mutation.SetGroundID(v)
+	return _c
+}
+
+// SetNillableGroundID sets the "ground_id" field if the given value is not nil.
+func (_c *SlotCreate) SetNillableGroundID(v *string) *SlotCreate {
+	if v != nil {
+		_c.SetGroundID(*v)
+	}
+	return _c
+}
+
 // SetSlotDate sets the "slot_date" field.
 func (_c *SlotCreate) SetSlotDate(v time.Time) *SlotCreate {
 	_c.mutation.SetSlotDate(v)
@@ -90,56 +132,14 @@ func (_c *SlotCreate) SetID(v string) *SlotCreate {
 	return _c
 }
 
-// SetFacilityID sets the "facility" edge to the Facility entity by ID.
-func (_c *SlotCreate) SetFacilityID(id string) *SlotCreate {
-	_c.mutation.SetFacilityID(id)
-	return _c
-}
-
-// SetNillableFacilityID sets the "facility" edge to the Facility entity by ID if the given value is not nil.
-func (_c *SlotCreate) SetNillableFacilityID(id *string) *SlotCreate {
-	if id != nil {
-		_c = _c.SetFacilityID(*id)
-	}
-	return _c
-}
-
 // SetFacility sets the "facility" edge to the Facility entity.
 func (_c *SlotCreate) SetFacility(v *Facility) *SlotCreate {
 	return _c.SetFacilityID(v.ID)
 }
 
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_c *SlotCreate) SetMunicipalityID(id string) *SlotCreate {
-	_c.mutation.SetMunicipalityID(id)
-	return _c
-}
-
-// SetNillableMunicipalityID sets the "municipality" edge to the Municipality entity by ID if the given value is not nil.
-func (_c *SlotCreate) SetNillableMunicipalityID(id *string) *SlotCreate {
-	if id != nil {
-		_c = _c.SetMunicipalityID(*id)
-	}
-	return _c
-}
-
 // SetMunicipality sets the "municipality" edge to the Municipality entity.
 func (_c *SlotCreate) SetMunicipality(v *Municipality) *SlotCreate {
 	return _c.SetMunicipalityID(v.ID)
-}
-
-// SetGroundID sets the "ground" edge to the Ground entity by ID.
-func (_c *SlotCreate) SetGroundID(id string) *SlotCreate {
-	_c.mutation.SetGroundID(id)
-	return _c
-}
-
-// SetNillableGroundID sets the "ground" edge to the Ground entity by ID if the given value is not nil.
-func (_c *SlotCreate) SetNillableGroundID(id *string) *SlotCreate {
-	if id != nil {
-		_c = _c.SetGroundID(*id)
-	}
-	return _c
 }
 
 // SetGround sets the "ground" edge to the Ground entity.
@@ -300,7 +300,7 @@ func (_c *SlotCreate) createSpec() (*Slot, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.facility_slots = &nodes[0]
+		_node.FacilityID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.MunicipalityIDs(); len(nodes) > 0 {
@@ -317,7 +317,7 @@ func (_c *SlotCreate) createSpec() (*Slot, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.municipality_slots = &nodes[0]
+		_node.MunicipalityID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.GroundIDs(); len(nodes) > 0 {
@@ -334,7 +334,7 @@ func (_c *SlotCreate) createSpec() (*Slot, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.ground_slots = &nodes[0]
+		_node.GroundID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.NotificationsIDs(); len(nodes) > 0 {

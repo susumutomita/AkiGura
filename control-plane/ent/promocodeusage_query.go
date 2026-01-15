@@ -26,7 +26,6 @@ type PromoCodeUsageQuery struct {
 	predicates    []predicate.PromoCodeUsage
 	withPromoCode *PromoCodeQuery
 	withTeam      *TeamQuery
-	withFKs       bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -335,12 +334,12 @@ func (_q *PromoCodeUsageQuery) WithTeam(opts ...func(*TeamQuery)) *PromoCodeUsag
 // Example:
 //
 //	var v []struct {
-//		AppliedAt time.Time `json:"applied_at,omitempty"`
+//		PromoCodeID string `json:"promo_code_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.PromoCodeUsage.Query().
-//		GroupBy(promocodeusage.FieldAppliedAt).
+//		GroupBy(promocodeusage.FieldPromoCodeID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *PromoCodeUsageQuery) GroupBy(field string, fields ...string) *PromoCodeUsageGroupBy {
@@ -358,11 +357,11 @@ func (_q *PromoCodeUsageQuery) GroupBy(field string, fields ...string) *PromoCod
 // Example:
 //
 //	var v []struct {
-//		AppliedAt time.Time `json:"applied_at,omitempty"`
+//		PromoCodeID string `json:"promo_code_id,omitempty"`
 //	}
 //
 //	client.PromoCodeUsage.Query().
-//		Select(promocodeusage.FieldAppliedAt).
+//		Select(promocodeusage.FieldPromoCodeID).
 //		Scan(ctx, &v)
 func (_q *PromoCodeUsageQuery) Select(fields ...string) *PromoCodeUsageSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -406,19 +405,12 @@ func (_q *PromoCodeUsageQuery) prepareQuery(ctx context.Context) error {
 func (_q *PromoCodeUsageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*PromoCodeUsage, error) {
 	var (
 		nodes       = []*PromoCodeUsage{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
 			_q.withPromoCode != nil,
 			_q.withTeam != nil,
 		}
 	)
-	if _q.withPromoCode != nil || _q.withTeam != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, promocodeusage.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*PromoCodeUsage).scanValues(nil, columns)
 	}
@@ -456,10 +448,7 @@ func (_q *PromoCodeUsageQuery) loadPromoCode(ctx context.Context, query *PromoCo
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*PromoCodeUsage)
 	for i := range nodes {
-		if nodes[i].promo_code_usages == nil {
-			continue
-		}
-		fk := *nodes[i].promo_code_usages
+		fk := nodes[i].PromoCodeID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -476,7 +465,7 @@ func (_q *PromoCodeUsageQuery) loadPromoCode(ctx context.Context, query *PromoCo
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "promo_code_usages" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "promo_code_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -488,10 +477,7 @@ func (_q *PromoCodeUsageQuery) loadTeam(ctx context.Context, query *TeamQuery, n
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*PromoCodeUsage)
 	for i := range nodes {
-		if nodes[i].team_promo_code_usages == nil {
-			continue
-		}
-		fk := *nodes[i].team_promo_code_usages
+		fk := nodes[i].TeamID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -508,7 +494,7 @@ func (_q *PromoCodeUsageQuery) loadTeam(ctx context.Context, query *TeamQuery, n
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_promo_code_usages" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -541,6 +527,12 @@ func (_q *PromoCodeUsageQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != promocodeusage.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withPromoCode != nil {
+			_spec.Node.AddColumnOnce(promocodeusage.FieldPromoCodeID)
+		}
+		if _q.withTeam != nil {
+			_spec.Node.AddColumnOnce(promocodeusage.FieldTeamID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

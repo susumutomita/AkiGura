@@ -28,7 +28,6 @@ type NotificationQuery struct {
 	withTeam           *TeamQuery
 	withWatchCondition *WatchConditionQuery
 	withSlot           *SlotQuery
-	withFKs            bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -371,12 +370,12 @@ func (_q *NotificationQuery) WithSlot(opts ...func(*SlotQuery)) *NotificationQue
 // Example:
 //
 //	var v []struct {
-//		Channel string `json:"channel,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Notification.Query().
-//		GroupBy(notification.FieldChannel).
+//		GroupBy(notification.FieldTeamID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *NotificationQuery) GroupBy(field string, fields ...string) *NotificationGroupBy {
@@ -394,11 +393,11 @@ func (_q *NotificationQuery) GroupBy(field string, fields ...string) *Notificati
 // Example:
 //
 //	var v []struct {
-//		Channel string `json:"channel,omitempty"`
+//		TeamID string `json:"team_id,omitempty"`
 //	}
 //
 //	client.Notification.Query().
-//		Select(notification.FieldChannel).
+//		Select(notification.FieldTeamID).
 //		Scan(ctx, &v)
 func (_q *NotificationQuery) Select(fields ...string) *NotificationSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -442,7 +441,6 @@ func (_q *NotificationQuery) prepareQuery(ctx context.Context) error {
 func (_q *NotificationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Notification, error) {
 	var (
 		nodes       = []*Notification{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [3]bool{
 			_q.withTeam != nil,
@@ -450,12 +448,6 @@ func (_q *NotificationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			_q.withSlot != nil,
 		}
 	)
-	if _q.withTeam != nil || _q.withWatchCondition != nil || _q.withSlot != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, notification.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Notification).scanValues(nil, columns)
 	}
@@ -499,10 +491,7 @@ func (_q *NotificationQuery) loadTeam(ctx context.Context, query *TeamQuery, nod
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Notification)
 	for i := range nodes {
-		if nodes[i].team_notifications == nil {
-			continue
-		}
-		fk := *nodes[i].team_notifications
+		fk := nodes[i].TeamID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -519,7 +508,7 @@ func (_q *NotificationQuery) loadTeam(ctx context.Context, query *TeamQuery, nod
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_notifications" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -531,10 +520,7 @@ func (_q *NotificationQuery) loadWatchCondition(ctx context.Context, query *Watc
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Notification)
 	for i := range nodes {
-		if nodes[i].watch_condition_notifications == nil {
-			continue
-		}
-		fk := *nodes[i].watch_condition_notifications
+		fk := nodes[i].WatchConditionID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -551,7 +537,7 @@ func (_q *NotificationQuery) loadWatchCondition(ctx context.Context, query *Watc
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "watch_condition_notifications" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "watch_condition_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -563,10 +549,7 @@ func (_q *NotificationQuery) loadSlot(ctx context.Context, query *SlotQuery, nod
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Notification)
 	for i := range nodes {
-		if nodes[i].slot_notifications == nil {
-			continue
-		}
-		fk := *nodes[i].slot_notifications
+		fk := nodes[i].SlotID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -583,7 +566,7 @@ func (_q *NotificationQuery) loadSlot(ctx context.Context, query *SlotQuery, nod
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "slot_notifications" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "slot_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -616,6 +599,15 @@ func (_q *NotificationQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != notification.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withTeam != nil {
+			_spec.Node.AddColumnOnce(notification.FieldTeamID)
+		}
+		if _q.withWatchCondition != nil {
+			_spec.Node.AddColumnOnce(notification.FieldWatchConditionID)
+		}
+		if _q.withSlot != nil {
+			_spec.Node.AddColumnOnce(notification.FieldSlotID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

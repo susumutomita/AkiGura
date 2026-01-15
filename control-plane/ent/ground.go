@@ -18,6 +18,8 @@ type Ground struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// MunicipalityID holds the value of the "municipality_id" field.
+	MunicipalityID string `json:"municipality_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// CourtPattern holds the value of the "court_pattern" field.
@@ -28,9 +30,8 @@ type Ground struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GroundQuery when eager-loading is set.
-	Edges                GroundEdges `json:"edges"`
-	municipality_grounds *string
-	selectValues         sql.SelectValues
+	Edges        GroundEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // GroundEdges holds the relations/edges for other nodes in the graph.
@@ -71,12 +72,10 @@ func (*Ground) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case ground.FieldEnabled:
 			values[i] = new(sql.NullBool)
-		case ground.FieldID, ground.FieldName, ground.FieldCourtPattern:
+		case ground.FieldID, ground.FieldMunicipalityID, ground.FieldName, ground.FieldCourtPattern:
 			values[i] = new(sql.NullString)
 		case ground.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case ground.ForeignKeys[0]: // municipality_grounds
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -97,6 +96,12 @@ func (_m *Ground) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case ground.FieldMunicipalityID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field municipality_id", values[i])
+			} else if value.Valid {
+				_m.MunicipalityID = value.String
 			}
 		case ground.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -121,13 +126,6 @@ func (_m *Ground) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
-			}
-		case ground.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field municipality_grounds", values[i])
-			} else if value.Valid {
-				_m.municipality_grounds = new(string)
-				*_m.municipality_grounds = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -175,6 +173,9 @@ func (_m *Ground) String() string {
 	var builder strings.Builder
 	builder.WriteString("Ground(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("municipality_id=")
+	builder.WriteString(_m.MunicipalityID)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")

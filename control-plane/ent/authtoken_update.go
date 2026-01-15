@@ -29,6 +29,20 @@ func (_u *AuthTokenUpdate) Where(ps ...predicate.AuthToken) *AuthTokenUpdate {
 	return _u
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *AuthTokenUpdate) SetTeamID(v string) *AuthTokenUpdate {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *AuthTokenUpdate) SetNillableTeamID(v *string) *AuthTokenUpdate {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
 // SetToken sets the "token" field.
 func (_u *AuthTokenUpdate) SetToken(v string) *AuthTokenUpdate {
 	_u.mutation.SetToken(v)
@@ -77,12 +91,6 @@ func (_u *AuthTokenUpdate) ClearUsedAt() *AuthTokenUpdate {
 	return _u
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *AuthTokenUpdate) SetTeamID(id string) *AuthTokenUpdate {
-	_u.mutation.SetTeamID(id)
-	return _u
-}
-
 // SetTeam sets the "team" edge to the Team entity.
 func (_u *AuthTokenUpdate) SetTeam(v *Team) *AuthTokenUpdate {
 	return _u.SetTeamID(v.ID)
@@ -128,6 +136,11 @@ func (_u *AuthTokenUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *AuthTokenUpdate) check() error {
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := authtoken.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "AuthToken.team_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Token(); ok {
 		if err := authtoken.TokenValidator(v); err != nil {
 			return &ValidationError{Name: "token", err: fmt.Errorf(`ent: validator failed for field "AuthToken.token": %w`, err)}
@@ -212,6 +225,20 @@ type AuthTokenUpdateOne struct {
 	mutation *AuthTokenMutation
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *AuthTokenUpdateOne) SetTeamID(v string) *AuthTokenUpdateOne {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *AuthTokenUpdateOne) SetNillableTeamID(v *string) *AuthTokenUpdateOne {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
 // SetToken sets the "token" field.
 func (_u *AuthTokenUpdateOne) SetToken(v string) *AuthTokenUpdateOne {
 	_u.mutation.SetToken(v)
@@ -257,12 +284,6 @@ func (_u *AuthTokenUpdateOne) SetNillableUsedAt(v *time.Time) *AuthTokenUpdateOn
 // ClearUsedAt clears the value of the "used_at" field.
 func (_u *AuthTokenUpdateOne) ClearUsedAt() *AuthTokenUpdateOne {
 	_u.mutation.ClearUsedAt()
-	return _u
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *AuthTokenUpdateOne) SetTeamID(id string) *AuthTokenUpdateOne {
-	_u.mutation.SetTeamID(id)
 	return _u
 }
 
@@ -324,6 +345,11 @@ func (_u *AuthTokenUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *AuthTokenUpdateOne) check() error {
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := authtoken.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "AuthToken.team_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Token(); ok {
 		if err := authtoken.TokenValidator(v); err != nil {
 			return &ValidationError{Name: "token", err: fmt.Errorf(`ent: validator failed for field "AuthToken.token": %w`, err)}

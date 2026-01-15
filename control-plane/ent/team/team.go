@@ -53,35 +53,35 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "watchcondition" package.
 	WatchConditionsInverseTable = "watch_conditions"
 	// WatchConditionsColumn is the table column denoting the watch_conditions relation/edge.
-	WatchConditionsColumn = "team_watch_conditions"
+	WatchConditionsColumn = "team_id"
 	// NotificationsTable is the table that holds the notifications relation/edge.
 	NotificationsTable = "notifications"
 	// NotificationsInverseTable is the table name for the Notification entity.
 	// It exists in this package in order to avoid circular dependency with the "notification" package.
 	NotificationsInverseTable = "notifications"
 	// NotificationsColumn is the table column denoting the notifications relation/edge.
-	NotificationsColumn = "team_notifications"
+	NotificationsColumn = "team_id"
 	// AuthTokensTable is the table that holds the auth_tokens relation/edge.
 	AuthTokensTable = "auth_tokens"
 	// AuthTokensInverseTable is the table name for the AuthToken entity.
 	// It exists in this package in order to avoid circular dependency with the "authtoken" package.
 	AuthTokensInverseTable = "auth_tokens"
 	// AuthTokensColumn is the table column denoting the auth_tokens relation/edge.
-	AuthTokensColumn = "team_auth_tokens"
+	AuthTokensColumn = "team_id"
 	// SupportTicketsTable is the table that holds the support_tickets relation/edge.
 	SupportTicketsTable = "support_tickets"
 	// SupportTicketsInverseTable is the table name for the SupportTicket entity.
 	// It exists in this package in order to avoid circular dependency with the "supportticket" package.
 	SupportTicketsInverseTable = "support_tickets"
 	// SupportTicketsColumn is the table column denoting the support_tickets relation/edge.
-	SupportTicketsColumn = "team_support_tickets"
+	SupportTicketsColumn = "team_id"
 	// PromoCodeUsagesTable is the table that holds the promo_code_usages relation/edge.
 	PromoCodeUsagesTable = "promo_code_usages"
 	// PromoCodeUsagesInverseTable is the table name for the PromoCodeUsage entity.
 	// It exists in this package in order to avoid circular dependency with the "promocodeusage" package.
 	PromoCodeUsagesInverseTable = "promo_code_usages"
 	// PromoCodeUsagesColumn is the table column denoting the promo_code_usages relation/edge.
-	PromoCodeUsagesColumn = "team_promo_code_usages"
+	PromoCodeUsagesColumn = "team_id"
 )
 
 // Columns holds all SQL columns for team fields.

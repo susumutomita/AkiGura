@@ -18,6 +18,8 @@ type SupportMessage struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// TicketID holds the value of the "ticket_id" field.
+	TicketID string `json:"ticket_id,omitempty"`
 	// Role holds the value of the "role" field.
 	Role supportmessage.Role `json:"role,omitempty"`
 	// Content holds the value of the "content" field.
@@ -26,9 +28,8 @@ type SupportMessage struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SupportMessageQuery when eager-loading is set.
-	Edges                   SupportMessageEdges `json:"edges"`
-	support_ticket_messages *string
-	selectValues            sql.SelectValues
+	Edges        SupportMessageEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // SupportMessageEdges holds the relations/edges for other nodes in the graph.
@@ -56,12 +57,10 @@ func (*SupportMessage) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case supportmessage.FieldID, supportmessage.FieldRole, supportmessage.FieldContent:
+		case supportmessage.FieldID, supportmessage.FieldTicketID, supportmessage.FieldRole, supportmessage.FieldContent:
 			values[i] = new(sql.NullString)
 		case supportmessage.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case supportmessage.ForeignKeys[0]: // support_ticket_messages
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -83,6 +82,12 @@ func (_m *SupportMessage) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ID = value.String
 			}
+		case supportmessage.FieldTicketID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ticket_id", values[i])
+			} else if value.Valid {
+				_m.TicketID = value.String
+			}
 		case supportmessage.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field role", values[i])
@@ -100,13 +105,6 @@ func (_m *SupportMessage) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
-			}
-		case supportmessage.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field support_ticket_messages", values[i])
-			} else if value.Valid {
-				_m.support_ticket_messages = new(string)
-				*_m.support_ticket_messages = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -149,6 +147,9 @@ func (_m *SupportMessage) String() string {
 	var builder strings.Builder
 	builder.WriteString("SupportMessage(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("ticket_id=")
+	builder.WriteString(_m.TicketID)
+	builder.WriteString(", ")
 	builder.WriteString("role=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Role))
 	builder.WriteString(", ")

@@ -15,6 +15,8 @@ const (
 	Label = "support_ticket"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldTeamID holds the string denoting the team_id field in the database.
+	FieldTeamID = "team_id"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
 	// FieldSubject holds the string denoting the subject field in the database.
@@ -43,19 +45,20 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
-	TeamColumn = "team_support_tickets"
+	TeamColumn = "team_id"
 	// MessagesTable is the table that holds the messages relation/edge.
 	MessagesTable = "support_messages"
 	// MessagesInverseTable is the table name for the SupportMessage entity.
 	// It exists in this package in order to avoid circular dependency with the "supportmessage" package.
 	MessagesInverseTable = "support_messages"
 	// MessagesColumn is the table column denoting the messages relation/edge.
-	MessagesColumn = "support_ticket_messages"
+	MessagesColumn = "ticket_id"
 )
 
 // Columns holds all SQL columns for supportticket fields.
 var Columns = []string{
 	FieldID,
+	FieldTeamID,
 	FieldEmail,
 	FieldSubject,
 	FieldStatus,
@@ -66,21 +69,10 @@ var Columns = []string{
 	FieldUpdatedAt,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "support_tickets"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"team_support_tickets",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -163,6 +155,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByTeamID orders the results by the team_id field.
+func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
 }
 
 // ByEmail orders the results by the email field.

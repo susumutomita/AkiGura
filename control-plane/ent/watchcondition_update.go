@@ -31,6 +31,34 @@ func (_u *WatchConditionUpdate) Where(ps ...predicate.WatchCondition) *WatchCond
 	return _u
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *WatchConditionUpdate) SetTeamID(v string) *WatchConditionUpdate {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *WatchConditionUpdate) SetNillableTeamID(v *string) *WatchConditionUpdate {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// SetFacilityID sets the "facility_id" field.
+func (_u *WatchConditionUpdate) SetFacilityID(v string) *WatchConditionUpdate {
+	_u.mutation.SetFacilityID(v)
+	return _u
+}
+
+// SetNillableFacilityID sets the "facility_id" field if the given value is not nil.
+func (_u *WatchConditionUpdate) SetNillableFacilityID(v *string) *WatchConditionUpdate {
+	if v != nil {
+		_u.SetFacilityID(*v)
+	}
+	return _u
+}
+
 // SetDaysOfWeek sets the "days_of_week" field.
 func (_u *WatchConditionUpdate) SetDaysOfWeek(v string) *WatchConditionUpdate {
 	_u.mutation.SetDaysOfWeek(v)
@@ -133,21 +161,9 @@ func (_u *WatchConditionUpdate) SetUpdatedAt(v time.Time) *WatchConditionUpdate 
 	return _u
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *WatchConditionUpdate) SetTeamID(id string) *WatchConditionUpdate {
-	_u.mutation.SetTeamID(id)
-	return _u
-}
-
 // SetTeam sets the "team" edge to the Team entity.
 func (_u *WatchConditionUpdate) SetTeam(v *Team) *WatchConditionUpdate {
 	return _u.SetTeamID(v.ID)
-}
-
-// SetFacilityID sets the "facility" edge to the Facility entity by ID.
-func (_u *WatchConditionUpdate) SetFacilityID(id string) *WatchConditionUpdate {
-	_u.mutation.SetFacilityID(id)
-	return _u
 }
 
 // SetFacility sets the "facility" edge to the Facility entity.
@@ -246,6 +262,16 @@ func (_u *WatchConditionUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *WatchConditionUpdate) check() error {
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := watchcondition.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.team_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FacilityID(); ok {
+		if err := watchcondition.FacilityIDValidator(v); err != nil {
+			return &ValidationError{Name: "facility_id", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.facility_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.DaysOfWeek(); ok {
 		if err := watchcondition.DaysOfWeekValidator(v); err != nil {
 			return &ValidationError{Name: "days_of_week", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.days_of_week": %w`, err)}
@@ -432,6 +458,34 @@ type WatchConditionUpdateOne struct {
 	mutation *WatchConditionMutation
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *WatchConditionUpdateOne) SetTeamID(v string) *WatchConditionUpdateOne {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *WatchConditionUpdateOne) SetNillableTeamID(v *string) *WatchConditionUpdateOne {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// SetFacilityID sets the "facility_id" field.
+func (_u *WatchConditionUpdateOne) SetFacilityID(v string) *WatchConditionUpdateOne {
+	_u.mutation.SetFacilityID(v)
+	return _u
+}
+
+// SetNillableFacilityID sets the "facility_id" field if the given value is not nil.
+func (_u *WatchConditionUpdateOne) SetNillableFacilityID(v *string) *WatchConditionUpdateOne {
+	if v != nil {
+		_u.SetFacilityID(*v)
+	}
+	return _u
+}
+
 // SetDaysOfWeek sets the "days_of_week" field.
 func (_u *WatchConditionUpdateOne) SetDaysOfWeek(v string) *WatchConditionUpdateOne {
 	_u.mutation.SetDaysOfWeek(v)
@@ -534,21 +588,9 @@ func (_u *WatchConditionUpdateOne) SetUpdatedAt(v time.Time) *WatchConditionUpda
 	return _u
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *WatchConditionUpdateOne) SetTeamID(id string) *WatchConditionUpdateOne {
-	_u.mutation.SetTeamID(id)
-	return _u
-}
-
 // SetTeam sets the "team" edge to the Team entity.
 func (_u *WatchConditionUpdateOne) SetTeam(v *Team) *WatchConditionUpdateOne {
 	return _u.SetTeamID(v.ID)
-}
-
-// SetFacilityID sets the "facility" edge to the Facility entity by ID.
-func (_u *WatchConditionUpdateOne) SetFacilityID(id string) *WatchConditionUpdateOne {
-	_u.mutation.SetFacilityID(id)
-	return _u
 }
 
 // SetFacility sets the "facility" edge to the Facility entity.
@@ -660,6 +702,16 @@ func (_u *WatchConditionUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *WatchConditionUpdateOne) check() error {
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := watchcondition.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.team_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FacilityID(); ok {
+		if err := watchcondition.FacilityIDValidator(v); err != nil {
+			return &ValidationError{Name: "facility_id", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.facility_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.DaysOfWeek(); ok {
 		if err := watchcondition.DaysOfWeekValidator(v); err != nil {
 			return &ValidationError{Name: "days_of_week", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.days_of_week": %w`, err)}

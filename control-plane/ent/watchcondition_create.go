@@ -23,6 +23,18 @@ type WatchConditionCreate struct {
 	hooks    []Hook
 }
 
+// SetTeamID sets the "team_id" field.
+func (_c *WatchConditionCreate) SetTeamID(v string) *WatchConditionCreate {
+	_c.mutation.SetTeamID(v)
+	return _c
+}
+
+// SetFacilityID sets the "facility_id" field.
+func (_c *WatchConditionCreate) SetFacilityID(v string) *WatchConditionCreate {
+	_c.mutation.SetFacilityID(v)
+	return _c
+}
+
 // SetDaysOfWeek sets the "days_of_week" field.
 func (_c *WatchConditionCreate) SetDaysOfWeek(v string) *WatchConditionCreate {
 	_c.mutation.SetDaysOfWeek(v)
@@ -117,21 +129,9 @@ func (_c *WatchConditionCreate) SetID(v string) *WatchConditionCreate {
 	return _c
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_c *WatchConditionCreate) SetTeamID(id string) *WatchConditionCreate {
-	_c.mutation.SetTeamID(id)
-	return _c
-}
-
 // SetTeam sets the "team" edge to the Team entity.
 func (_c *WatchConditionCreate) SetTeam(v *Team) *WatchConditionCreate {
 	return _c.SetTeamID(v.ID)
-}
-
-// SetFacilityID sets the "facility" edge to the Facility entity by ID.
-func (_c *WatchConditionCreate) SetFacilityID(id string) *WatchConditionCreate {
-	_c.mutation.SetFacilityID(id)
-	return _c
 }
 
 // SetFacility sets the "facility" edge to the Facility entity.
@@ -205,6 +205,22 @@ func (_c *WatchConditionCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *WatchConditionCreate) check() error {
+	if _, ok := _c.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "WatchCondition.team_id"`)}
+	}
+	if v, ok := _c.mutation.TeamID(); ok {
+		if err := watchcondition.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.team_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.FacilityID(); !ok {
+		return &ValidationError{Name: "facility_id", err: errors.New(`ent: missing required field "WatchCondition.facility_id"`)}
+	}
+	if v, ok := _c.mutation.FacilityID(); ok {
+		if err := watchcondition.FacilityIDValidator(v); err != nil {
+			return &ValidationError{Name: "facility_id", err: fmt.Errorf(`ent: validator failed for field "WatchCondition.facility_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.DaysOfWeek(); !ok {
 		return &ValidationError{Name: "days_of_week", err: errors.New(`ent: missing required field "WatchCondition.days_of_week"`)}
 	}
@@ -325,7 +341,7 @@ func (_c *WatchConditionCreate) createSpec() (*WatchCondition, *sqlgraph.CreateS
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_watch_conditions = &nodes[0]
+		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.FacilityIDs(); len(nodes) > 0 {
@@ -342,7 +358,7 @@ func (_c *WatchConditionCreate) createSpec() (*WatchCondition, *sqlgraph.CreateS
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.facility_watch_conditions = &nodes[0]
+		_node.FacilityID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.NotificationsIDs(); len(nodes) > 0 {

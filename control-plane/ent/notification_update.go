@@ -31,6 +31,48 @@ func (_u *NotificationUpdate) Where(ps ...predicate.Notification) *NotificationU
 	return _u
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *NotificationUpdate) SetTeamID(v string) *NotificationUpdate {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *NotificationUpdate) SetNillableTeamID(v *string) *NotificationUpdate {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// SetWatchConditionID sets the "watch_condition_id" field.
+func (_u *NotificationUpdate) SetWatchConditionID(v string) *NotificationUpdate {
+	_u.mutation.SetWatchConditionID(v)
+	return _u
+}
+
+// SetNillableWatchConditionID sets the "watch_condition_id" field if the given value is not nil.
+func (_u *NotificationUpdate) SetNillableWatchConditionID(v *string) *NotificationUpdate {
+	if v != nil {
+		_u.SetWatchConditionID(*v)
+	}
+	return _u
+}
+
+// SetSlotID sets the "slot_id" field.
+func (_u *NotificationUpdate) SetSlotID(v string) *NotificationUpdate {
+	_u.mutation.SetSlotID(v)
+	return _u
+}
+
+// SetNillableSlotID sets the "slot_id" field if the given value is not nil.
+func (_u *NotificationUpdate) SetNillableSlotID(v *string) *NotificationUpdate {
+	if v != nil {
+		_u.SetSlotID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *NotificationUpdate) SetChannel(v string) *NotificationUpdate {
 	_u.mutation.SetChannel(v)
@@ -79,32 +121,14 @@ func (_u *NotificationUpdate) ClearSentAt() *NotificationUpdate {
 	return _u
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *NotificationUpdate) SetTeamID(id string) *NotificationUpdate {
-	_u.mutation.SetTeamID(id)
-	return _u
-}
-
 // SetTeam sets the "team" edge to the Team entity.
 func (_u *NotificationUpdate) SetTeam(v *Team) *NotificationUpdate {
 	return _u.SetTeamID(v.ID)
 }
 
-// SetWatchConditionID sets the "watch_condition" edge to the WatchCondition entity by ID.
-func (_u *NotificationUpdate) SetWatchConditionID(id string) *NotificationUpdate {
-	_u.mutation.SetWatchConditionID(id)
-	return _u
-}
-
 // SetWatchCondition sets the "watch_condition" edge to the WatchCondition entity.
 func (_u *NotificationUpdate) SetWatchCondition(v *WatchCondition) *NotificationUpdate {
 	return _u.SetWatchConditionID(v.ID)
-}
-
-// SetSlotID sets the "slot" edge to the Slot entity by ID.
-func (_u *NotificationUpdate) SetSlotID(id string) *NotificationUpdate {
-	_u.mutation.SetSlotID(id)
-	return _u
 }
 
 // SetSlot sets the "slot" edge to the Slot entity.
@@ -164,6 +188,21 @@ func (_u *NotificationUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *NotificationUpdate) check() error {
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := notification.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "Notification.team_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.WatchConditionID(); ok {
+		if err := notification.WatchConditionIDValidator(v); err != nil {
+			return &ValidationError{Name: "watch_condition_id", err: fmt.Errorf(`ent: validator failed for field "Notification.watch_condition_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.SlotID(); ok {
+		if err := notification.SlotIDValidator(v); err != nil {
+			return &ValidationError{Name: "slot_id", err: fmt.Errorf(`ent: validator failed for field "Notification.slot_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Channel(); ok {
 		if err := notification.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Notification.channel": %w`, err)}
@@ -317,6 +356,48 @@ type NotificationUpdateOne struct {
 	mutation *NotificationMutation
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *NotificationUpdateOne) SetTeamID(v string) *NotificationUpdateOne {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *NotificationUpdateOne) SetNillableTeamID(v *string) *NotificationUpdateOne {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// SetWatchConditionID sets the "watch_condition_id" field.
+func (_u *NotificationUpdateOne) SetWatchConditionID(v string) *NotificationUpdateOne {
+	_u.mutation.SetWatchConditionID(v)
+	return _u
+}
+
+// SetNillableWatchConditionID sets the "watch_condition_id" field if the given value is not nil.
+func (_u *NotificationUpdateOne) SetNillableWatchConditionID(v *string) *NotificationUpdateOne {
+	if v != nil {
+		_u.SetWatchConditionID(*v)
+	}
+	return _u
+}
+
+// SetSlotID sets the "slot_id" field.
+func (_u *NotificationUpdateOne) SetSlotID(v string) *NotificationUpdateOne {
+	_u.mutation.SetSlotID(v)
+	return _u
+}
+
+// SetNillableSlotID sets the "slot_id" field if the given value is not nil.
+func (_u *NotificationUpdateOne) SetNillableSlotID(v *string) *NotificationUpdateOne {
+	if v != nil {
+		_u.SetSlotID(*v)
+	}
+	return _u
+}
+
 // SetChannel sets the "channel" field.
 func (_u *NotificationUpdateOne) SetChannel(v string) *NotificationUpdateOne {
 	_u.mutation.SetChannel(v)
@@ -365,32 +446,14 @@ func (_u *NotificationUpdateOne) ClearSentAt() *NotificationUpdateOne {
 	return _u
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_u *NotificationUpdateOne) SetTeamID(id string) *NotificationUpdateOne {
-	_u.mutation.SetTeamID(id)
-	return _u
-}
-
 // SetTeam sets the "team" edge to the Team entity.
 func (_u *NotificationUpdateOne) SetTeam(v *Team) *NotificationUpdateOne {
 	return _u.SetTeamID(v.ID)
 }
 
-// SetWatchConditionID sets the "watch_condition" edge to the WatchCondition entity by ID.
-func (_u *NotificationUpdateOne) SetWatchConditionID(id string) *NotificationUpdateOne {
-	_u.mutation.SetWatchConditionID(id)
-	return _u
-}
-
 // SetWatchCondition sets the "watch_condition" edge to the WatchCondition entity.
 func (_u *NotificationUpdateOne) SetWatchCondition(v *WatchCondition) *NotificationUpdateOne {
 	return _u.SetWatchConditionID(v.ID)
-}
-
-// SetSlotID sets the "slot" edge to the Slot entity by ID.
-func (_u *NotificationUpdateOne) SetSlotID(id string) *NotificationUpdateOne {
-	_u.mutation.SetSlotID(id)
-	return _u
 }
 
 // SetSlot sets the "slot" edge to the Slot entity.
@@ -463,6 +526,21 @@ func (_u *NotificationUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *NotificationUpdateOne) check() error {
+	if v, ok := _u.mutation.TeamID(); ok {
+		if err := notification.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "Notification.team_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.WatchConditionID(); ok {
+		if err := notification.WatchConditionIDValidator(v); err != nil {
+			return &ValidationError{Name: "watch_condition_id", err: fmt.Errorf(`ent: validator failed for field "Notification.watch_condition_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.SlotID(); ok {
+		if err := notification.SlotIDValidator(v); err != nil {
+			return &ValidationError{Name: "slot_id", err: fmt.Errorf(`ent: validator failed for field "Notification.slot_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Channel(); ok {
 		if err := notification.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Notification.channel": %w`, err)}

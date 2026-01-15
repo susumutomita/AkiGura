@@ -19,14 +19,16 @@ type PromoCodeUsage struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// PromoCodeID holds the value of the "promo_code_id" field.
+	PromoCodeID string `json:"promo_code_id,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID string `json:"team_id,omitempty"`
 	// AppliedAt holds the value of the "applied_at" field.
 	AppliedAt time.Time `json:"applied_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PromoCodeUsageQuery when eager-loading is set.
-	Edges                  PromoCodeUsageEdges `json:"edges"`
-	promo_code_usages      *string
-	team_promo_code_usages *string
-	selectValues           sql.SelectValues
+	Edges        PromoCodeUsageEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // PromoCodeUsageEdges holds the relations/edges for other nodes in the graph.
@@ -67,14 +69,10 @@ func (*PromoCodeUsage) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case promocodeusage.FieldID:
+		case promocodeusage.FieldID, promocodeusage.FieldPromoCodeID, promocodeusage.FieldTeamID:
 			values[i] = new(sql.NullString)
 		case promocodeusage.FieldAppliedAt:
 			values[i] = new(sql.NullTime)
-		case promocodeusage.ForeignKeys[0]: // promo_code_usages
-			values[i] = new(sql.NullString)
-		case promocodeusage.ForeignKeys[1]: // team_promo_code_usages
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -96,25 +94,23 @@ func (_m *PromoCodeUsage) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ID = value.String
 			}
+		case promocodeusage.FieldPromoCodeID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field promo_code_id", values[i])
+			} else if value.Valid {
+				_m.PromoCodeID = value.String
+			}
+		case promocodeusage.FieldTeamID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value.Valid {
+				_m.TeamID = value.String
+			}
 		case promocodeusage.FieldAppliedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field applied_at", values[i])
 			} else if value.Valid {
 				_m.AppliedAt = value.Time
-			}
-		case promocodeusage.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field promo_code_usages", values[i])
-			} else if value.Valid {
-				_m.promo_code_usages = new(string)
-				*_m.promo_code_usages = value.String
-			}
-		case promocodeusage.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field team_promo_code_usages", values[i])
-			} else if value.Valid {
-				_m.team_promo_code_usages = new(string)
-				*_m.team_promo_code_usages = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -162,6 +158,12 @@ func (_m *PromoCodeUsage) String() string {
 	var builder strings.Builder
 	builder.WriteString("PromoCodeUsage(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("promo_code_id=")
+	builder.WriteString(_m.PromoCodeID)
+	builder.WriteString(", ")
+	builder.WriteString("team_id=")
+	builder.WriteString(_m.TeamID)
+	builder.WriteString(", ")
 	builder.WriteString("applied_at=")
 	builder.WriteString(_m.AppliedAt.Format(time.ANSIC))
 	builder.WriteByte(')')

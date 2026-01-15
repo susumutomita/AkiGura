@@ -65,6 +65,21 @@ func IDContainsFold(id string) predicate.Notification {
 	return predicate.Notification(sql.FieldContainsFold(FieldID, id))
 }
 
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEQ(FieldTeamID, v))
+}
+
+// WatchConditionID applies equality check predicate on the "watch_condition_id" field. It's identical to WatchConditionIDEQ.
+func WatchConditionID(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEQ(FieldWatchConditionID, v))
+}
+
+// SlotID applies equality check predicate on the "slot_id" field. It's identical to SlotIDEQ.
+func SlotID(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEQ(FieldSlotID, v))
+}
+
 // Channel applies equality check predicate on the "channel" field. It's identical to ChannelEQ.
 func Channel(v string) predicate.Notification {
 	return predicate.Notification(sql.FieldEQ(FieldChannel, v))
@@ -78,6 +93,201 @@ func SentAt(v time.Time) predicate.Notification {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Notification {
 	return predicate.Notification(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...string) predicate.Notification {
+	return predicate.Notification(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...string) predicate.Notification {
+	return predicate.Notification(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// TeamIDGT applies the GT predicate on the "team_id" field.
+func TeamIDGT(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldGT(FieldTeamID, v))
+}
+
+// TeamIDGTE applies the GTE predicate on the "team_id" field.
+func TeamIDGTE(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldGTE(FieldTeamID, v))
+}
+
+// TeamIDLT applies the LT predicate on the "team_id" field.
+func TeamIDLT(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldLT(FieldTeamID, v))
+}
+
+// TeamIDLTE applies the LTE predicate on the "team_id" field.
+func TeamIDLTE(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldLTE(FieldTeamID, v))
+}
+
+// TeamIDContains applies the Contains predicate on the "team_id" field.
+func TeamIDContains(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldContains(FieldTeamID, v))
+}
+
+// TeamIDHasPrefix applies the HasPrefix predicate on the "team_id" field.
+func TeamIDHasPrefix(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldHasPrefix(FieldTeamID, v))
+}
+
+// TeamIDHasSuffix applies the HasSuffix predicate on the "team_id" field.
+func TeamIDHasSuffix(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldHasSuffix(FieldTeamID, v))
+}
+
+// TeamIDEqualFold applies the EqualFold predicate on the "team_id" field.
+func TeamIDEqualFold(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEqualFold(FieldTeamID, v))
+}
+
+// TeamIDContainsFold applies the ContainsFold predicate on the "team_id" field.
+func TeamIDContainsFold(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldContainsFold(FieldTeamID, v))
+}
+
+// WatchConditionIDEQ applies the EQ predicate on the "watch_condition_id" field.
+func WatchConditionIDEQ(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEQ(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDNEQ applies the NEQ predicate on the "watch_condition_id" field.
+func WatchConditionIDNEQ(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldNEQ(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDIn applies the In predicate on the "watch_condition_id" field.
+func WatchConditionIDIn(vs ...string) predicate.Notification {
+	return predicate.Notification(sql.FieldIn(FieldWatchConditionID, vs...))
+}
+
+// WatchConditionIDNotIn applies the NotIn predicate on the "watch_condition_id" field.
+func WatchConditionIDNotIn(vs ...string) predicate.Notification {
+	return predicate.Notification(sql.FieldNotIn(FieldWatchConditionID, vs...))
+}
+
+// WatchConditionIDGT applies the GT predicate on the "watch_condition_id" field.
+func WatchConditionIDGT(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldGT(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDGTE applies the GTE predicate on the "watch_condition_id" field.
+func WatchConditionIDGTE(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldGTE(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDLT applies the LT predicate on the "watch_condition_id" field.
+func WatchConditionIDLT(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldLT(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDLTE applies the LTE predicate on the "watch_condition_id" field.
+func WatchConditionIDLTE(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldLTE(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDContains applies the Contains predicate on the "watch_condition_id" field.
+func WatchConditionIDContains(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldContains(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDHasPrefix applies the HasPrefix predicate on the "watch_condition_id" field.
+func WatchConditionIDHasPrefix(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldHasPrefix(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDHasSuffix applies the HasSuffix predicate on the "watch_condition_id" field.
+func WatchConditionIDHasSuffix(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldHasSuffix(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDEqualFold applies the EqualFold predicate on the "watch_condition_id" field.
+func WatchConditionIDEqualFold(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEqualFold(FieldWatchConditionID, v))
+}
+
+// WatchConditionIDContainsFold applies the ContainsFold predicate on the "watch_condition_id" field.
+func WatchConditionIDContainsFold(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldContainsFold(FieldWatchConditionID, v))
+}
+
+// SlotIDEQ applies the EQ predicate on the "slot_id" field.
+func SlotIDEQ(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEQ(FieldSlotID, v))
+}
+
+// SlotIDNEQ applies the NEQ predicate on the "slot_id" field.
+func SlotIDNEQ(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldNEQ(FieldSlotID, v))
+}
+
+// SlotIDIn applies the In predicate on the "slot_id" field.
+func SlotIDIn(vs ...string) predicate.Notification {
+	return predicate.Notification(sql.FieldIn(FieldSlotID, vs...))
+}
+
+// SlotIDNotIn applies the NotIn predicate on the "slot_id" field.
+func SlotIDNotIn(vs ...string) predicate.Notification {
+	return predicate.Notification(sql.FieldNotIn(FieldSlotID, vs...))
+}
+
+// SlotIDGT applies the GT predicate on the "slot_id" field.
+func SlotIDGT(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldGT(FieldSlotID, v))
+}
+
+// SlotIDGTE applies the GTE predicate on the "slot_id" field.
+func SlotIDGTE(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldGTE(FieldSlotID, v))
+}
+
+// SlotIDLT applies the LT predicate on the "slot_id" field.
+func SlotIDLT(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldLT(FieldSlotID, v))
+}
+
+// SlotIDLTE applies the LTE predicate on the "slot_id" field.
+func SlotIDLTE(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldLTE(FieldSlotID, v))
+}
+
+// SlotIDContains applies the Contains predicate on the "slot_id" field.
+func SlotIDContains(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldContains(FieldSlotID, v))
+}
+
+// SlotIDHasPrefix applies the HasPrefix predicate on the "slot_id" field.
+func SlotIDHasPrefix(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldHasPrefix(FieldSlotID, v))
+}
+
+// SlotIDHasSuffix applies the HasSuffix predicate on the "slot_id" field.
+func SlotIDHasSuffix(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldHasSuffix(FieldSlotID, v))
+}
+
+// SlotIDEqualFold applies the EqualFold predicate on the "slot_id" field.
+func SlotIDEqualFold(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldEqualFold(FieldSlotID, v))
+}
+
+// SlotIDContainsFold applies the ContainsFold predicate on the "slot_id" field.
+func SlotIDContainsFold(v string) predicate.Notification {
+	return predicate.Notification(sql.FieldContainsFold(FieldSlotID, v))
 }
 
 // ChannelEQ applies the EQ predicate on the "channel" field.

@@ -22,6 +22,12 @@ type GroundCreate struct {
 	hooks    []Hook
 }
 
+// SetMunicipalityID sets the "municipality_id" field.
+func (_c *GroundCreate) SetMunicipalityID(v string) *GroundCreate {
+	_c.mutation.SetMunicipalityID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *GroundCreate) SetName(v string) *GroundCreate {
 	_c.mutation.SetName(v)
@@ -73,12 +79,6 @@ func (_c *GroundCreate) SetNillableCreatedAt(v *time.Time) *GroundCreate {
 // SetID sets the "id" field.
 func (_c *GroundCreate) SetID(v string) *GroundCreate {
 	_c.mutation.SetID(v)
-	return _c
-}
-
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_c *GroundCreate) SetMunicipalityID(id string) *GroundCreate {
-	_c.mutation.SetMunicipalityID(id)
 	return _c
 }
 
@@ -149,6 +149,14 @@ func (_c *GroundCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *GroundCreate) check() error {
+	if _, ok := _c.mutation.MunicipalityID(); !ok {
+		return &ValidationError{Name: "municipality_id", err: errors.New(`ent: missing required field "Ground.municipality_id"`)}
+	}
+	if v, ok := _c.mutation.MunicipalityID(); ok {
+		if err := ground.MunicipalityIDValidator(v); err != nil {
+			return &ValidationError{Name: "municipality_id", err: fmt.Errorf(`ent: validator failed for field "Ground.municipality_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Ground.name"`)}
 	}
@@ -231,7 +239,7 @@ func (_c *GroundCreate) createSpec() (*Ground, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.municipality_grounds = &nodes[0]
+		_node.MunicipalityID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.SlotsIDs(); len(nodes) > 0 {

@@ -31,7 +31,6 @@ type SlotQuery struct {
 	withMunicipality  *MunicipalityQuery
 	withGround        *GroundQuery
 	withNotifications *NotificationQuery
-	withFKs           bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -408,12 +407,12 @@ func (_q *SlotQuery) WithNotifications(opts ...func(*NotificationQuery)) *SlotQu
 // Example:
 //
 //	var v []struct {
-//		SlotDate time.Time `json:"slot_date,omitempty"`
+//		FacilityID string `json:"facility_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Slot.Query().
-//		GroupBy(slot.FieldSlotDate).
+//		GroupBy(slot.FieldFacilityID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *SlotQuery) GroupBy(field string, fields ...string) *SlotGroupBy {
@@ -431,11 +430,11 @@ func (_q *SlotQuery) GroupBy(field string, fields ...string) *SlotGroupBy {
 // Example:
 //
 //	var v []struct {
-//		SlotDate time.Time `json:"slot_date,omitempty"`
+//		FacilityID string `json:"facility_id,omitempty"`
 //	}
 //
 //	client.Slot.Query().
-//		Select(slot.FieldSlotDate).
+//		Select(slot.FieldFacilityID).
 //		Scan(ctx, &v)
 func (_q *SlotQuery) Select(fields ...string) *SlotSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -479,7 +478,6 @@ func (_q *SlotQuery) prepareQuery(ctx context.Context) error {
 func (_q *SlotQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Slot, error) {
 	var (
 		nodes       = []*Slot{}
-		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [4]bool{
 			_q.withFacility != nil,
@@ -488,12 +486,6 @@ func (_q *SlotQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Slot, e
 			_q.withNotifications != nil,
 		}
 	)
-	if _q.withFacility != nil || _q.withMunicipality != nil || _q.withGround != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, slot.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Slot).scanValues(nil, columns)
 	}
@@ -544,10 +536,10 @@ func (_q *SlotQuery) loadFacility(ctx context.Context, query *FacilityQuery, nod
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Slot)
 	for i := range nodes {
-		if nodes[i].facility_slots == nil {
+		if nodes[i].FacilityID == nil {
 			continue
 		}
-		fk := *nodes[i].facility_slots
+		fk := *nodes[i].FacilityID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -564,7 +556,7 @@ func (_q *SlotQuery) loadFacility(ctx context.Context, query *FacilityQuery, nod
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "facility_slots" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "facility_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -576,10 +568,10 @@ func (_q *SlotQuery) loadMunicipality(ctx context.Context, query *MunicipalityQu
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Slot)
 	for i := range nodes {
-		if nodes[i].municipality_slots == nil {
+		if nodes[i].MunicipalityID == nil {
 			continue
 		}
-		fk := *nodes[i].municipality_slots
+		fk := *nodes[i].MunicipalityID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -596,7 +588,7 @@ func (_q *SlotQuery) loadMunicipality(ctx context.Context, query *MunicipalityQu
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "municipality_slots" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "municipality_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -608,10 +600,10 @@ func (_q *SlotQuery) loadGround(ctx context.Context, query *GroundQuery, nodes [
 	ids := make([]string, 0, len(nodes))
 	nodeids := make(map[string][]*Slot)
 	for i := range nodes {
-		if nodes[i].ground_slots == nil {
+		if nodes[i].GroundID == nil {
 			continue
 		}
-		fk := *nodes[i].ground_slots
+		fk := *nodes[i].GroundID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -628,7 +620,7 @@ func (_q *SlotQuery) loadGround(ctx context.Context, query *GroundQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "ground_slots" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "ground_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -646,7 +638,9 @@ func (_q *SlotQuery) loadNotifications(ctx context.Context, query *NotificationQ
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(notification.FieldSlotID)
+	}
 	query.Where(predicate.Notification(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(slot.NotificationsColumn), fks...))
 	}))
@@ -655,13 +649,10 @@ func (_q *SlotQuery) loadNotifications(ctx context.Context, query *NotificationQ
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.slot_notifications
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "slot_notifications" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.SlotID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "slot_notifications" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "slot_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -692,6 +683,15 @@ func (_q *SlotQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != slot.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withFacility != nil {
+			_spec.Node.AddColumnOnce(slot.FieldFacilityID)
+		}
+		if _q.withMunicipality != nil {
+			_spec.Node.AddColumnOnce(slot.FieldMunicipalityID)
+		}
+		if _q.withGround != nil {
+			_spec.Node.AddColumnOnce(slot.FieldGroundID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

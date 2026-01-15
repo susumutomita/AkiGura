@@ -65,6 +65,11 @@ func IDContainsFold(id string) predicate.Ground {
 	return predicate.Ground(sql.FieldContainsFold(FieldID, id))
 }
 
+// MunicipalityID applies equality check predicate on the "municipality_id" field. It's identical to MunicipalityIDEQ.
+func MunicipalityID(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldEQ(FieldMunicipalityID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Ground {
 	return predicate.Ground(sql.FieldEQ(FieldName, v))
@@ -83,6 +88,71 @@ func Enabled(v bool) predicate.Ground {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Ground {
 	return predicate.Ground(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// MunicipalityIDEQ applies the EQ predicate on the "municipality_id" field.
+func MunicipalityIDEQ(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldEQ(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDNEQ applies the NEQ predicate on the "municipality_id" field.
+func MunicipalityIDNEQ(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldNEQ(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDIn applies the In predicate on the "municipality_id" field.
+func MunicipalityIDIn(vs ...string) predicate.Ground {
+	return predicate.Ground(sql.FieldIn(FieldMunicipalityID, vs...))
+}
+
+// MunicipalityIDNotIn applies the NotIn predicate on the "municipality_id" field.
+func MunicipalityIDNotIn(vs ...string) predicate.Ground {
+	return predicate.Ground(sql.FieldNotIn(FieldMunicipalityID, vs...))
+}
+
+// MunicipalityIDGT applies the GT predicate on the "municipality_id" field.
+func MunicipalityIDGT(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldGT(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDGTE applies the GTE predicate on the "municipality_id" field.
+func MunicipalityIDGTE(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldGTE(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDLT applies the LT predicate on the "municipality_id" field.
+func MunicipalityIDLT(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldLT(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDLTE applies the LTE predicate on the "municipality_id" field.
+func MunicipalityIDLTE(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldLTE(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDContains applies the Contains predicate on the "municipality_id" field.
+func MunicipalityIDContains(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldContains(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDHasPrefix applies the HasPrefix predicate on the "municipality_id" field.
+func MunicipalityIDHasPrefix(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldHasPrefix(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDHasSuffix applies the HasSuffix predicate on the "municipality_id" field.
+func MunicipalityIDHasSuffix(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldHasSuffix(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDEqualFold applies the EqualFold predicate on the "municipality_id" field.
+func MunicipalityIDEqualFold(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldEqualFold(FieldMunicipalityID, v))
+}
+
+// MunicipalityIDContainsFold applies the ContainsFold predicate on the "municipality_id" field.
+func MunicipalityIDContainsFold(v string) predicate.Ground {
+	return predicate.Ground(sql.FieldContainsFold(FieldMunicipalityID, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

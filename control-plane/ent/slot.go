@@ -20,6 +20,12 @@ type Slot struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// FacilityID holds the value of the "facility_id" field.
+	FacilityID *string `json:"facility_id,omitempty"`
+	// MunicipalityID holds the value of the "municipality_id" field.
+	MunicipalityID *string `json:"municipality_id,omitempty"`
+	// GroundID holds the value of the "ground_id" field.
+	GroundID *string `json:"ground_id,omitempty"`
 	// SlotDate holds the value of the "slot_date" field.
 	SlotDate time.Time `json:"slot_date,omitempty"`
 	// TimeFrom holds the value of the "time_from" field.
@@ -34,11 +40,8 @@ type Slot struct {
 	ScrapedAt time.Time `json:"scraped_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SlotQuery when eager-loading is set.
-	Edges              SlotEdges `json:"edges"`
-	facility_slots     *string
-	ground_slots       *string
-	municipality_slots *string
-	selectValues       sql.SelectValues
+	Edges        SlotEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // SlotEdges holds the relations/edges for other nodes in the graph.
@@ -103,16 +106,10 @@ func (*Slot) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case slot.FieldID, slot.FieldTimeFrom, slot.FieldTimeTo, slot.FieldCourtName, slot.FieldRawText:
+		case slot.FieldID, slot.FieldFacilityID, slot.FieldMunicipalityID, slot.FieldGroundID, slot.FieldTimeFrom, slot.FieldTimeTo, slot.FieldCourtName, slot.FieldRawText:
 			values[i] = new(sql.NullString)
 		case slot.FieldSlotDate, slot.FieldScrapedAt:
 			values[i] = new(sql.NullTime)
-		case slot.ForeignKeys[0]: // facility_slots
-			values[i] = new(sql.NullString)
-		case slot.ForeignKeys[1]: // ground_slots
-			values[i] = new(sql.NullString)
-		case slot.ForeignKeys[2]: // municipality_slots
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -133,6 +130,27 @@ func (_m *Slot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
 				_m.ID = value.String
+			}
+		case slot.FieldFacilityID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field facility_id", values[i])
+			} else if value.Valid {
+				_m.FacilityID = new(string)
+				*_m.FacilityID = value.String
+			}
+		case slot.FieldMunicipalityID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field municipality_id", values[i])
+			} else if value.Valid {
+				_m.MunicipalityID = new(string)
+				*_m.MunicipalityID = value.String
+			}
+		case slot.FieldGroundID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ground_id", values[i])
+			} else if value.Valid {
+				_m.GroundID = new(string)
+				*_m.GroundID = value.String
 			}
 		case slot.FieldSlotDate:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -169,27 +187,6 @@ func (_m *Slot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field scraped_at", values[i])
 			} else if value.Valid {
 				_m.ScrapedAt = value.Time
-			}
-		case slot.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field facility_slots", values[i])
-			} else if value.Valid {
-				_m.facility_slots = new(string)
-				*_m.facility_slots = value.String
-			}
-		case slot.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field ground_slots", values[i])
-			} else if value.Valid {
-				_m.ground_slots = new(string)
-				*_m.ground_slots = value.String
-			}
-		case slot.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field municipality_slots", values[i])
-			} else if value.Valid {
-				_m.municipality_slots = new(string)
-				*_m.municipality_slots = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -247,6 +244,21 @@ func (_m *Slot) String() string {
 	var builder strings.Builder
 	builder.WriteString("Slot(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.FacilityID; v != nil {
+		builder.WriteString("facility_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.MunicipalityID; v != nil {
+		builder.WriteString("municipality_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.GroundID; v != nil {
+		builder.WriteString("ground_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
 	builder.WriteString("slot_date=")
 	builder.WriteString(_m.SlotDate.Format(time.ANSIC))
 	builder.WriteString(", ")

@@ -23,6 +23,24 @@ type NotificationCreate struct {
 	hooks    []Hook
 }
 
+// SetTeamID sets the "team_id" field.
+func (_c *NotificationCreate) SetTeamID(v string) *NotificationCreate {
+	_c.mutation.SetTeamID(v)
+	return _c
+}
+
+// SetWatchConditionID sets the "watch_condition_id" field.
+func (_c *NotificationCreate) SetWatchConditionID(v string) *NotificationCreate {
+	_c.mutation.SetWatchConditionID(v)
+	return _c
+}
+
+// SetSlotID sets the "slot_id" field.
+func (_c *NotificationCreate) SetSlotID(v string) *NotificationCreate {
+	_c.mutation.SetSlotID(v)
+	return _c
+}
+
 // SetChannel sets the "channel" field.
 func (_c *NotificationCreate) SetChannel(v string) *NotificationCreate {
 	_c.mutation.SetChannel(v)
@@ -77,32 +95,14 @@ func (_c *NotificationCreate) SetID(v string) *NotificationCreate {
 	return _c
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (_c *NotificationCreate) SetTeamID(id string) *NotificationCreate {
-	_c.mutation.SetTeamID(id)
-	return _c
-}
-
 // SetTeam sets the "team" edge to the Team entity.
 func (_c *NotificationCreate) SetTeam(v *Team) *NotificationCreate {
 	return _c.SetTeamID(v.ID)
 }
 
-// SetWatchConditionID sets the "watch_condition" edge to the WatchCondition entity by ID.
-func (_c *NotificationCreate) SetWatchConditionID(id string) *NotificationCreate {
-	_c.mutation.SetWatchConditionID(id)
-	return _c
-}
-
 // SetWatchCondition sets the "watch_condition" edge to the WatchCondition entity.
 func (_c *NotificationCreate) SetWatchCondition(v *WatchCondition) *NotificationCreate {
 	return _c.SetWatchConditionID(v.ID)
-}
-
-// SetSlotID sets the "slot" edge to the Slot entity by ID.
-func (_c *NotificationCreate) SetSlotID(id string) *NotificationCreate {
-	_c.mutation.SetSlotID(id)
-	return _c
 }
 
 // SetSlot sets the "slot" edge to the Slot entity.
@@ -157,6 +157,30 @@ func (_c *NotificationCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *NotificationCreate) check() error {
+	if _, ok := _c.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "Notification.team_id"`)}
+	}
+	if v, ok := _c.mutation.TeamID(); ok {
+		if err := notification.TeamIDValidator(v); err != nil {
+			return &ValidationError{Name: "team_id", err: fmt.Errorf(`ent: validator failed for field "Notification.team_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.WatchConditionID(); !ok {
+		return &ValidationError{Name: "watch_condition_id", err: errors.New(`ent: missing required field "Notification.watch_condition_id"`)}
+	}
+	if v, ok := _c.mutation.WatchConditionID(); ok {
+		if err := notification.WatchConditionIDValidator(v); err != nil {
+			return &ValidationError{Name: "watch_condition_id", err: fmt.Errorf(`ent: validator failed for field "Notification.watch_condition_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.SlotID(); !ok {
+		return &ValidationError{Name: "slot_id", err: errors.New(`ent: missing required field "Notification.slot_id"`)}
+	}
+	if v, ok := _c.mutation.SlotID(); ok {
+		if err := notification.SlotIDValidator(v); err != nil {
+			return &ValidationError{Name: "slot_id", err: fmt.Errorf(`ent: validator failed for field "Notification.slot_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Channel(); !ok {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required field "Notification.channel"`)}
 	}
@@ -250,7 +274,7 @@ func (_c *NotificationCreate) createSpec() (*Notification, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_notifications = &nodes[0]
+		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.WatchConditionIDs(); len(nodes) > 0 {
@@ -267,7 +291,7 @@ func (_c *NotificationCreate) createSpec() (*Notification, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.watch_condition_notifications = &nodes[0]
+		_node.WatchConditionID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.SlotIDs(); len(nodes) > 0 {
@@ -284,7 +308,7 @@ func (_c *NotificationCreate) createSpec() (*Notification, *sqlgraph.CreateSpec)
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.slot_notifications = &nodes[0]
+		_node.SlotID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

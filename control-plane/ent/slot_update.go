@@ -32,6 +32,66 @@ func (_u *SlotUpdate) Where(ps ...predicate.Slot) *SlotUpdate {
 	return _u
 }
 
+// SetFacilityID sets the "facility_id" field.
+func (_u *SlotUpdate) SetFacilityID(v string) *SlotUpdate {
+	_u.mutation.SetFacilityID(v)
+	return _u
+}
+
+// SetNillableFacilityID sets the "facility_id" field if the given value is not nil.
+func (_u *SlotUpdate) SetNillableFacilityID(v *string) *SlotUpdate {
+	if v != nil {
+		_u.SetFacilityID(*v)
+	}
+	return _u
+}
+
+// ClearFacilityID clears the value of the "facility_id" field.
+func (_u *SlotUpdate) ClearFacilityID() *SlotUpdate {
+	_u.mutation.ClearFacilityID()
+	return _u
+}
+
+// SetMunicipalityID sets the "municipality_id" field.
+func (_u *SlotUpdate) SetMunicipalityID(v string) *SlotUpdate {
+	_u.mutation.SetMunicipalityID(v)
+	return _u
+}
+
+// SetNillableMunicipalityID sets the "municipality_id" field if the given value is not nil.
+func (_u *SlotUpdate) SetNillableMunicipalityID(v *string) *SlotUpdate {
+	if v != nil {
+		_u.SetMunicipalityID(*v)
+	}
+	return _u
+}
+
+// ClearMunicipalityID clears the value of the "municipality_id" field.
+func (_u *SlotUpdate) ClearMunicipalityID() *SlotUpdate {
+	_u.mutation.ClearMunicipalityID()
+	return _u
+}
+
+// SetGroundID sets the "ground_id" field.
+func (_u *SlotUpdate) SetGroundID(v string) *SlotUpdate {
+	_u.mutation.SetGroundID(v)
+	return _u
+}
+
+// SetNillableGroundID sets the "ground_id" field if the given value is not nil.
+func (_u *SlotUpdate) SetNillableGroundID(v *string) *SlotUpdate {
+	if v != nil {
+		_u.SetGroundID(*v)
+	}
+	return _u
+}
+
+// ClearGroundID clears the value of the "ground_id" field.
+func (_u *SlotUpdate) ClearGroundID() *SlotUpdate {
+	_u.mutation.ClearGroundID()
+	return _u
+}
+
 // SetSlotDate sets the "slot_date" field.
 func (_u *SlotUpdate) SetSlotDate(v time.Time) *SlotUpdate {
 	_u.mutation.SetSlotDate(v)
@@ -128,56 +188,14 @@ func (_u *SlotUpdate) SetNillableScrapedAt(v *time.Time) *SlotUpdate {
 	return _u
 }
 
-// SetFacilityID sets the "facility" edge to the Facility entity by ID.
-func (_u *SlotUpdate) SetFacilityID(id string) *SlotUpdate {
-	_u.mutation.SetFacilityID(id)
-	return _u
-}
-
-// SetNillableFacilityID sets the "facility" edge to the Facility entity by ID if the given value is not nil.
-func (_u *SlotUpdate) SetNillableFacilityID(id *string) *SlotUpdate {
-	if id != nil {
-		_u = _u.SetFacilityID(*id)
-	}
-	return _u
-}
-
 // SetFacility sets the "facility" edge to the Facility entity.
 func (_u *SlotUpdate) SetFacility(v *Facility) *SlotUpdate {
 	return _u.SetFacilityID(v.ID)
 }
 
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_u *SlotUpdate) SetMunicipalityID(id string) *SlotUpdate {
-	_u.mutation.SetMunicipalityID(id)
-	return _u
-}
-
-// SetNillableMunicipalityID sets the "municipality" edge to the Municipality entity by ID if the given value is not nil.
-func (_u *SlotUpdate) SetNillableMunicipalityID(id *string) *SlotUpdate {
-	if id != nil {
-		_u = _u.SetMunicipalityID(*id)
-	}
-	return _u
-}
-
 // SetMunicipality sets the "municipality" edge to the Municipality entity.
 func (_u *SlotUpdate) SetMunicipality(v *Municipality) *SlotUpdate {
 	return _u.SetMunicipalityID(v.ID)
-}
-
-// SetGroundID sets the "ground" edge to the Ground entity by ID.
-func (_u *SlotUpdate) SetGroundID(id string) *SlotUpdate {
-	_u.mutation.SetGroundID(id)
-	return _u
-}
-
-// SetNillableGroundID sets the "ground" edge to the Ground entity by ID if the given value is not nil.
-func (_u *SlotUpdate) SetNillableGroundID(id *string) *SlotUpdate {
-	if id != nil {
-		_u = _u.SetGroundID(*id)
-	}
-	return _u
 }
 
 // SetGround sets the "ground" edge to the Ground entity.
@@ -474,6 +492,66 @@ type SlotUpdateOne struct {
 	mutation *SlotMutation
 }
 
+// SetFacilityID sets the "facility_id" field.
+func (_u *SlotUpdateOne) SetFacilityID(v string) *SlotUpdateOne {
+	_u.mutation.SetFacilityID(v)
+	return _u
+}
+
+// SetNillableFacilityID sets the "facility_id" field if the given value is not nil.
+func (_u *SlotUpdateOne) SetNillableFacilityID(v *string) *SlotUpdateOne {
+	if v != nil {
+		_u.SetFacilityID(*v)
+	}
+	return _u
+}
+
+// ClearFacilityID clears the value of the "facility_id" field.
+func (_u *SlotUpdateOne) ClearFacilityID() *SlotUpdateOne {
+	_u.mutation.ClearFacilityID()
+	return _u
+}
+
+// SetMunicipalityID sets the "municipality_id" field.
+func (_u *SlotUpdateOne) SetMunicipalityID(v string) *SlotUpdateOne {
+	_u.mutation.SetMunicipalityID(v)
+	return _u
+}
+
+// SetNillableMunicipalityID sets the "municipality_id" field if the given value is not nil.
+func (_u *SlotUpdateOne) SetNillableMunicipalityID(v *string) *SlotUpdateOne {
+	if v != nil {
+		_u.SetMunicipalityID(*v)
+	}
+	return _u
+}
+
+// ClearMunicipalityID clears the value of the "municipality_id" field.
+func (_u *SlotUpdateOne) ClearMunicipalityID() *SlotUpdateOne {
+	_u.mutation.ClearMunicipalityID()
+	return _u
+}
+
+// SetGroundID sets the "ground_id" field.
+func (_u *SlotUpdateOne) SetGroundID(v string) *SlotUpdateOne {
+	_u.mutation.SetGroundID(v)
+	return _u
+}
+
+// SetNillableGroundID sets the "ground_id" field if the given value is not nil.
+func (_u *SlotUpdateOne) SetNillableGroundID(v *string) *SlotUpdateOne {
+	if v != nil {
+		_u.SetGroundID(*v)
+	}
+	return _u
+}
+
+// ClearGroundID clears the value of the "ground_id" field.
+func (_u *SlotUpdateOne) ClearGroundID() *SlotUpdateOne {
+	_u.mutation.ClearGroundID()
+	return _u
+}
+
 // SetSlotDate sets the "slot_date" field.
 func (_u *SlotUpdateOne) SetSlotDate(v time.Time) *SlotUpdateOne {
 	_u.mutation.SetSlotDate(v)
@@ -570,56 +648,14 @@ func (_u *SlotUpdateOne) SetNillableScrapedAt(v *time.Time) *SlotUpdateOne {
 	return _u
 }
 
-// SetFacilityID sets the "facility" edge to the Facility entity by ID.
-func (_u *SlotUpdateOne) SetFacilityID(id string) *SlotUpdateOne {
-	_u.mutation.SetFacilityID(id)
-	return _u
-}
-
-// SetNillableFacilityID sets the "facility" edge to the Facility entity by ID if the given value is not nil.
-func (_u *SlotUpdateOne) SetNillableFacilityID(id *string) *SlotUpdateOne {
-	if id != nil {
-		_u = _u.SetFacilityID(*id)
-	}
-	return _u
-}
-
 // SetFacility sets the "facility" edge to the Facility entity.
 func (_u *SlotUpdateOne) SetFacility(v *Facility) *SlotUpdateOne {
 	return _u.SetFacilityID(v.ID)
 }
 
-// SetMunicipalityID sets the "municipality" edge to the Municipality entity by ID.
-func (_u *SlotUpdateOne) SetMunicipalityID(id string) *SlotUpdateOne {
-	_u.mutation.SetMunicipalityID(id)
-	return _u
-}
-
-// SetNillableMunicipalityID sets the "municipality" edge to the Municipality entity by ID if the given value is not nil.
-func (_u *SlotUpdateOne) SetNillableMunicipalityID(id *string) *SlotUpdateOne {
-	if id != nil {
-		_u = _u.SetMunicipalityID(*id)
-	}
-	return _u
-}
-
 // SetMunicipality sets the "municipality" edge to the Municipality entity.
 func (_u *SlotUpdateOne) SetMunicipality(v *Municipality) *SlotUpdateOne {
 	return _u.SetMunicipalityID(v.ID)
-}
-
-// SetGroundID sets the "ground" edge to the Ground entity by ID.
-func (_u *SlotUpdateOne) SetGroundID(id string) *SlotUpdateOne {
-	_u.mutation.SetGroundID(id)
-	return _u
-}
-
-// SetNillableGroundID sets the "ground" edge to the Ground entity by ID if the given value is not nil.
-func (_u *SlotUpdateOne) SetNillableGroundID(id *string) *SlotUpdateOne {
-	if id != nil {
-		_u = _u.SetGroundID(*id)
-	}
-	return _u
 }
 
 // SetGround sets the "ground" edge to the Ground entity.
