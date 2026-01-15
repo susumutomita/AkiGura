@@ -1,6 +1,7 @@
 package srv
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -11,11 +12,13 @@ import (
 
 	"srv.exe.dev/db"
 	"srv.exe.dev/db/dbgen"
+	"srv.exe.dev/ent"
 )
 
 type Server struct {
 	DB           *sql.DB
 	Queries      *dbgen.Queries
+	Ent          *ent.Client // Ent ORM client
 	Hostname     string
 	TemplatesDir string
 	StaticDir    string
@@ -48,6 +51,14 @@ func New(dbPath, hostname string) (*Server, error) {
 		return nil, err
 	}
 	srv.Queries = dbgen.New(srv.DB)
+
+	// Initialize Ent client
+	entClient, err := db.OpenEnt(context.Background(), dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init ent: %w", err)
+	}
+	srv.Ent = entClient
+
 	return srv, nil
 }
 
