@@ -157,13 +157,13 @@
                     <span class="flex items-center gap-2">
                         <span class="text-gray-400">/</span>
                         <button @click="slotView = 'grounds'; selectedGround = null" 
-                                class="text-indigo-600 hover:underline" :class="{'font-bold': slotView === 'grounds'}" x-text="selectedMunicipality.name"></button>
+                                class="text-indigo-600 hover:underline" :class="{'font-bold': slotView === 'grounds'}" x-text="selectedMunicipality?.name"></button>
                     </span>
                 </template>
                 <template x-if="selectedGround">
                     <span class="flex items-center gap-2">
                         <span class="text-gray-400">/</span>
-                        <span class="font-bold" x-text="selectedGround.name"></span>
+                        <span class="font-bold" x-text="selectedGround?.name"></span>
                     </span>
                 </template>
             </div>
@@ -192,10 +192,10 @@
             <!-- グラウンド一覧 -->
             <div x-show="slotView === 'grounds' && selectedMunicipality">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold" x-text="selectedMunicipality.name + ' の施設'"></h2>
+                    <h2 class="text-2xl font-bold" x-text="selectedMunicipality?.name + ' の施設'"></h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <template x-for="g in getGroundsForMunicipality(selectedMunicipality.id)" :key="g.id">
+                    <template x-for="g in getGroundsForMunicipality(selectedMunicipality?.id)" :key="g.id">
                         <div @click="selectGround(g)" 
                              class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow">
                             <div class="flex justify-between items-start">
@@ -212,7 +212,7 @@
             <!-- カレンダー表示 -->
             <div x-show="slotView === 'calendar' && selectedGround">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold" x-text="selectedGround.name + ' の空き状況'"></h2>
+                    <h2 class="text-xl font-bold" x-text="selectedGround?.name + ' の空き状況'"></h2>
                 </div>
 
                 <!-- Calendar Navigation -->
@@ -251,13 +251,13 @@
                                         }"
                                         x-text="day.day"
                                     ></span>
-                                    <template x-if="day.currentMonth && getSlotsForGroundDate(selectedGround.id, day.dateStr).length > 0">
+                                    <template x-if="day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length > 0">
                                         <span class="px-1.5 py-0.5 text-xs font-bold rounded-full bg-green-500 text-white" 
-                                              x-text="getSlotsForGroundDate(selectedGround.id, day.dateStr).length"></span>
+                                              x-text="getSlotsForGroundDate(selectedGround?.id, day.dateStr).length"></span>
                                     </template>
                                 </div>
                                 <div class="mt-1 space-y-0.5 overflow-hidden max-h-[40px]">
-                                    <template x-for="slot in getSlotsForGroundDate(selectedGround.id, day.dateStr).slice(0, 2)" :key="slot.id">
+                                    <template x-for="slot in getSlotsForGroundDate(selectedGround?.id, day.dateStr).slice(0, 2)" :key="slot.id">
                                         <div class="text-xs px-1 py-0.5 bg-green-100 text-green-800 rounded truncate" x-text="slot.time_from + '-' + slot.time_to"></div>
                                     </template>
                                 </div>
@@ -269,11 +269,11 @@
                 <!-- Selected Date Detail -->
                 <div x-show="selectedDate" class="mt-6 bg-white rounded-lg shadow p-4">
                     <h3 class="text-lg font-bold mb-4" x-text="formatDateFull(selectedDate) + ' の空き枠'"></h3>
-                    <div x-show="getSlotsForGroundDate(selectedGround.id, selectedDate).length === 0" class="text-gray-500 text-center py-4">
+                    <div x-show="getSlotsForGroundDate(selectedGround?.id, selectedDate).length === 0" class="text-gray-500 text-center py-4">
                         この日の空き枠はありません
                     </div>
                     <div class="space-y-2">
-                        <template x-for="slot in getSlotsForGroundDate(selectedGround.id, selectedDate)" :key="slot.id">
+                        <template x-for="slot in getSlotsForGroundDate(selectedGround?.id, selectedDate)" :key="slot.id">
                             <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
                                 <div>
                                     <span class="font-medium" x-text="slot.time_from + ' - ' + slot.time_to"></span>
@@ -286,7 +286,7 @@
 
                 <!-- Stats -->
                 <div class="mt-4 text-sm text-gray-500">
-                    <span x-text="getSlotsForGround(selectedGround.id).length"></span>件の空き枠
+                    <span x-text="getSlotsForGround(selectedGround?.id).length"></span>件の空き枠
                 </div>
             </div>
         </div>
@@ -593,14 +593,14 @@
 
             async loadTeams() {
                 const res = await fetch('/api/teams');
-                this.teams = await res.json();
+                this.teams = await res.json() || [];
             },
 
             async loadFacilities() {
                 const res = await fetch('/api/grounds');
                 const grounds = await res.json();
                 // Map grounds to facilities format
-                this.facilities = grounds.map(g => ({
+                this.facilities = (grounds || []).map(g => ({
                     id: g.id,
                     name: g.name,
                     municipality: g.municipality_name,
@@ -611,7 +611,7 @@
 
             async loadMunicipalities() {
                 const res = await fetch('/api/municipalities');
-                this.municipalities = await res.json();
+                this.municipalities = await res.json() || [];
             },
 
             async loadGrounds() {
@@ -691,10 +691,12 @@
             },
 
             getSlotsForGround(groundId) {
+                if (!groundId) return [];
                 return this.slots.filter(s => s.ground_id === groundId);
             },
 
             getSlotsForGroundDate(groundId, dateStr) {
+                if (!groundId) return [];
                 return this.slots.filter(s => {
                     const slotDate = s.slot_date.split('T')[0];
                     return s.ground_id === groundId && slotDate === dateStr;
