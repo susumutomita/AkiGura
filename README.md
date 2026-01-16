@@ -1,155 +1,167 @@
 # AkiGura
 
-野球場の空き枠監視・通知システムです。
+Sports facility availability monitoring and notification system.
 
-## アーキテクチャ
+## Features
+
+- **Automatic Monitoring**: Continuously scrapes public sports facility booking sites
+- **Instant Notifications**: Get notified via email when slots become available
+- **Calendar View**: Visual calendar interface showing all available slots
+- **Watch Rules**: Set up custom monitoring rules for specific facilities and time slots
+- **Multi-facility Support**: Monitor multiple facilities across different municipalities
+
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    AkiGura System                        │
+│                       AkiGura System                       │
 ├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌──────────────────┐      ┌──────────────────────────┐ │
-│  │  Control Plane   │      │        Worker            │ │
-│  │  (Go Server)     │      │   (Go + Python)          │ │
-│  │                  │      │                          │ │
-│  │  - Dashboard     │◄────►│  - Scraping              │ │
-│  │  - Team管理      │      │  - Matching              │ │
-│  │  - 施設管理      │  DB  │  - 通知送信              │ │
-│  │  - AIチャット    │      │                          │ │
-│  │  - Billing       │      │  ┌────────────────────┐  │ │
-│  └──────────────────┘      │  │ ground-reservation │  │ │
-│          │                 │  │ (Python scraper)   │  │ │
-│          ▼                 │  └────────────────────┘  │ │
-│   ┌──────────────┐         └──────────────────────────┘ │
-│   │   SQLite     │                                      │
-│   │   Database   │                                      │
-│   └──────────────┘                                      │
+│                                                             │
+│  ┌──────────────────┐      ┌──────────────────────────┐    │
+│  │  Control Plane   │      │         Worker           │    │
+│  │   (Go Server)    │      │     (Go + Python)        │    │
+│  │                  │      │                          │    │
+│  │  - Web UI        │◄────►│  - Scraping              │    │
+│  │  - Auth (Magic   │  DB  │  - Matching              │    │
+│  │    Link/Google)  │      │  - Notifications         │    │
+│  │  - REST API      │      │                          │    │
+│  │  - Billing       │      │  ┌────────────────────┐  │    │
+│  └──────────────────┘      │  │ ground-reservation │  │    │
+│          │                 │  │ (Python scraper)   │  │    │
+│          ▼                 │  └────────────────────┘  │    │
+│   ┌──────────────┐         └──────────────────────────┘    │
+│   │ Turso/SQLite │                                       │
+│   │   Database   │                                       │
+│   └──────────────┘                                       │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## クイックスタート
+## Quick Start
 
-### 前提条件
+### Prerequisites
 
 - Go 1.21+
 - Python 3.10+
 - SQLite3
 
-### 1. リポジトリのクローン
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/susumutomita/AkiGura.git
 cd AkiGura
 ```
 
-### 2. ground-reservation (Pythonスクレイパー) のセットアップ
+### 2. Set Up ground-reservation (Python Scraper)
 
 ```bash
-# 別リポジトリをクローン
 git clone https://github.com/susumutomita/ground-reservation.git ../ground-reservation
-
-# Python仮想環境を作成・有効化
 cd ../ground-reservation
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-
 cd ../AkiGura
 ```
 
-### 3. Control Plane (管理サーバー) の起動
+### 3. Start the Control Plane
 
 ```bash
 cd control-plane
 go build -o akigura-srv ./cmd/srv
-./akigura-srv -listen :8000
+./akigura-srv -listen :8001
 ```
 
-ブラウザで http://localhost:8000 にアクセスします。
+Open http://localhost:8001 in your browser.
 
-### 4. Worker の起動 (別ターミナル)
+### 4. Start the Worker (separate terminal)
 
 ```bash
 cd worker
 go build -o akigura-worker ./cmd/worker
 
-# 一回だけ実行
+# Run once
 ./akigura-worker -once
 
-# または定期実行 (15分間隔)
+# Or run periodically (every 15 minutes)
 ./akigura-worker -interval 15m
 ```
 
-## 起動スクリプト
-
-両方を一度に起動する場合は、以下のスクリプトを実行します。
-
-```bash
-./start.sh
-```
-
-## ディレクトリ構成
+## Directory Structure
 
 ```
 AkiGura/
-├── control-plane/      # Go製管理サーバー
-│   ├── cmd/srv/        # メインエントリーポイント
-│   ├── db/             # データベース・マイグレーション
-│   ├── srv/            # HTTPハンドラー・テンプレート
-│   └── billing/        # Stripe課金
+├── control-plane/      # Go web server
+│   ├── cmd/srv/        # Main entry point
+│   ├── db/             # Database & migrations
+│   ├── srv/            # HTTP handlers & templates
+│   └── billing/        # Stripe integration
 │
-├── worker/             # スクレイピングWorker
-│   ├── cmd/worker/     # メインエントリーポイント
-│   ├── notifier/       # 通知送信 (Email/LINE/Slack)
+├── worker/             # Scraping worker
+│   ├── cmd/worker/     # Main entry point
+│   ├── notifier/       # Notifications (Email/LINE/Slack)
 │   └── scraper_wrapper.py
 │
-└── packages/           # (レガシー: TypeScript版)
+└── docs/               # Documentation
 ```
 
-## 環境変数
+## Environment Variables
 
-### データベース (Turso / SQLite)
+### Database (Turso / SQLite)
 
-| 変数 | 説明 | デフォルト |
-|------|------|------------|
-| `TURSO_DATABASE_URL` | Turso データベース URL | (未設定時はローカルSQLite) |
-| `TURSO_AUTH_TOKEN` | Turso 認証トークン | (Turso使用時は必須) |
-| `DATABASE_PATH` | ローカルSQLiteパス | `./db.sqlite3` |
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `TURSO_DATABASE_URL` | Turso database URL | (uses local SQLite if not set) |
+| `TURSO_AUTH_TOKEN` | Turso auth token | (required for Turso) |
+| `DATABASE_PATH` | Local SQLite path | `./db.sqlite3` |
 
-`TURSO_DATABASE_URL` が設定されている場合は Turso に接続し、未設定の場合はローカル SQLite を使用します。
+### Authentication
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `BASE_URL` | Public URL for magic links | `http://localhost:8001` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | (optional) |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | (optional) |
+| `SMTP_USER` | Gmail address for sending emails | (optional) |
+| `SMTP_PASSWORD` | Gmail app password | (optional) |
 
 ### Control Plane
 
-| 変数 | 説明 | デフォルト |
-|------|------|------------|
-| `PORT` | サーバーポート | 8000 |
-| `OPENAI_API_KEY` | OpenAI APIキー | (AIチャット用) |
-| `ANTHROPIC_API_KEY` | Claude APIキー | (AIチャット用) |
-| `STRIPE_SECRET_KEY` | Stripe秘密鍵 | (課金用) |
-| `STRIPE_WEBHOOK_SECRET` | Stripeウェブフック秘密 | (課金用) |
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `OPENAI_API_KEY` | OpenAI API key | (for AI chat) |
+| `ANTHROPIC_API_KEY` | Claude API key | (for AI chat) |
+| `STRIPE_SECRET_KEY` | Stripe secret key | (for billing) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | (for billing) |
 
 ### Worker
 
-| 変数 | 説明 | デフォルト |
-|------|------|------------|
-| `RESEND_API_KEY` | Resend APIキー | (メール通知用) |
-| `LINE_CHANNEL_TOKEN` | LINE Messaging APIトークン | (LINE通知用) |
-| `SLACK_WEBHOOK_URL` | Slack Webhook URL | (Slack通知用) |
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `SMTP_USER` | Gmail address | (for email notifications) |
+| `SMTP_PASSWORD` | Gmail app password | (for email notifications) |
+| `SENDGRID_API_KEY` | SendGrid API key | (alternative to SMTP) |
+| `LINE_CHANNEL_TOKEN` | LINE Messaging API token | (for LINE notifications) |
+| `SLACK_WEBHOOK_URL` | Slack Webhook URL | (for Slack notifications) |
 
-## 対応施設
+## Supported Facilities
 
-- 横浜市
-- 綾瀬市
-- 平塚市
-- 神奈川県
-- 鎌倉市
-- 藤沢市
+- Yokohama City
+- Ayase City
+- Hiratsuka City
+- Kanagawa Prefecture
+- Kamakura City
+- Fujisawa City
 
-## 開発
+## Authentication
 
-詳細は [CLAUDE.md](./CLAUDE.md) を参照。
+AkiGura supports two authentication methods:
 
-## ライセンス
+1. **Magic Link (Email)**: Enter your email to receive a sign-in link
+2. **Google OAuth**: Sign in with your Google account (requires configuration)
+
+## Development
+
+See [CLAUDE.md](./CLAUDE.md) for development guidelines.
+
+## License
 
 MIT
