@@ -137,6 +137,12 @@ func (s *Server) Serve(addr string) error {
 	// Auth endpoints
 	mux.HandleFunc("POST /api/auth/magic-link", s.HandleRequestMagicLink)
 	mux.HandleFunc("GET /auth/verify", s.HandleVerifyMagicLink)
+
+	// OAuth routes
+	mux.HandleFunc("GET /api/auth/config", s.HandleOAuthConfig)
+	mux.HandleFunc("GET /auth/google", s.HandleGoogleLogin)
+	mux.HandleFunc("GET /auth/google/callback", s.HandleGoogleCallback)
+
 	slog.Info("starting server", "addr", addr)
 	return http.ListenAndServe(addr, mux)
 }
