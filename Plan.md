@@ -283,3 +283,57 @@ Apache License 2.0 を採用。MIT に比べ特許保護があり、他者がコ
 ## 振り返り (Retrospective)
 
 (今後問題が発生した際に記録する)
+
+### Phase 2.5: Turso への移行 - 2026-01-17
+
+**目的 (Objective)**:
+- ローカル SQLite を Turso (libSQL) に移行し、本番想定のクラウドデータベースで稼働させる
+
+**制約 (Guardrails)**:
+- 既存機能を停止させずにシームレスに移行する
+- インフラ秘密情報は `.env` などに格納し、リポジトリには含めない
+- `Plan.md` のルールと `CLAUDE.md` の実装原則を順守する
+
+**タスク (TODOs)**:
+- [ ] Turso CLI をインストールし、アカウントへログインする
+- [ ] 新しい Turso データベースを作成し、地域名を設定する
+- [ ] スキーママイグレーションを Turso に適用する
+- [ ] アプリの接続設定(`TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`)を`.env`と systemd に追加する
+- [ ] コード側で libsql ドライバ接続を本番設定に切り替える
+- [ ] マイグレーションとアプリ起動テストを行う
+- [ ] Plan.md に進捗と検証結果を記録する
+
+**検証手順 (Validation)**:
+- `go test ./...`と`go build ./cmd/srv`が成功する
+- Turso 上の`teams`テーブルに実データが存在することを確認する
+- `/api/dashboard`など主要エンドポイントが動作し、データが Turso から返ることを確認する
+
+**未解決の質問 (Open Questions)**:
+- Turso のレプリカ構成は必要か(後続で検討)
+
+**進捗ログ (Progress Log)**:
+- [2026-01-17 07:05]Turso への移行準備を開始
+- [2026-01-17 07:08]npm が入っておらず Turso CLI インストールに失敗。別手段で CLI を導入する方針に変更
+- [2026-01-17 07:10]Turso 公式インストーラで CLI 導入に成功
+- [2026-01-17 07:11]CLI パスを確認し`/home/exedev/.turso/turso`が利用可能なことを確認
+- [2026-01-17 07:12]Turso CLI で auth login 済み
+- [2026-01-17 07:13]既存の Turso DB 一覧を確認(akigura 等)
+- [2026-01-17 07:14]既存 DB`akigura`のメタ情報を確認(73MB / us-west-2)
+- [2026-01-17 07:15]新規 DB`akigura-app`を作成
+- [2026-01-17 07:16]`akigura-app`の URL を確認(libsql://akigura-app-susumutomita.aws-us-west-2.turso.io)
+- [2026-01-17 07:17]Turso auth token を生成(安全のため`.env`にのみ保存予定)
+- [2026-01-17 07:19]`.env`を新規 Turso URL/Token に更新
+- [2026-01-17 07:20]`akigura-app` DB の初期テーブルが空であることを確認
+- [2026-01-17 07:23]`sqlite3 db.sqlite3 .dump | turso db shell`で Turso にスキーマとデータを移行中
+- [2026-01-17 07:24]Turso への dump import が完了
+- [2026-01-17 07:26]`go test ./...`を実行し全て通過
+- [2026-01-17 07:27]`go build -o akigura-srv ./cmd/srv`成功
+- [2026-01-17 07:28]Turso 接続状態で`./akigura-srv`を起動し`/api/dashboard`が正常レスポンスを返すことを確認
+- [2026-01-17 07:29]ローカルテスト終了のためサーバープロセスを停止
+
+**振り返り (Retrospective)**:
+- 問題: npm が入っておらず Turso CLI インストールに失敗した
+- 根本原因: グローバル npm が環境に未導入だった
+- 予防策: CLI インストール時には公式スクリプトやバイナリを直接使用する
+
+- [2026-01-17 07:32]Turso 上で`slots`件数(1480)など主要テーブルを確認
