@@ -337,3 +337,34 @@ Apache License 2.0 を採用。MIT に比べ特許保護があり、他者がコ
 - 予防策: CLI インストール時には公式スクリプトやバイナリを直接使用する
 
 - [2026-01-17 07:32]Turso 上で`slots`件数(1480)など主要テーブルを確認
+
+### Phase 3.5: Stripe 課金統合ブラッシュアップ - 2026-01-17
+
+**目的 (Objective)**:
+- Stripe Checkout / Billing Portal / Webhook を本番レベルで動かし、プラン変更が完結する体験を提供する
+
+**制約 (Guardrails)**:
+- 実際の Stripe API を使用し、モックやスタブを置き換える
+- 環境変数 (STRIPE_SECRET_KEY など) は `.env` や systemd で安全に設定する
+- UI からの操作で Checkout → Webhook → DB 更新まで全て確認する
+
+**タスク (TODOs)**:
+- [ ] Stripe API キーと Price ID を取得し `.env` に設定する
+- [ ] `billing.Plans` の Price ID を最新のものに更新する
+- [ ] `StripeClient.VerifyWebhookSignature` を stripe-go で本番仕様にする
+- [ ] `HandleCreateCheckout` で SuccessURL / CancelURL を環境変数ベースに切り替える
+- [ ] Webhook エンドポイントを本番 URL で受けられるよう systemd/ngrok 設定を適用する
+- [ ] `/user` UI で Checkout → Stripe へ遷移できることをブラウザ確認する
+- [ ] Webhook 受信後に teams.plan などが更新されることを DB で確認する
+- [ ] Plan.md にログと振り返りを記録する
+
+**検証手順 (Validation)**:
+- `go test ./...` と `go build ./cmd/srv` を通す
+- テスト用チームで Checkout 〜 Webhook まで通し、`teams` テーブルの plan/billing_interval/current_period_end を確認する
+- `/api/dashboard` で課金ステータスが反映されることを確認する
+
+**未解決の質問 (Open Questions)**:
+- 日本円での税込表示・消費税処理が必要か
+
+**進捗ログ (Progress Log)**:
+- [2026-01-17 07:55]Stripe 統合作業の計画を追加

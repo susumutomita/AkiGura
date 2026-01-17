@@ -165,3 +165,7 @@ See [CLAUDE.md](./CLAUDE.md) for development guidelines.
 ## License
 
 MIT
+
+## Billing / Stripe
+
+詳しい課金フローと環境変数の設定方法は [docs/STRIPE.md](docs/STRIPE.md) を参照してください。
