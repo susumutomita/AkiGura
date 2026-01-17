@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/stripe/stripe-go/v79/webhook"
 )
 
 // Plan represents a subscription plan
@@ -322,8 +325,15 @@ func (s *StripeClient) delete(ctx context.Context, path string) ([]byte, error) 
 
 // VerifyWebhookSignature verifies a Stripe webhook signature
 func (s *StripeClient) VerifyWebhookSignature(payload []byte, signature string) bool {
-	// Simplified verification - in production use stripe-go library
-	return signature != "" && s.WebhookSecret != ""
+	if s.WebhookSecret == "" || len(payload) == 0 || signature == "" {
+		return false
+	}
+
+	if _, err := webhook.ConstructEvent(payload, signature, s.WebhookSecret); err != nil {
+		slog.Warn("stripe webhook signature invalid", "error", err)
+		return false
+	}
+	return true
 }
 
 // WebhookEvent represents a Stripe webhook event
