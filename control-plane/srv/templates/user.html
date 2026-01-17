@@ -529,9 +529,17 @@
             </div>
 
             <!-- Danger Zone -->
-            <div class="bg-white rounded border border-sumi-200 p-6">
+            <div class="bg-white rounded border border-sango-200 p-6">
                 <h3 class="font-semibold text-sango-600 mb-4">Danger Zone</h3>
-                <button @click="logout()" class="text-sango-500 hover:text-sango-600 text-sm transition-colors">Sign out</button>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-sumi-800 text-sm">Delete Account</p>
+                            <p class="text-sm text-sumi-500">Permanently delete your account and all data</p>
+                        </div>
+                        <button @click="showDeleteModal = true" class="px-4 py-2 border border-sango-300 text-sango-600 rounded text-sm font-medium hover:bg-sango-50 transition-colors">Delete Account</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -575,6 +583,33 @@
                         class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 disabled:opacity-50 transition-colors">
                     <span x-show="!checkoutLoading">Proceed to Payment</span>
                     <span x-show="checkoutLoading">Processing...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Modal -->
+    <div x-show="showDeleteModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50">
+        <div class="bg-white rounded border border-sumi-200 p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold text-sango-600 mb-4">Delete Account</h3>
+            <div class="space-y-4">
+                <div class="bg-sango-50 border border-sango-200 rounded p-4">
+                    <p class="text-sm text-sango-700">This action cannot be undone. All your data including watch rules and notification history will be permanently deleted.</p>
+                </div>
+                <div>
+                    <label class="block text-sm text-sumi-600 mb-1">Type your email to confirm: <span class="font-medium" x-text="team?.email"></span></label>
+                    <input type="email" x-model="deleteConfirmEmail"
+                           class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:border-sango-500 focus:outline-none"
+                           placeholder="your@email.com">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button @click="showDeleteModal = false; deleteConfirmEmail = ''"
+                        class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 transition-colors">Cancel</button>
+                <button @click="deleteAccount()" :disabled="deleteLoading || deleteConfirmEmail !== team?.email"
+                        class="px-4 py-2 bg-sango-600 text-white rounded text-sm font-medium hover:bg-sango-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <span x-show="!deleteLoading">Delete Account</span>
+                    <span x-show="deleteLoading">Deleting...</span>
                 </button>
             </div>
         </div>
@@ -668,6 +703,9 @@
             plans: [],
             billingInterval: 'monthly',
             showUpgradeModal: false,
+            showDeleteModal: false,
+            deleteConfirmEmail: '',
+            deleteLoading: false,
             selectedPlan: null,
             promoCode: '',
             promoCodeValid: null,
@@ -1065,6 +1103,31 @@
                     alert('Connection error');
                 } finally {
                     this.checkoutLoading = false;
+                }
+            },
+
+            async deleteAccount() {
+                if (!this.team || this.deleteConfirmEmail !== this.team.email) return;
+                this.deleteLoading = true;
+                try {
+                    const res = await fetch('/api/teams/' + this.team.id, {
+                        method: 'DELETE'
+                    });
+                    if (!res.ok) {
+                        const data = await res.json();
+                        alert(data.error || 'Failed to delete account');
+                        return;
+                    }
+                    // Clear local state and show login
+                    this.team = null;
+                    this.showDeleteModal = false;
+                    this.deleteConfirmEmail = '';
+                    localStorage.removeItem('akigura_team');
+                    alert('Your account has been deleted');
+                } catch (e) {
+                    alert('Connection error');
+                } finally {
+                    this.deleteLoading = false;
                 }
             },
 
