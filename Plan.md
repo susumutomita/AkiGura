@@ -353,7 +353,7 @@ Apache License 2.0 を採用。MIT に比べ特許保護があり、他者がコ
 - [ ] `billing.Plans` の Price ID を最新のものに更新する
 - [ ] `StripeClient.VerifyWebhookSignature` を stripe-go で本番仕様にする
 - [ ] `HandleCreateCheckout` で SuccessURL / CancelURL を環境変数ベースに切り替える
-- [ ] Webhook エンドポイントを本番 URL で受けられるよう systemd/ngrok 設定を行う
+- [ ] Webhook エンドポイントを本番 URL で受けられるよう systemd/ngrok を設定する
 - [ ] `/user` UI で Checkout → Stripe へ遷移できることをブラウザ確認する
 - [ ] Webhook 受信後に teams.plan などが更新されることを DB で確認する
 - [ ] Plan.md にログと振り返りを記録する
@@ -367,4 +367,4 @@ Apache License 2.0 を採用。MIT に比べ特許保護があり、他者がコ
 - 日本円での税込表示・消費税処理が必要か
 
 **進捗ログ (Progress Log)**:
-- [2026-01-17 07:55] Stripe 統合作業の計画を追加
+- [2026-01-17 07:55]Stripe 統合作業の計画を追加
