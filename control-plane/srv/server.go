@@ -113,6 +113,7 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("GET /api/teams", s.HandleListTeams)
 	mux.HandleFunc("POST /api/teams", s.HandleCreateTeam)
 	mux.HandleFunc("GET /api/teams/by-email", s.HandleGetTeamByEmail)
+	mux.HandleFunc("DELETE /api/teams/{id}", s.HandleDeleteTeam)
 	mux.HandleFunc("GET /api/facilities", s.HandleListFacilities)
 	mux.HandleFunc("POST /api/facilities", s.HandleCreateFacility)
 	mux.HandleFunc("GET /api/conditions", s.HandleListConditions)

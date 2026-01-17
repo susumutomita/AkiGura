@@ -108,6 +108,41 @@ func (s *Server) HandleGetTeamByEmail(w http.ResponseWriter, r *http.Request) {
 	s.jsonResponse(w, team)
 }
 
+// Delete Team
+func (s *Server) HandleDeleteTeam(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		s.jsonError(w, "team id required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+
+	// Delete related data first
+	_, err := s.DB.ExecContext(ctx, "DELETE FROM watch_conditions WHERE team_id = ?", id)
+	if err != nil {
+		slog.Error("delete watch conditions", "error", err)
+	}
+	_, err = s.DB.ExecContext(ctx, "DELETE FROM notifications WHERE team_id = ?", id)
+	if err != nil {
+		slog.Error("delete notifications", "error", err)
+	}
+	_, err = s.DB.ExecContext(ctx, "DELETE FROM auth_tokens WHERE team_id = ?", id)
+	if err != nil {
+		slog.Error("delete auth tokens", "error", err)
+	}
+
+	// Delete the team
+	_, err = s.DB.ExecContext(ctx, "DELETE FROM teams WHERE id = ?", id)
+	if err != nil {
+		s.jsonError(w, "failed to delete team", http.StatusInternalServerError)
+		return
+	}
+
+	slog.Info("team deleted", "team_id", id)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // Slots API
 func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 	groundID := r.URL.Query().Get("ground_id")
