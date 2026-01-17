@@ -118,46 +118,22 @@
                 </button>
                 <!-- Desktop Nav -->
                 <nav class="hidden md:flex items-center space-x-1">
-                    <button @click="currentTab = 'dashboard'"
-                            :class="currentTab === 'dashboard' ? 'text-kinari-50 border-b-2 border-kinari-50' : 'text-sumi-300 hover:text-kinari-50'"
-                            class="px-3 py-2 text-sm font-medium transition-colors">ダッシュボード</button>
-                    <button @click="currentTab = 'teams'"
-                            :class="currentTab === 'teams' ? 'text-kinari-50 border-b-2 border-kinari-50' : 'text-sumi-300 hover:text-kinari-50'"
-                            class="px-3 py-2 text-sm font-medium transition-colors">チーム</button>
-                    <button @click="currentTab = 'facilities'"
-                            :class="currentTab === 'facilities' ? 'text-kinari-50 border-b-2 border-kinari-50' : 'text-sumi-300 hover:text-kinari-50'"
-                            class="px-3 py-2 text-sm font-medium transition-colors">施設</button>
-                    <button @click="currentTab = 'slots'"
-                            :class="currentTab === 'slots' ? 'text-kinari-50 border-b-2 border-kinari-50' : 'text-sumi-300 hover:text-kinari-50'"
-                            class="px-3 py-2 text-sm font-medium transition-colors">空き状況</button>
-                    <button @click="currentTab = 'worker'"
-                            :class="currentTab === 'worker' ? 'text-kinari-50 border-b-2 border-kinari-50' : 'text-sumi-300 hover:text-kinari-50'"
-                            class="px-3 py-2 text-sm font-medium transition-colors">ワーカー</button>
-                    <button @click="currentTab = 'support'"
-                            :class="currentTab === 'support' ? 'text-kinari-50 border-b-2 border-kinari-50' : 'text-sumi-300 hover:text-kinari-50'"
-                            class="px-3 py-2 text-sm font-medium transition-colors">AI</button>
+                    <template x-for="tab in navTabs" :key="tab.id">
+                        <button @click="currentTab = tab.id"
+                                :class="currentTab === tab.id ? 'text-kinari-50 border-b-2 border-kinari-50' : 'text-sumi-300 hover:text-kinari-50'"
+                                class="px-3 py-2 text-sm font-medium transition-colors"
+                                x-text="tab.label"></button>
+                    </template>
                 </nav>
             </div>
             <!-- Mobile Nav -->
             <nav x-show="mobileMenuOpen" x-cloak class="md:hidden mt-3 pb-2 grid grid-cols-3 gap-2">
-                <button @click="currentTab = 'dashboard'; mobileMenuOpen = false"
-                        :class="currentTab === 'dashboard' ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                        class="px-2 py-2 rounded text-sm text-center transition-colors">ダッシュボード</button>
-                <button @click="currentTab = 'teams'; mobileMenuOpen = false"
-                        :class="currentTab === 'teams' ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                        class="px-2 py-2 rounded text-sm text-center transition-colors">チーム</button>
-                <button @click="currentTab = 'facilities'; mobileMenuOpen = false"
-                        :class="currentTab === 'facilities' ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                        class="px-2 py-2 rounded text-sm text-center transition-colors">施設</button>
-                <button @click="currentTab = 'slots'; mobileMenuOpen = false"
-                        :class="currentTab === 'slots' ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                        class="px-2 py-2 rounded text-sm text-center transition-colors">空き状況</button>
-                <button @click="currentTab = 'worker'; mobileMenuOpen = false"
-                        :class="currentTab === 'worker' ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                        class="px-2 py-2 rounded text-sm text-center transition-colors">ワーカー</button>
-                <button @click="currentTab = 'support'; mobileMenuOpen = false"
-                        :class="currentTab === 'support' ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                        class="px-2 py-2 rounded text-sm text-center transition-colors">AI</button>
+                <template x-for="tab in navTabs" :key="tab.id">
+                    <button @click="currentTab = tab.id; mobileMenuOpen = false"
+                            :class="currentTab === tab.id ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
+                            class="px-2 py-2 rounded text-sm text-center transition-colors"
+                            x-text="tab.label"></button>
+                </template>
             </nav>
         </div>
     </header>
@@ -671,8 +647,31 @@
     </div>
 
     <script>
+    const NAV_TABS = [
+        { id: 'dashboard', label: 'ダッシュボード' },
+        { id: 'teams', label: 'チーム' },
+        { id: 'facilities', label: '施設' },
+        { id: 'slots', label: '空き状況' },
+        { id: 'worker', label: 'ワーカー' },
+        { id: 'support', label: 'AI' }
+    ];
+
+    const SCRAPE_STATUS_MAP = {
+        'success': '空きあり',
+        'success_no_slots': '空きなし',
+        'parse_error': '解析エラー',
+        'network_error': '通信エラー',
+        'no_table_found': 'テーブルなし',
+        'unknown_facility': '不明な施設',
+        'scraper_unavailable': 'スクレイパー利用不可',
+        'execution_error': '実行エラー'
+    };
+
+    const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+
     function app() {
         return {
+            navTabs: NAV_TABS,
             currentTab: 'dashboard',
             mobileMenuOpen: false,
             dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [] },
@@ -681,23 +680,19 @@
             grounds: [],
             slots: [],
             municipalities: [],
-            // Drilldown state
-            slotView: 'municipalities',  // municipalities -> grounds -> calendar
+            slotView: 'municipalities',
             selectedMunicipality: null,
             selectedGround: null,
             slotFilter: { municipalityId: '' },
-            // Calendar state
             calendarYear: new Date().getFullYear(),
             calendarMonth: new Date().getMonth(),
             selectedDate: null,
-            // Worker state
-            showLogs: window.innerWidth >= 768,  // Show logs by default on desktop
+            showLogs: window.innerWidth >= 768,
             jobs: [],
             workerLogs: [],
             scrapeRunning: false,
             selectedMunicipalityForScrape: '',
             autoScrollLogs: true,
-            // Other
             tickets: [],
             chatMessages: [],
             chatInput: '',
@@ -788,19 +783,15 @@
                 return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
             },
 
-            prevMonth() {
-                const d = new Date(this.calendarYear, this.calendarMonth - 1, 1);
+            changeMonth(delta) {
+                const d = new Date(this.calendarYear, this.calendarMonth + delta, 1);
                 this.calendarYear = d.getFullYear();
                 this.calendarMonth = d.getMonth();
                 this.selectedDate = null;
             },
 
-            nextMonth() {
-                const d = new Date(this.calendarYear, this.calendarMonth + 1, 1);
-                this.calendarYear = d.getFullYear();
-                this.calendarMonth = d.getMonth();
-                this.selectedDate = null;
-            },
+            prevMonth() { this.changeMonth(-1); },
+            nextMonth() { this.changeMonth(1); },
 
             selectDate(dateStr) {
                 this.selectedDate = this.selectedDate === dateStr ? null : dateStr;
@@ -850,18 +841,13 @@
             formatDate(dateStr) {
                 if (!dateStr) return '-';
                 const d = new Date(dateStr);
-                const days = ['日', '月', '火', '水', '木', '金', '土'];
-                const month = d.getMonth() + 1;
-                const day = d.getDate();
-                const dow = days[d.getDay()];
-                return `${month}/${day}(${dow})`;
+                return `${d.getMonth() + 1}/${d.getDate()}(${DAY_NAMES[d.getDay()]})`;
             },
 
             formatDateFull(dateStr) {
                 if (!dateStr) return '';
                 const d = new Date(dateStr);
-                const days = ['日', '月', '火', '水', '木', '金', '土'];
-                return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${days[d.getDay()]})`;
+                return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日(${DAY_NAMES[d.getDay()]})`;
             },
 
             formatDateTime(dateStr) {
@@ -871,17 +857,7 @@
             },
 
             formatScrapeStatus(status) {
-                const statusMap = {
-                    'success': '空きあり',
-                    'success_no_slots': '空きなし',
-                    'parse_error': '解析エラー',
-                    'network_error': '通信エラー',
-                    'no_table_found': 'テーブルなし',
-                    'unknown_facility': '不明な施設',
-                    'scraper_unavailable': 'スクレイパー利用不可',
-                    'execution_error': '実行エラー'
-                };
-                return statusMap[status] || status || '-';
+                return SCRAPE_STATUS_MAP[status] || status || '-';
             },
 
             showJobDetails(job) {

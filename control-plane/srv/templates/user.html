@@ -177,26 +177,12 @@
         <!-- Tabs -->
         <div class="border-b border-sumi-200 mb-8">
             <nav class="flex gap-8">
-                <button @click="tab = 'slots'"
-                        :class="tab === 'slots' ? 'border-ai-600 text-sumi-800' : 'border-transparent text-sumi-500 hover:text-sumi-700'"
-                        class="pb-3 border-b-2 font-medium text-sm transition-colors">
-                    Availability
-                </button>
-                <button @click="tab = 'conditions'"
-                        :class="tab === 'conditions' ? 'border-ai-600 text-sumi-800' : 'border-transparent text-sumi-500 hover:text-sumi-700'"
-                        class="pb-3 border-b-2 font-medium text-sm transition-colors">
-                    Watch Rules
-                </button>
-                <button @click="tab = 'notifications'"
-                        :class="tab === 'notifications' ? 'border-ai-600 text-sumi-800' : 'border-transparent text-sumi-500 hover:text-sumi-700'"
-                        class="pb-3 border-b-2 font-medium text-sm transition-colors">
-                    Alerts
-                </button>
-                <button @click="tab = 'settings'"
-                        :class="tab === 'settings' ? 'border-ai-600 text-sumi-800' : 'border-transparent text-sumi-500 hover:text-sumi-700'"
-                        class="pb-3 border-b-2 font-medium text-sm transition-colors">
-                    Settings
-                </button>
+                <template x-for="item in tabItems" :key="item.id">
+                    <button @click="tab = item.id"
+                            :class="tab === item.id ? 'border-ai-600 text-sumi-800' : 'border-transparent text-sumi-500 hover:text-sumi-700'"
+                            class="pb-3 border-b-2 font-medium text-sm transition-colors"
+                            x-text="item.label"></button>
+                </template>
             </nav>
         </div>
 
@@ -513,10 +499,7 @@
                     <template x-for="job in jobs.slice(0, 10)" :key="job.id">
                         <div class="flex items-center justify-between text-sm py-2 border-b border-sumi-100 last:border-0">
                             <div class="flex items-center gap-2">
-                                <span x-show="job.status === 'completed'" class="w-2 h-2 rounded-full bg-wakakusa-500"></span>
-                                <span x-show="job.status === 'failed'" class="w-2 h-2 rounded-full bg-sango-500"></span>
-                                <span x-show="job.status === 'running'" class="w-2 h-2 rounded-full bg-ai-500 animate-pulse"></span>
-                                <span x-show="job.status === 'pending'" class="w-2 h-2 rounded-full bg-sumi-300"></span>
+                                <span class="w-2 h-2 rounded-full" :class="getJobStatusColor(job.status)"></span>
                                 <span class="text-sumi-700" x-text="job.municipality_name"></span>
                             </div>
                             <div class="flex items-center gap-3 text-sumi-500">
@@ -667,9 +650,22 @@
 
     <script>
     const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const TAB_ITEMS = [
+        { id: 'slots', label: 'Availability' },
+        { id: 'conditions', label: 'Watch Rules' },
+        { id: 'notifications', label: 'Alerts' },
+        { id: 'settings', label: 'Settings' }
+    ];
+    const JOB_STATUS_COLORS = {
+        completed: 'bg-wakakusa-500',
+        failed: 'bg-sango-500',
+        running: 'bg-ai-500 animate-pulse',
+        pending: 'bg-sumi-300'
+    };
 
     function userApp() {
         return {
+            tabItems: TAB_ITEMS,
             team: null,
             tab: 'slots',
             conditions: [],
@@ -1046,7 +1042,11 @@
                 if (diff < 60000) return 'just now';
                 if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
                 if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
-                return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+                return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+            },
+
+            getJobStatusColor(status) {
+                return JOB_STATUS_COLORS[status] || JOB_STATUS_COLORS.pending;
             },
 
             // Billing methods
