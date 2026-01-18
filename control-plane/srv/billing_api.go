@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -142,15 +143,24 @@ func (s *Server) HandleCreateCheckout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Determine URLs (env overrides allowed)
+	successURL := os.Getenv("STRIPE_SUCCESS_URL")
+	if successURL == "" {
+		successURL = "https://" + r.Host + "/user?success=true"
+	}
+	cancelURL := os.Getenv("STRIPE_CANCEL_URL")
+	if cancelURL == "" {
+		cancelURL = "https://" + r.Host + "/user?canceled=true"
+	}
+
 	// Create checkout session
-	baseURL := "https://" + r.Host
 	checkoutURL, err := stripeClient.CreateCheckoutSession(r.Context(), billing.CheckoutOptions{
 		CustomerID:     customerID,
 		PriceID:        priceID,
-		SuccessURL:     baseURL + "/user?success=true",
-		CancelURL:      baseURL + "/user?canceled=true",
+		SuccessURL:     successURL,
+		CancelURL:      cancelURL,
 		TeamID:         team.ID,
-		AllowPromoCode: req.PromoCode == "", // Allow entering promo code only if not pre-applied
+		AllowPromoCode: req.PromoCode == "",
 		StripeCouponID: stripeCouponID,
 	})
 	if err != nil {
@@ -190,8 +200,12 @@ func (s *Server) HandleBillingPortal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseURL := "https://" + r.Host
-	portalURL, err := stripeClient.CreateBillingPortalSession(r.Context(), team.StripeCustomerID.String, baseURL+"/user")
+	returnURL := os.Getenv("STRIPE_RETURN_URL")
+	if returnURL == "" {
+		returnURL = "https://" + r.Host + "/user"
+	}
+
+	portalURL, err := stripeClient.CreateBillingPortalSession(r.Context(), team.StripeCustomerID.String, returnURL)
 	if err != nil {
 		slog.Error("create billing portal", "error", err)
 		s.jsonError(w, "failed to create portal", http.StatusInternalServerError)

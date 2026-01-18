@@ -349,11 +349,12 @@ Apache License 2.0 を採用。MIT に比べ特許保護があり、他者がコ
 - UI からの操作で Checkout → Webhook → DB 更新まで全て確認する
 
 **タスク (TODOs)**:
-- [ ] Stripe API キーと Price ID を取得し `.env` に設定する
-- [ ] `billing.Plans` の Price ID を最新のものに更新する
-- [ ] `StripeClient.VerifyWebhookSignature` を stripe-go で本番仕様にする
-- [ ] `HandleCreateCheckout` で SuccessURL / CancelURL を環境変数ベースに切り替える
-- [ ] Webhook エンドポイントを本番 URL で受けられるよう systemd/ngrok を設定する
+- [x] Stripe API キーと Price ID を取得し `.env` に設定した
+- [x] `billing.Plans` の Price ID を最新のものに更新した
+- [x] `StripeClient.VerifyWebhookSignature` を stripe-go で本番仕様にした
+- [x] `HandleCreateCheckout` で SuccessURL / CancelURL を環境変数ベースに切り替えた
+- [ ] Webhook エンドポイントを本番 URL で受けられるよう systemd/ngrok 設定を適用する
+
 - [ ] `/user` UI で Checkout → Stripe へ遷移できることをブラウザ確認する
 - [ ] Webhook 受信後に teams.plan などが更新されることを DB で確認する
 - [ ] Plan.md にログと振り返りを記録する
@@ -368,3 +369,8 @@ Apache License 2.0 を採用。MIT に比べ特許保護があり、他者がコ
 
 **進捗ログ (Progress Log)**:
 - [2026-01-17 07:55]Stripe 統合作業の計画を追加
+- [2026-01-17 08:20]Stripe Webhook 署名検証と Checkout/Billing Portal の環境変数対応を実装
+- [2026-01-17 08:25]Webhook 環境変数対応への lint 修正
+- [2026-01-17 08:32]Stripe 用テストヘルパーの整備開始
+- [2026-01-18 09:10]textlint の違反箇所を修正
+- [2026-01-18 09:15]lint 再実行のための表記ゆれ修正
