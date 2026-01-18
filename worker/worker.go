@@ -162,41 +162,25 @@ func (w *Worker) getOrCreateGround(ctx context.Context, municipalityID, courtNam
 	return &newID
 }
 
+// courtSuffixes contains all court suffixes to be removed from facility names
+var courtSuffixes = []string{
+	// Full-width letters + 面
+	"Ａ面", "Ｂ面", "Ｃ面", "Ｄ面", "Ｅ面", "Ｆ面", "Ｇ面", "Ｈ面", "Ｉ面", "Ｊ面", "Ｋ面", "Ｌ面",
+	// Half-width letters + 面
+	"A面", "B面", "C面", "D面", "E面", "F面", "G面", "H面", "I面", "J面", "K面", "L面",
+	// Numbers + 面 (10面 first to match before 0面)
+	"10面", "1面", "2面", "3面", "4面", "5面", "6面", "7面", "8面", "9面",
+}
+
 // extractBaseFacilityName removes court suffixes from facility names
 // e.g., "大神グラウンド野球場Ａ面" -> "大神グラウンド野球場"
 func extractBaseFacilityName(courtName string) string {
-	// Common patterns to remove:
-	// - A面, B面, C面, etc. (full-width)
-	// - Ａ面, Ｂ面, Ｃ面, etc. (half-width)
-	// - 1面, 2面, 3面, etc.
-	// - （東）, （西）, etc.
-
 	name := courtName
-
-	// Remove full-width letter + 面
-	for _, suffix := range []string{"Ａ面", "Ｂ面", "Ｃ面", "Ｄ面", "Ｅ面", "Ｆ面", "Ｇ面", "Ｈ面", "Ｉ面", "Ｊ面", "Ｋ面", "Ｌ面"} {
+	for _, suffix := range courtSuffixes {
 		if strings.HasSuffix(name, suffix) {
-			name = strings.TrimSuffix(name, suffix)
-			break
+			return strings.TrimSpace(strings.TrimSuffix(name, suffix))
 		}
 	}
-
-	// Remove half-width letter + 面
-	for _, suffix := range []string{"A面", "B面", "C面", "D面", "E面", "F面", "G面", "H面", "I面", "J面", "K面", "L面"} {
-		if strings.HasSuffix(name, suffix) {
-			name = strings.TrimSuffix(name, suffix)
-			break
-		}
-	}
-
-	// Remove number + 面
-	for _, suffix := range []string{"1面", "2面", "3面", "4面", "5面", "6面", "7面", "8面", "9面", "10面"} {
-		if strings.HasSuffix(name, suffix) {
-			name = strings.TrimSuffix(name, suffix)
-			break
-		}
-	}
-
 	return strings.TrimSpace(name)
 }
 
@@ -391,24 +375,21 @@ func (w *Worker) ProcessPendingJobs(ctx context.Context) error {
 		slog.Info("processing pending job", "job_id", job.JobID, "scraper_type", job.ScraperType)
 
 		// Mark as running
-		w.DB.ExecContext(ctx, `
-			UPDATE scrape_jobs SET status = 'running', started_at = CURRENT_TIMESTAMP WHERE id = ?
-		`, job.JobID)
+		if err := w.UpdateJob(ctx, job.JobID, "running", 0, ""); err != nil {
+			slog.Error("failed to mark job running", "job_id", job.JobID, "error", err)
+			continue
+		}
 
 		// Run scraper
 		result, err := w.RunScraper(ctx, job.ScraperType)
 		if err != nil {
-			w.DB.ExecContext(ctx, `
-				UPDATE scrape_jobs SET status = 'failed', error_message = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?
-			`, err.Error(), job.JobID)
+			w.UpdateJobWithDiagnostics(ctx, job.JobID, "failed", "execution_error", 0, err.Error(), nil)
 			slog.Error("scraper failed", "job_id", job.JobID, "error", err)
 			continue
 		}
 
 		if !result.Success {
-			w.DB.ExecContext(ctx, `
-				UPDATE scrape_jobs SET status = 'failed', error_message = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?
-			`, result.Error, job.JobID)
+			w.UpdateJobWithDiagnostics(ctx, job.JobID, "failed", result.Status, 0, result.Error, result.Diagnostics)
 			slog.Error("scraper returned error", "job_id", job.JobID, "error", result.Error)
 			continue
 		}
@@ -417,9 +398,9 @@ func (w *Worker) ProcessPendingJobs(ctx context.Context) error {
 		saved, _ := w.SaveSlots(ctx, job.MunicipalityID, result.Slots)
 
 		// Mark as completed
-		w.DB.ExecContext(ctx, `
-			UPDATE scrape_jobs SET status = 'completed', slots_found = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?
-		`, saved, job.JobID)
+		if err := w.UpdateJobWithDiagnostics(ctx, job.JobID, "completed", result.Status, saved, "", result.Diagnostics); err != nil {
+			slog.Error("failed to mark job completed", "job_id", job.JobID, "error", err)
+		}
 
 		slog.Info("job completed", "job_id", job.JobID, "slots_saved", saved)
 

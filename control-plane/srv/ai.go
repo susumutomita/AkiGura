@@ -110,16 +110,7 @@ func (c *AIClient) Chat(ctx context.Context, userMessage string, conversationHis
 
 // Ollama API (local LLM)
 func (c *AIClient) chatOllama(ctx context.Context, userMessage string, history []ChatMessage) (string, error) {
-	messages := make([]map[string]string, 0, len(history)+2)
-	messages = append(messages, map[string]string{"role": "system", "content": c.SystemPrompt})
-	for _, m := range history {
-		role := m.Role
-		if role == "ai" {
-			role = "assistant"
-		}
-		messages = append(messages, map[string]string{"role": role, "content": m.Content})
-	}
-	messages = append(messages, map[string]string{"role": "user", "content": userMessage})
+	messages := buildMessages(c.SystemPrompt, userMessage, history, true)
 
 	reqBody := map[string]interface{}{
 		"model":    c.Model,
@@ -162,17 +153,38 @@ type ChatMessage struct {
 	Content string `json:"content"`
 }
 
+// normalizeRole converts "ai" role to "assistant" for API compatibility
+func normalizeRole(role string) string {
+	if role == "ai" {
+		return "assistant"
+	}
+	return role
+}
+
+// buildMessages constructs the message array for AI API calls
+func buildMessages(systemPrompt, userMessage string, history []ChatMessage, includeSystem bool) []map[string]string {
+	capacity := len(history) + 1
+	if includeSystem {
+		capacity++
+	}
+	messages := make([]map[string]string, 0, capacity)
+
+	if includeSystem && systemPrompt != "" {
+		messages = append(messages, map[string]string{"role": "system", "content": systemPrompt})
+	}
+
+	for _, m := range history {
+		messages = append(messages, map[string]string{"role": normalizeRole(m.Role), "content": m.Content})
+	}
+
+	messages = append(messages, map[string]string{"role": "user", "content": userMessage})
+	return messages
+}
+
 // Anthropic (Claude) API
 func (c *AIClient) chatAnthropic(ctx context.Context, userMessage string, history []ChatMessage) (string, error) {
-	messages := make([]map[string]string, 0, len(history)+1)
-	for _, m := range history {
-		role := m.Role
-		if role == "ai" {
-			role = "assistant"
-		}
-		messages = append(messages, map[string]string{"role": role, "content": m.Content})
-	}
-	messages = append(messages, map[string]string{"role": "user", "content": userMessage})
+	// Anthropic uses a separate system field, so don't include system in messages
+	messages := buildMessages("", userMessage, history, false)
 
 	reqBody := map[string]interface{}{
 		"model":      c.Model,
@@ -219,16 +231,7 @@ func (c *AIClient) chatAnthropic(ctx context.Context, userMessage string, histor
 
 // OpenAI API
 func (c *AIClient) chatOpenAI(ctx context.Context, userMessage string, history []ChatMessage) (string, error) {
-	messages := make([]map[string]string, 0, len(history)+2)
-	messages = append(messages, map[string]string{"role": "system", "content": c.SystemPrompt})
-	for _, m := range history {
-		role := m.Role
-		if role == "ai" {
-			role = "assistant"
-		}
-		messages = append(messages, map[string]string{"role": role, "content": m.Content})
-	}
-	messages = append(messages, map[string]string{"role": "user", "content": userMessage})
+	messages := buildMessages(c.SystemPrompt, userMessage, history, true)
 
 	reqBody := map[string]interface{}{
 		"model":      c.Model,
