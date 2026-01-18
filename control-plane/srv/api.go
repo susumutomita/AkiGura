@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"srv.exe.dev/db/dbgen"
@@ -642,16 +643,7 @@ func (s *Server) generateFallbackResponse(message string) string {
 }
 
 func containsKeyword(s, keyword string) bool {
-	return len(s) > 0 && len(keyword) > 0 && (s == keyword || len(s) >= len(keyword) && (s[:len(keyword)] == keyword || s[len(s)-len(keyword):] == keyword || findSubstring(s, keyword)))
-}
-
-func findSubstring(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(s, keyword)
 }
 
 // HandleTriggerScrape triggers a scrape job for a municipality or all municipalities

@@ -13,7 +13,6 @@ import (
 	"net/mail"
 	"net/smtp"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -225,24 +224,10 @@ func teamToJSON(team dbgen.Team) string {
 	return buf.String()
 }
 
-// sendMagicLinkEmail sends the magic link via SMTP or SendGrid
-func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) error {
-	// Try SMTP first (Gmail)
-	if config.SMTPUser != "" && config.SMTPPassword != "" {
-		return sendMagicLinkEmailSMTP(config, email, teamName, magicLink)
-	}
-
-	// Fall back to SendGrid
-	if config.SendGridKey == "" {
-		slog.Info("Magic link (email not configured)", "email", email, "link", magicLink)
-		return nil
-	}
-
-	// Escape teamName to prevent HTML injection in email
+// buildMagicLinkHTML generates the HTML content for magic link email
+func buildMagicLinkHTML(teamName, magicLink string) string {
 	escapedTeamName := html.EscapeString(teamName)
-
-	htmlContent := fmt.Sprintf(`
-<!DOCTYPE html>
+	return fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
 <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -261,6 +246,22 @@ func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) er
   </div>
 </body>
 </html>`, escapedTeamName, magicLink, magicLink)
+}
+
+// sendMagicLinkEmail sends the magic link via SMTP or SendGrid
+func sendMagicLinkEmail(config AuthConfig, email, teamName, magicLink string) error {
+	// Try SMTP first (Gmail)
+	if config.SMTPUser != "" && config.SMTPPassword != "" {
+		return sendMagicLinkEmailSMTP(config, email, teamName, magicLink)
+	}
+
+	// Fall back to SendGrid
+	if config.SendGridKey == "" {
+		slog.Info("Magic link (email not configured)", "email", email, "link", magicLink)
+		return nil
+	}
+
+	htmlContent := buildMagicLinkHTML(teamName, magicLink)
 
 	payload := map[string]interface{}{
 		"personalizations": []map[string]interface{}{
@@ -316,28 +317,8 @@ func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string
 		return fmt.Errorf("invalid email address: %w", err)
 	}
 	sanitizedEmail := parsedAddr.Address
-	escapedTeamName := html.EscapeString(teamName)
 
-	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: #4F46E5; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-    <h1 style="margin: 0;">⚾ AkiGura</h1>
-  </div>
-  <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
-    <p>%s 様</p>
-    <p>以下のボタンをクリックしてログインしてください。このリンクは15分間有効です。</p>
-    <p style="text-align: center; margin: 30px 0;">
-      <a href="%s" style="display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">ログインする</a>
-    </p>
-    <p style="color: #6b7280; font-size: 12px;">このメールに心当たりがない場合は、無視してください。</p>
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-    <p style="color: #9ca3af; font-size: 11px;">リンクが機能しない場合は、以下のURLをブラウザに貼り付けてください：<br>%s</p>
-  </div>
-</body>
-</html>`, escapedTeamName, magicLink, magicLink)
-
+	htmlContent := buildMagicLinkHTML(teamName, magicLink)
 	subject := "【AkiGura】ログインリンク"
 
 	msg := fmt.Sprintf("From: %s <%s>\r\n"+
@@ -355,11 +336,3 @@ func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string
 	return smtp.SendMail(addr, auth, config.SMTPUser, []string{sanitizedEmail}, []byte(msg))
 }
 
-// sanitizeEmailHeader removes characters that could be used for header injection
-func sanitizeEmailHeader(s string) string {
-	// Remove CR, LF, and null bytes to prevent header injection
-	s = strings.ReplaceAll(s, "\r", "")
-	s = strings.ReplaceAll(s, "\n", "")
-	s = strings.ReplaceAll(s, "\x00", "")
-	return s
-}
