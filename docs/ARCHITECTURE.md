@@ -1,277 +1,120 @@
-# AkiGura アーキテクチャ設計書
+# AkiGura アーキテクチャ概要（2026-01 現在）
 
-## 概要
-
-公共施設（グラウンド等）の空き情報を監視し、ユーザーに通知するサービス。
-
-## 設計原則
-
-### プライバシー重視
-
-- **個人情報を持たない**: メールアドレス等は認証サービス（Clerk）側で管理
-- **Cookie不使用**: トラッキングしない
-- **アクセス解析なし**: Google Analytics等は入れない
-
-### シンプルな構成
-
-- ユーザーは初回設定後、基本的にシステムにアクセスしない
-- 通知メールから直接予約サイトへ遷移
+最新の構成・実装を前提に再整理したドキュメントです。以前の Clerk・SES 依存構成とは異なり、現バージョンでは **Go 製コントロールプレーン + Python ワーカー + Turso(DB)** を中核とし、UI も同サーバーで提供しています。
 
 ---
 
-## システム構成
+## 1. サービス全体像
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      ユーザー                            │
-└─────────────────┬───────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────────────┐
-│                  Clerk（認証）                           │
-│  - マジックリンク認証（パスワードレス）                    │
-│  - メールアドレス管理                                    │
-│  - チーム/組織機能                                       │
-└─────────────────┬───────────────────────────────────────┘
-                  │ ユーザーID（UUID）のみ
-                  ▼
-┌─────────────────────────────────────────────────────────┐
-│                AkiGura サーバー                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │  Web UI     │  │  Worker     │  │  Control    │     │
-│  │  (設定画面) │  │ (スクレイパー)│  │  Plane     │     │
-│  └─────────────┘  └──────┬──────┘  └─────────────┘     │
-│                          │                              │
-│  ┌───────────────────────┴────────────────────────┐    │
-│  │              SQLite Database                    │    │
-│  │  - ユーザーID（Clerk UUID）                      │    │
-│  │  - 監視条件                                     │    │
-│  │  - Stripe顧客ID                                 │    │
-│  │  - 施設/自治体マスター                          │    │
-│  │  ※メールアドレスは保存しない                    │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────┬───────────────────────────────────────┘
-                  │
-        ┌─────────┴─────────┐
-        ▼                   ▼
-┌───────────────┐   ┌───────────────┐
-│  Amazon SES   │   │    Stripe     │
-│  (メール送信)  │   │   (課金)      │
-└───────────────┘   └───────────────┘
+┌──────────┐         ┌────────────┐
+│ AkiGura UI │<───────>│ Go Control │───┐
+│ (管理/ユーザー)│  REST  │ Plane/API  │   │
+└──────────┘         │ (./control-plane)│   │
+                       └──────┬─────┘   │
+                              │         │
+                              ▼         │
+                       ┌────────────┐  │
+                       │ Turso(libSQL)│◄┘  永続 DB
+                       └────────────┘
+                              ▲
+                              │Queue/Jobs
+                              ▼
+                       ┌────────────┐
+                       │Python Worker│（スクレイパー）
+                       └────────────┘
 ```
 
----
+- **Control Plane**: Go 1.25.5。API・管理画面・ユーザー画面を提供し、Turso に接続してデータを保存。Stripe 課金や通知ルール管理を担う。
+- **Worker**: 既存の ground-reservation 由来の Python スクレイパーを呼び出して空き枠を取得。結果は `slots` テーブルに書き込む。
+- **DB**: Turso(libSQL)。ローカル開発では `control-plane/db.sqlite3` を生成し、同一 schema を使用。
 
-## 認証フロー
+### 認証・課金
+- 現在のローカル実装は **Magic Link / Clerk** ではなく、独自 UI + エミュレータ的なログインフロー（メールアドレスを入力→Magic Link風に擬似ログイン）を使用しています。
+- 課金は Stripe Checkout + Billing Portal + Webhook を実装済み。`billing.Plans` に PriceID を環境変数で注入。
+- Webhook 署名検証は `stripe-go/v79` を使用し、環境変数 `STRIPE_WEBHOOK_SECRET` に依存。
 
-```
-1. ユーザーがメールアドレスを入力
-2. Clerkがマジックリンクをメール送信
-3. ユーザーがリンクをクリック
-4. Clerkが認証、AkiGuraにユーザーID（UUID）を返す
-5. AkiGuraはUUIDのみ保存（メアドは保存しない）
-```
-
-### なぜClerkか
-
-- マジックリンク（パスワードレス）標準対応
-- チーム/組織機能が無料枠で使える
-- 10,000 MAUまで無料
-- メールアドレス管理をClerkに委譲できる
+### 通知
+- まだ Amazon SES ではなく、通知送信は今後 SendGrid 等で実装予定（Plan.md Phase 4 参照）。現バージョンのドキュメントからは SES の記述を削除。
 
 ---
 
-## 通知フロー
+## 2. データモデル
 
-```
-1. Worker が定期的に自治体サイトをスクレイピング
-2. 空き枠を検出
-3. 監視条件にマッチするユーザーを特定
-4. Clerk API でユーザーのメールアドレスを取得
-5. Amazon SES でメール送信
-6. メール内に予約サイトへの直リンクを含める
-```
+### 主要テーブル（抜粋）
 
-### メール送信サービス選定
+`teams`
+- plan (`free/personal/pro/org`)
+- stripe_customer_id, stripe_subscription_id
+- billing_interval, current_period_end
 
-| サービス | 料金 | 選定理由 |
-|---------|------|----------|
-| Amazon SES | $0.10/1,000通 | 圧倒的に安い、スケール可能 |
-| Resend | 3,000通/月無料 | 開発しやすいが、スケール時にコスト増 |
-| SendGrid | 100通/日無料 | 無料枠が少ない |
+`grounds`
+- municipality_id, name, court_pattern 等。UI の監視条件選択で使用。
 
-→ **Amazon SES** を採用
+`watch_conditions`
+- team_id, municipality_id, ground_id, days_of_week, time_from/to
+- UI から作成・削除可能。`/user` ページの “Add Watch Rule” モーダルに紐づく。
 
----
-
-## 課金モデル
-
-### プラン構成（案）
-
-| プラン | 料金 | 内容 |
-|-------|------|------|
-| Free | ¥0 | 土曜午前のみ監視、1自治体 |
-| Personal | ¥500/月 | 全時間帯監視、1自治体 |
-| Team | ¥2,000/月 | 全時間帯、複数自治体、チーム共有 |
-
-### 実装
-
-- Stripe Checkout で決済
-- Stripe顧客ID を AkiGura に保存
-- Webhook で支払い状態を同期
-- 決済情報（カード番号等）は Stripe 側で管理
+`slots`
+- municipality_id + slot_date + time_from + court_name で UNIQUE 制約
+- Python Worker がスクレイピング結果を挿入し、Go UI が参照。
 
 ---
 
-## データモデル
+## 3. Stripe フロー（最新版）
 
-### AkiGura が保存するデータ
+1. `/user` 画面でプランを選択し「Upgrade」→ `/api/billing/checkout` を呼び出す。
+2. Go サーバーが Stripe Checkout Session を作成し、成功/キャンセル URL を環境変数で決定。`metadata[team_id]` にチームIDを付与。
+3. ユーザーが Checkout を完了すると、`/api/billing/webhook` へ以下イベントが届く：
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+4. Webhook Handler (`billing/webhook.go`) が `teams` テーブルの plan/billing_interval 等を更新。
+5. `/user` UI の Danger Zone からアカウント削除 (`DELETE /api/teams/{id}`) も可能。
 
-```sql
--- ユーザー（個人情報なし）
-users (
-  id UUID PRIMARY KEY,        -- Clerk のユーザーID
-  stripe_customer_id TEXT,    -- Stripe 顧客ID
-  plan TEXT,                  -- free/personal/team
-  created_at TIMESTAMP
-)
-
--- チーム
-teams (
-  id UUID PRIMARY KEY,
-  name TEXT,
-  owner_id UUID REFERENCES users(id),
-  created_at TIMESTAMP
-)
-
--- 監視条件
-watch_conditions (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  team_id UUID REFERENCES teams(id),
-  municipality_id UUID,
-  ground_id UUID,
-  day_of_week TEXT,           -- 'saturday', 'sunday', etc.
-  time_from TEXT,
-  time_to TEXT,
-  enabled BOOLEAN,
-  created_at TIMESTAMP
-)
+【環境変数】
+```
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_PERSONAL_MONTHLY=
+STRIPE_PRICE_PERSONAL_YEARLY=
+...（Pro/Org）
+STRIPE_SUCCESS_URL=https://.../user?success=true
+STRIPE_CANCEL_URL=https://.../user?canceled=true
+STRIPE_RETURN_URL=https://.../user
 ```
 
-### AkiGura が保存しないデータ
-
-- メールアドレス（Clerk が管理）
-- パスワード（マジックリンク認証のため不要）
-- 決済情報（Stripe が管理）
-- アクセスログ
+詳しくは `docs/STRIPE.md` を参照。
 
 ---
 
-## スケーラビリティ
+## 4. UI / UX のポイント
 
-### 負荷の特性
-
-| 要因 | スケール時の影響 |
-|------|------------------|
-| ユーザー数増加 | ほぼ影響なし（アクセス少ない） |
-| 自治体数増加 | スクレイピング負荷増 |
-| 通知数増加 | SES で処理（サーバー負荷小） |
-
-### ボトルネック予測
-
-1. **Clerk 10,000 MAU** - 最初に来る上限、超えたら $25/月〜
-2. **スクレイピング並列度** - 自治体 100+ で要最適化
-3. **SES 送信レート** - デフォルト 14通/秒、申請で引き上げ可
-
-### 監視すべきメトリクス
-
-- MAU（Clerk 上限）
-- MRR（Monthly Recurring Revenue）
-- メール送信数/成功率
-- スクレイピング成功率
+- `/user` 画面は Alpine.js + Tailwind で実装。ローカルストレージに `akigura_team` を保存して疑似ログイン状態を再現。
+- 監視条件作成モーダルでは、`municipalities` → `grounds` の依存を以下の API で取得：
+  - `GET /api/municipalities`
+  - `GET /api/grounds`
+- 「グラウンドが選べない」場合は DB の `grounds` が空・または `municipality_id` が null の可能性が高い。Turso/SQLite を初期化した際には最新マイグレーションを適用し、`grounds` データを投入すること。
 
 ---
 
-## セキュリティ
+## 5. 開発フロー / CI
 
-### 方針
-
-- 個人情報を持たないことで漏洩リスクを最小化
-- 認証・決済は専門サービスに委譲
-
-### リスクと対策
-
-| リスク | 対策 |
-|--------|------|
-| DB漏洩 | 個人情報がないため影響限定的 |
-| 不正アクセス | Clerk の認証に依存 |
-| スクレイピング検知 | レートリミット、User-Agent設定 |
+- すべてのコミット前に `make before-commit` を必須化（textlint + go test/build + worker build）。`AGENTS.md` にも明記し、`.git/hooks/pre-commit` でも自動実行。
+- GitHub Actions: lint/text / go test / CodeQL / 依存分析 / CLAUDEレビュー などを自動実行。PR は main への auto-squash merge ルール。
 
 ---
 
-## 法的考慮事項
+## 6. 未完了タスクと今後の方針
 
-### OK なこと
-
-- 公開情報（空き状況）のスクレイピング
-- 情報を集約して通知するサービスの提供
-- 課金
-
-### グレー/NG なこと
-
-- 自動予約機能（利用規約違反の可能性、責任問題）
-- robots.txt で Disallow されているページへのアクセス
-
-### 利用規約に明記すべきこと
-
-```
-1. サービス内容
-   - 公共施設の空き情報を収集し通知するサービス
-
-2. 個人情報
-   - 本サービスは個人情報を収集・保存しない
-   - 認証情報は Clerk 社、決済情報は Stripe 社が管理
-
-3. 免責事項
-   - 空き情報の正確性は保証しない
-   - 予約の成否について責任を負わない
-   - 各自治体の利用規約に従うこと
-
-4. 禁止事項
-   - 転売目的での利用
-   - サーバーへの過度な負荷
-```
+Plan.md Phase 3.5 〜 Phase 4 参照。
+- Webhook endpoint の本番配備（systemd + HTTPS）が未着手。
+- `watch_conditions` UI で ground セレクトが空になる問題 → DB 初期データと API フィールドを再確認。
+- E2E テスト（UI 操作を含む）や SendGrid 通知、Stripe 自動請求などを段階的に実装予定。
 
 ---
 
-## 将来の拡張
-
-### Phase 1（初回リリース）
-
-- 空き情報の通知
-- 基本的な課金
-
-### Phase 2
-
-- 対応自治体の拡大
-- 施設種別の拡大（体育館等）
-
-### Phase 3（要法的確認）
-
-- 自動予約機能
-- 自治体との API 連携
-
----
-
-## 技術スタック
-
-| 領域 | 技術 |
-|------|------|
-| バックエンド | Go |
-| データベース | Turso (libSQL) ※ローカル開発時はSQLite |
-| 認証 | Clerk |
-| 決済 | Stripe |
-| メール送信 | Amazon SES |
-| ホスティング | exe.dev VM |
-| スクレイピング | Python (既存の ground-reservation) |
+## 参照
+- `docs/STRIPE.md`: Stripe 環境変数とフロー詳細
+- `Plan.md`: 日次の進捗ログとタスク一覧
+- `AGENTS.md`: 開発ルール（コミット前チェック必須）
