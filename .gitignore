@@ -1,7 +1,7 @@
 # Go binaries
-akigura-srv
-akigura-worker
-worker
+**/akigura-srv
+**/akigura-worker
+worker/worker
 
 # SQLite database
 *.sqlite3
@@ -10,6 +10,8 @@ worker
 
 # Python
 __pycache__/
+**/__pycache__/
+*.pyc
 
 # Logs
 logs

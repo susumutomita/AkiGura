@@ -338,4 +338,3 @@ func sendMagicLinkEmailSMTP(config AuthConfig, email, teamName, magicLink string
 	slog.Info("Sending magic link via SMTP", "to", sanitizedEmail, "smtp", config.SMTPHost)
 	return smtp.SendMail(addr, auth, config.SMTPUser, []string{sanitizedEmail}, []byte(msg))
 }
-
