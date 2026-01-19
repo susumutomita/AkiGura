@@ -2,6 +2,7 @@ package srv
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -129,9 +130,9 @@ func (s *Server) HandleValidatePromoCodeEnt(w http.ResponseWriter, r *http.Reque
 	// Build response
 	var discountDescription string
 	if pc.DiscountType == promocode.DiscountTypePercent {
-		discountDescription = string(rune(pc.DiscountValue)) + "% off"
+		discountDescription = fmt.Sprintf("%d%% off", pc.DiscountValue)
 	} else {
-		discountDescription = "\u00a5" + string(rune(pc.DiscountValue)) + " off"
+		discountDescription = fmt.Sprintf("\u00a5%d off", pc.DiscountValue)
 	}
 
 	s.jsonResponse(w, map[string]interface{}{

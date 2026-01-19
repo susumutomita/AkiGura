@@ -262,13 +262,21 @@ type Subscription struct {
 	CancelAtPeriodEnd bool   `json:"cancel_at_period_end"`
 }
 
-func (s *StripeClient) post(ctx context.Context, path string, data url.Values) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "POST", s.BaseURL+path, strings.NewReader(data.Encode()))
+// do executes an HTTP request to the Stripe API
+func (s *StripeClient) do(ctx context.Context, method, path string, data url.Values) ([]byte, error) {
+	var body io.Reader
+	if data != nil {
+		body = strings.NewReader(data.Encode())
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, s.BaseURL+path, body)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBasicAuth(s.SecretKey, "")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if data != nil {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -276,51 +284,23 @@ func (s *StripeClient) post(ctx context.Context, path string, data url.Values) (
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("stripe error %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("stripe error %d: %s", resp.StatusCode, string(respBody))
 	}
-	return body, nil
+	return respBody, nil
+}
+
+func (s *StripeClient) post(ctx context.Context, path string, data url.Values) ([]byte, error) {
+	return s.do(ctx, "POST", path, data)
 }
 
 func (s *StripeClient) get(ctx context.Context, path string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", s.BaseURL+path, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBasicAuth(s.SecretKey, "")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("stripe error %d: %s", resp.StatusCode, string(body))
-	}
-	return body, nil
+	return s.do(ctx, "GET", path, nil)
 }
 
 func (s *StripeClient) delete(ctx context.Context, path string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "DELETE", s.BaseURL+path, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBasicAuth(s.SecretKey, "")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("stripe error %d: %s", resp.StatusCode, string(body))
-	}
-	return body, nil
+	return s.do(ctx, "DELETE", path, nil)
 }
 
 // VerifyWebhookSignature verifies a Stripe webhook signature

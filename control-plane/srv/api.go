@@ -156,48 +156,28 @@ func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var query string
+	// Build query with optional filter
+	baseQuery := `
+		SELECT s.id, s.ground_id, s.municipality_id, g.name as ground_name, m.name as municipality_name,
+		       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
+		FROM slots s
+		LEFT JOIN grounds g ON s.ground_id = g.id
+		LEFT JOIN municipalities m ON s.municipality_id = m.id
+		WHERE s.slot_date >= date('now')`
+
 	var args []interface{}
-
-	if groundID != "" {
-		query = `
-			SELECT s.id, s.ground_id, s.municipality_id, g.name as ground_name, m.name as municipality_name,
-			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
-			FROM slots s
-			LEFT JOIN grounds g ON s.ground_id = g.id
-			LEFT JOIN municipalities m ON s.municipality_id = m.id
-			WHERE s.ground_id = ? AND s.slot_date >= date('now')
-			ORDER BY s.slot_date, s.time_from
-			LIMIT ?
-		`
-		args = []interface{}{groundID, limit}
-	} else if municipalityID != "" {
-		query = `
-			SELECT s.id, s.ground_id, s.municipality_id, g.name as ground_name, m.name as municipality_name,
-			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
-			FROM slots s
-			LEFT JOIN grounds g ON s.ground_id = g.id
-			LEFT JOIN municipalities m ON s.municipality_id = m.id
-			WHERE s.municipality_id = ? AND s.slot_date >= date('now')
-			ORDER BY s.slot_date, s.time_from
-			LIMIT ?
-		`
-		args = []interface{}{municipalityID, limit}
-	} else {
-		query = `
-			SELECT s.id, s.ground_id, s.municipality_id, g.name as ground_name, m.name as municipality_name,
-			       s.slot_date, s.time_from, s.time_to, s.court_name, s.scraped_at
-			FROM slots s
-			LEFT JOIN grounds g ON s.ground_id = g.id
-			LEFT JOIN municipalities m ON s.municipality_id = m.id
-			WHERE s.slot_date >= date('now')
-			ORDER BY s.slot_date, s.time_from
-			LIMIT ?
-		`
-		args = []interface{}{limit}
+	switch {
+	case groundID != "":
+		baseQuery += " AND s.ground_id = ?"
+		args = append(args, groundID)
+	case municipalityID != "":
+		baseQuery += " AND s.municipality_id = ?"
+		args = append(args, municipalityID)
 	}
+	baseQuery += " ORDER BY s.slot_date, s.time_from LIMIT ?"
+	args = append(args, limit)
 
-	rows, err := s.DB.QueryContext(r.Context(), query, args...)
+	rows, err := s.DB.QueryContext(r.Context(), baseQuery, args...)
 	if err != nil {
 		s.jsonError(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -311,29 +291,21 @@ func (s *Server) HandleListMunicipalities(w http.ResponseWriter, r *http.Request
 func (s *Server) HandleListGrounds(w http.ResponseWriter, r *http.Request) {
 	municipalityID := r.URL.Query().Get("municipality_id")
 
-	var query string
-	var args []interface{}
+	baseQuery := `
+		SELECT g.id, g.municipality_id, m.name as municipality_name, g.name, g.court_pattern, g.enabled, g.created_at
+		FROM grounds g
+		JOIN municipalities m ON g.municipality_id = m.id
+		WHERE g.enabled = 1`
 
+	var args []interface{}
+	orderBy := " ORDER BY m.name, g.name"
 	if municipalityID != "" {
-		query = `
-			SELECT g.id, g.municipality_id, m.name as municipality_name, g.name, g.court_pattern, g.enabled, g.created_at
-			FROM grounds g
-			JOIN municipalities m ON g.municipality_id = m.id
-			WHERE g.municipality_id = ? AND g.enabled = 1
-			ORDER BY g.name
-		`
-		args = []interface{}{municipalityID}
-	} else {
-		query = `
-			SELECT g.id, g.municipality_id, m.name as municipality_name, g.name, g.court_pattern, g.enabled, g.created_at
-			FROM grounds g
-			JOIN municipalities m ON g.municipality_id = m.id
-			WHERE g.enabled = 1
-			ORDER BY m.name, g.name
-		`
+		baseQuery += " AND g.municipality_id = ?"
+		args = append(args, municipalityID)
+		orderBy = " ORDER BY g.name"
 	}
 
-	rows, err := s.DB.QueryContext(r.Context(), query, args...)
+	rows, err := s.DB.QueryContext(r.Context(), baseQuery+orderBy, args...)
 	if err != nil {
 		s.jsonError(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -634,16 +606,12 @@ func (s *Server) generateFallbackResponse(message string) string {
 	}
 
 	for keyword, response := range faqs {
-		if containsKeyword(message, keyword) {
+		if strings.Contains(message, keyword) {
 			return response
 		}
 	}
 
 	return "お問い合わせありがとうございます。具体的なご質問があればお聞かせください。\n\nよくある質問:\n- 料金プランについて\n- 通知設定について\n- 監視条件の設定方法\n- 施設の追加リクエスト"
-}
-
-func containsKeyword(s, keyword string) bool {
-	return strings.Contains(s, keyword)
 }
 
 // HandleTriggerScrape triggers a scrape job for a municipality or all municipalities

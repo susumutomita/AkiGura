@@ -173,30 +173,7 @@ func (s *Server) HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("google oauth login", "email", userInfo.Email, "team_id", team.ID)
 
-	// Return HTML that stores the session and redirects (same as magic link)
-	teamJSON := teamToJSON(team)
-	teamBase64 := base64.StdEncoding.EncodeToString([]byte(teamJSON))
-
-	htmlContent := fmt.Sprintf(`<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>ログイン完了 - AkiGura</title>
-</head>
-<body>
-    <script>
-        var teamData = JSON.parse(atob('%s'));
-        localStorage.setItem('akigura_team', JSON.stringify(teamData));
-        window.location.href = '/user';
-    </script>
-    <noscript>
-        <p>ログインが完了しました。<a href="/user">こちら</a>をクリックしてダッシュボードに移動してください。</p>
-    </noscript>
-</body>
-</html>`, teamBase64)
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(htmlContent))
+	writeAuthRedirectHTML(w, team, "ログイン完了")
 }
 
 // GoogleTokenResponse represents the token response from Google
