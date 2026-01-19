@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"srv.exe.dev/db"
 	"srv.exe.dev/db/dbgen"
@@ -152,26 +153,18 @@ func (s *Server) Serve(addr string) error {
 // For example: "example.exe.cloud:8080" returns "exe.cloud:8080"
 func mainDomainFromHost(host string) string {
 	// Split host and port
-	hostPart := host
-	portPart := ""
-	if idx := len(host) - 1; idx > 0 {
-		for i := idx; i >= 0; i-- {
-			if host[i] == ':' {
-				hostPart = host[:i]
-				portPart = host[i:]
-				break
-			}
-			if host[i] == '.' {
-				break
-			}
+	hostPart, portPart := host, ""
+	if colonIdx := strings.LastIndex(host, ":"); colonIdx > 0 {
+		// Ensure colon is after any dots (not IPv6)
+		if dotIdx := strings.LastIndex(host, "."); colonIdx > dotIdx {
+			hostPart = host[:colonIdx]
+			portPart = host[colonIdx:]
 		}
 	}
 
 	// Find the first dot and return everything after it
-	for i := 0; i < len(hostPart); i++ {
-		if hostPart[i] == '.' {
-			return hostPart[i+1:] + portPart
-		}
+	if dotIdx := strings.Index(hostPart, "."); dotIdx >= 0 {
+		return hostPart[dotIdx+1:] + portPart
 	}
 	return host
 }
