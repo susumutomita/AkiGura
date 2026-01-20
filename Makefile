@@ -1,3 +1,23 @@
+.PHONY: help
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  start           Start control-plane and worker"
+	@echo "  install         Install dependencies (bun + go modules)"
+	@echo "  build           Build control-plane and worker binaries"
+	@echo "  test            Run tests"
+	@echo "  test_coverage   Run tests with coverage"
+	@echo "  lint            Run go vet"
+	@echo "  lint_text       Run textlint"
+	@echo "  format          Format Go code"
+	@echo "  format_check    Check Go code formatting"
+	@echo "  clean           Clean build artifacts"
+	@echo "  before-commit   Run lint, format check, test, and build"
+	@echo "  run_control_plane  Run control-plane only"
+	@echo "  run_worker      Run worker only"
+	@echo "  sqlc            Generate sqlc code"
+
 .PHONY: install
 install:
 	bun install
@@ -51,6 +71,16 @@ format_check:
 
 .PHONY: before-commit
 before-commit: lint_text format_check test build
+
+.PHONY: start
+start:
+	@echo "Starting AkiGura..."
+	@echo ""
+	@echo "  API Server:  http://localhost:8000"
+	@echo "  Health:      http://localhost:8000/health"
+	@echo ""
+	@cd control-plane && go run ./cmd/srv &
+	@cd worker && go run ./cmd/worker
 
 .PHONY: run_control_plane
 run_control_plane:
