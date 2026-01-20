@@ -36,7 +36,7 @@ type AuthConfig struct {
 func getAuthConfig() AuthConfig {
 	return AuthConfig{
 		TokenExpiry:   15 * time.Minute,
-		BaseURL:       getEnvOrDefault("BASE_URL", "http://localhost:8001"),
+		BaseURL:       getEnvOrDefault("BASE_URL", "http://localhost:8000"),
 		SendGridKey:   os.Getenv("SENDGRID_API_KEY"),
 		EmailFrom:     getEnvOrDefault("SENDGRID_FROM", "noreply@akigura.jp"),
 		EmailFromName: getEnvOrDefault("SENDGRID_FROM_NAME", "AkiGura"),
