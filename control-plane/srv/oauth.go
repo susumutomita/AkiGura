@@ -29,7 +29,7 @@ func getOAuthConfig() OAuthConfig {
 	return OAuthConfig{
 		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		BaseURL:            getEnvOrDefault("BASE_URL", "http://localhost:8001"),
+		BaseURL:            getEnvOrDefault("BASE_URL", "http://localhost:8000"),
 	}
 }
 
