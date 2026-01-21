@@ -492,19 +492,42 @@
                     <button @click="loadJobs()" class="text-ai-600 hover:text-ai-700 text-sm font-medium transition-colors">Refresh</button>
                 </div>
                 <p class="text-sm text-sumi-500 mb-3">History of slot data updates.</p>
-                <div class="space-y-2 max-h-48 overflow-y-auto">
+                <div class="space-y-2 max-h-96 overflow-y-auto">
                     <template x-if="jobs.length === 0">
                         <p class="text-sm text-sumi-400">No updates yet</p>
                     </template>
                     <template x-for="job in jobs.slice(0, 10)" :key="job.id">
-                        <div class="flex items-center justify-between text-sm py-2 border-b border-sumi-100 last:border-0">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full" :class="getJobStatusColor(job.status)"></span>
-                                <span class="text-sumi-700" x-text="job.municipality_name"></span>
+                        <div class="border-b border-sumi-100 last:border-0">
+                            <div class="flex items-center justify-between text-sm py-2 cursor-pointer hover:bg-sumi-50 px-2 -mx-2 rounded"
+                                 @click="job.expanded = !job.expanded">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full" :class="getJobStatusColor(job.status)"></span>
+                                    <span class="text-sumi-700" x-text="job.municipality_name"></span>
+                                    <svg class="w-4 h-4 text-sumi-400 transition-transform" :class="job.expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-3 text-sumi-500">
+                                    <span x-show="job.status === 'completed'" x-text="job.slots_found + ' slots'"></span>
+                                    <span x-show="job.status === 'failed'" class="text-sango-500">Error</span>
+                                    <span x-text="formatJobTime(job.created_at)"></span>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-3 text-sumi-500">
-                                <span x-show="job.status === 'completed'" x-text="job.slots_found + ' slots'"></span>
-                                <span x-text="formatJobTime(job.created_at)"></span>
+                            <div x-show="job.expanded" class="pl-4 pb-2 text-xs space-y-1">
+                                <div class="text-sumi-500">
+                                    <span class="font-medium">Status:</span> <span x-text="job.scrape_status || job.status"></span>
+                                </div>
+                                <div x-show="job.error_message" class="text-sango-600">
+                                    <span class="font-medium">Error:</span> <span x-text="job.error_message"></span>
+                                </div>
+                                <div x-show="job.diagnostics" class="text-sumi-600">
+                                    <span class="font-medium">Log:</span>
+                                    <pre class="mt-1 p-2 bg-sumi-50 rounded text-xs overflow-x-auto whitespace-pre-wrap" x-text="formatDiagnostics(job.diagnostics)"></pre>
+                                </div>
+                                <div class="text-sumi-400">
+                                    <span x-show="job.started_at">Started: <span x-text="formatJobTime(job.started_at)"></span></span>
+                                    <span x-show="job.completed_at" class="ml-2">Completed: <span x-text="formatJobTime(job.completed_at)"></span></span>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -1043,6 +1066,25 @@
                 if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
                 if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
                 return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+            },
+
+            formatDiagnostics(diag) {
+                if (!diag) return '';
+                try {
+                    const obj = typeof diag === 'string' ? JSON.parse(diag) : diag;
+                    const lines = [];
+                    if (obj.search_started) lines.push(`Search started: ${obj.search_started}`);
+                    if (obj.search_completed) lines.push(`Search completed: ${obj.search_completed}`);
+                    if (obj.raw_results_count !== undefined) lines.push(`Raw results: ${obj.raw_results_count}`);
+                    if (obj.parsed_slots_count !== undefined) lines.push(`Parsed slots: ${obj.parsed_slots_count}`);
+                    if (obj.note) lines.push(`Note: ${obj.note}`);
+                    if (obj.parse_errors?.length > 0) lines.push(`Parse errors: ${obj.parse_errors.join(', ')}`);
+                    if (obj.exception_type) lines.push(`Exception: ${obj.exception_type}`);
+                    if (obj.html_verification?.confirmation) lines.push(`Verification: ${obj.html_verification.confirmation}`);
+                    return lines.length > 0 ? lines.join('\n') : JSON.stringify(obj, null, 2);
+                } catch {
+                    return String(diag);
+                }
             },
 
             getJobStatusColor(status) {
