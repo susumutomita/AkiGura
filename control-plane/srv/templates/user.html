@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AkiGura - Sports Facility Availability Monitor</title>
+    <title>AkiGura - スポーツ施設空き状況モニター</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -90,7 +90,7 @@
             <div x-show="team" class="flex items-center gap-4">
                 <span class="text-sm text-kinari-100" x-text="team?.name"></span>
                 <span class="px-2 py-0.5 text-xs font-medium uppercase tracking-wide bg-sumi-700 rounded" x-text="team?.plan"></span>
-                <button @click="logout()" class="text-sm text-kinari-200 hover:text-kinari-50 transition-colors">Sign out</button>
+                <button @click="logout()" class="text-sm text-kinari-200 hover:text-kinari-50 transition-colors">ログアウト</button>
             </div>
         </div>
     </header>
@@ -99,28 +99,28 @@
     <div x-show="!team && !emailSent" x-cloak class="max-w-sm mx-auto mt-20 px-6">
         <div class="bg-white rounded border border-sumi-100 p-8">
             <div class="text-center mb-8">
-                <h2 class="text-xl font-semibold text-sumi-800" x-text="isRegister ? 'Create Account' : 'Welcome back'"></h2>
-                <p class="text-sumi-500 mt-2 text-sm">Monitor facility availability automatically</p>
+                <h2 class="text-xl font-semibold text-sumi-800" x-text="isRegister ? 'アカウント作成' : 'ログイン'"></h2>
+                <p class="text-sumi-500 mt-2 text-sm">施設の空き状況を自動でモニタリング</p>
             </div>
             <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-sumi-600 mb-1.5">Email address</label>
+                    <label class="block text-sm font-medium text-sumi-600 mb-1.5">メールアドレス</label>
                     <input type="email" x-model="loginEmail" @keyup.enter="login()"
                            class="block w-full border border-sumi-200 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-ai-500 transition-colors"
-                           placeholder="you@example.com">
+                           placeholder="example@email.com">
                 </div>
                 <div x-show="isRegister">
-                    <label class="block text-sm font-medium text-sumi-600 mb-1.5">Team name</label>
+                    <label class="block text-sm font-medium text-sumi-600 mb-1.5">チーム名</label>
                     <input type="text" x-model="loginName"
                            class="block w-full border border-sumi-200 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-ai-500 transition-colors"
-                           placeholder="Your team or organization">
+                           placeholder="チームまたは組織名">
                 </div>
                 <button @click="login()" :disabled="loginLoading"
                         class="w-full bg-ai-600 text-white py-2.5 rounded font-medium text-sm hover:bg-ai-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span x-show="!loginLoading">Continue with Email</span>
+                    <span x-show="!loginLoading">メールでログイン</span>
                     <span x-show="loginLoading" class="flex items-center justify-center gap-2">
                         <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Sending...
+                        送信中...
                     </span>
                 </button>
 
@@ -130,7 +130,7 @@
                         <div class="w-full border-t border-sumi-200"></div>
                     </div>
                     <div class="relative flex justify-center text-sm">
-                        <span class="px-3 bg-white text-sumi-400">or</span>
+                        <span class="px-3 bg-white text-sumi-400">または</span>
                     </div>
                 </div>
 
@@ -143,11 +143,11 @@
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Continue with Google
+                    Google でログイン
                 </a>
 
                 <p class="text-center text-sm text-sumi-500 pt-2">
-                    <a href="#" @click.prevent="isRegister = !isRegister" class="text-ai-600 font-medium hover:text-ai-700" x-text="isRegister ? 'Already have an account? Sign in' : 'New here? Create an account'"></a>
+                    <a href="#" @click.prevent="isRegister = !isRegister" class="text-ai-600 font-medium hover:text-ai-700" x-text="isRegister ? 'アカウントをお持ちの方はこちら' : '新規登録はこちら'"></a>
                 </p>
                 <p x-show="loginError" class="text-sango-600 text-sm bg-sango-50 p-3 rounded border border-sango-200" x-text="loginError"></p>
             </div>
@@ -157,16 +157,16 @@
     <!-- Email Sent Message -->
     <div x-show="!team && emailSent" x-cloak class="max-w-sm mx-auto mt-20 px-6">
         <div class="bg-white rounded border border-sumi-100 p-8 text-center">
-            <h2 class="text-lg font-semibold text-sumi-800 mb-2">Check your email</h2>
-            <p class="text-sumi-500 text-sm mb-1">We sent a sign-in link to</p>
+            <h2 class="text-lg font-semibold text-sumi-800 mb-2">メールを確認してください</h2>
+            <p class="text-sumi-500 text-sm mb-1">ログインリンクを送信しました</p>
             <p class="font-medium text-sumi-800 mb-4" x-text="loginEmail"></p>
-            <p class="text-sm text-sumi-400 mb-6">The link expires in 15 minutes.</p>
+            <p class="text-sm text-sumi-400 mb-6">リンクの有効期限は 15 分です</p>
             <button @click="emailSent = false" class="text-ai-600 hover:text-ai-700 text-sm font-medium">
-                Use a different email
+                別のメールアドレスを使用
             </button>
             <!-- Debug link for development -->
             <div x-show="debugLink" class="mt-6 p-4 bg-kinari-200 border border-sumi-200 rounded text-left">
-                <p class="text-xs font-medium text-sumi-600 mb-2">Development mode: Direct sign-in link</p>
+                <p class="text-xs font-medium text-sumi-600 mb-2">開発モード: 直接ログインリンク</p>
                 <a :href="debugLink" class="text-xs text-ai-600 hover:text-ai-700 break-all font-mono" x-text="debugLink"></a>
             </div>
         </div>
@@ -191,23 +191,23 @@
             <div class="mb-6">
                 <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
                     <div>
-                        <h2 class="text-xl font-semibold text-sumi-800">Available Slots</h2>
+                        <h2 class="text-xl font-semibold text-sumi-800">空き状況</h2>
                         <p class="text-sm text-sumi-500 mt-1" x-show="lastUpdate">
-                            Last updated: <span x-text="lastUpdate?.time"></span>
+                            最終更新: <span x-text="lastUpdate?.time"></span>
                             <span x-show="lastUpdate?.count !== undefined" class="text-ai-600">(<span x-text="lastUpdate?.count"></span>)</span>
                         </p>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3">
                         <select x-model="selectedMunicipality" @change="filterSlots()"
                                 class="border border-sumi-200 rounded px-3 py-2 text-sm focus:border-ai-500 focus:outline-none">
-                            <option value="">All Regions</option>
+                            <option value="">すべての地域</option>
                             <template x-for="m in municipalities" :key="m.id">
                                 <option :value="m.id" x-text="m.name"></option>
                             </template>
                         </select>
                         <select x-model="selectedGround" @change="filterSlots()"
                                 class="border border-sumi-200 rounded px-3 py-2 text-sm focus:border-ai-500 focus:outline-none">
-                            <option value="">All Facilities</option>
+                            <option value="">すべての施設</option>
                             <template x-for="g in filteredGrounds" :key="g.id">
                                 <option :value="g.id" x-text="g.name"></option>
                             </template>
@@ -215,7 +215,7 @@
                         <button @click="refreshSlots()" :disabled="refreshing"
                                 class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                             <svg x-show="refreshing" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span x-text="refreshing ? 'Updating...' : 'Refresh'"></span>
+                            <span x-text="refreshing ? '更新中...' : '更新'"></span>
                         </button>
                     </div>
                 </div>
@@ -224,11 +224,11 @@
             <!-- Calendar Navigation -->
             <div class="flex justify-between items-center mb-4 py-3">
                 <button @click="prevMonth()" class="px-4 py-2 text-sm text-sumi-600 hover:text-sumi-800 transition-colors">
-                    Prev
+                    前月
                 </button>
-                <h3 class="text-lg font-semibold text-sumi-800" x-text="calendarYear + '/' + (calendarMonth + 1)"></h3>
+                <h3 class="text-lg font-semibold text-sumi-800" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
                 <button @click="nextMonth()" class="px-4 py-2 text-sm text-sumi-600 hover:text-sumi-800 transition-colors">
-                    Next
+                    翌月
                 </button>
             </div>
 
@@ -236,9 +236,9 @@
             <div class="bg-white rounded border border-sumi-200 overflow-hidden">
                 <!-- Week days header -->
                 <div class="grid grid-cols-7 bg-sumi-50 border-b border-sumi-200">
-                    <template x-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day">
+                    <template x-for="(day, i) in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
                         <div class="py-2.5 text-center text-xs font-medium"
-                             :class="day === 'Sun' ? 'text-sango-500' : day === 'Sat' ? 'text-ai-500' : 'text-sumi-500'"
+                             :class="i === 0 ? 'text-sango-500' : i === 6 ? 'text-ai-500' : 'text-sumi-500'"
                              x-text="day"></div>
                     </template>
                 </div>
@@ -285,7 +285,7 @@
             <div x-show="selectedDate" class="mt-6 bg-white rounded border border-sumi-200 p-5">
                 <div class="flex justify-between items-center mb-4">
                     <h4 class="font-semibold text-sumi-800" x-text="formatDateFull(selectedDate)"></h4>
-                    <span class="text-sm text-sumi-500" x-text="getSlotsForDate(selectedDate).length + ' slots'"></span>
+                    <span class="text-sm text-sumi-500" x-text="getSlotsForDate(selectedDate).length + ' 件'"></span>
                 </div>
                 <div class="space-y-2 max-h-[300px] overflow-y-auto">
                     <template x-for="slot in getSlotsForDate(selectedDate)" :key="slot.id">
@@ -299,15 +299,15 @@
                             </div>
                         </div>
                     </template>
-                    <p x-show="getSlotsForDate(selectedDate).length === 0" class="text-sumi-400 text-center py-4">No slots available</p>
+                    <p x-show="getSlotsForDate(selectedDate).length === 0" class="text-sumi-400 text-center py-4">空きはありません</p>
                 </div>
             </div>
 
             <!-- Summary -->
             <div class="mt-6 py-3 border-t border-sumi-200">
                 <p class="text-sm text-sumi-500">
-                    Total <span class="font-medium text-sumi-700" x-text="filteredSlots.length"></span> slots
-                    <span x-show="selectedMunicipality || selectedGround" class="ml-2 text-ai-600">(filtered)</span>
+                    合計 <span class="font-medium text-sumi-700" x-text="filteredSlots.length"></span> 件
+                    <span x-show="selectedMunicipality || selectedGround" class="ml-2 text-ai-600">(絞り込み中)</span>
                 </p>
             </div>
         </div>
@@ -315,8 +315,8 @@
         <!-- Watch Conditions -->
         <div x-show="tab === 'conditions'">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-sumi-800">Watch Rules</h2>
-                <button @click="showConditionModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">Add Rule</button>
+                <h2 class="text-xl font-semibold text-sumi-800">監視ルール</h2>
+                <button @click="showConditionModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">ルールを追加</button>
             </div>
             <div class="space-y-3">
                 <template x-for="c in conditions" :key="c.id">
@@ -331,63 +331,63 @@
                                 </p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <span class="px-2 py-0.5 text-xs rounded" :class="c.enabled ? 'bg-wakakusa-100 text-wakakusa-700' : 'bg-sumi-100 text-sumi-500'" x-text="c.enabled ? 'Active' : 'Inactive'"></span>
-                                <button @click="deleteCondition(c.id)" class="text-sango-500 hover:text-sango-600 text-sm transition-colors">Delete</button>
+                                <span class="px-2 py-0.5 text-xs rounded" :class="c.enabled ? 'bg-wakakusa-100 text-wakakusa-700' : 'bg-sumi-100 text-sumi-500'" x-text="c.enabled ? '有効' : '無効'"></span>
+                                <button @click="deleteCondition(c.id)" class="text-sango-500 hover:text-sango-600 text-sm transition-colors">削除</button>
                             </div>
                         </div>
                     </div>
                 </template>
-                <p x-show="conditions.length === 0" class="text-sumi-400 text-center py-12">No watch rules configured</p>
+                <p x-show="conditions.length === 0" class="text-sumi-400 text-center py-12">監視ルールが設定されていません</p>
             </div>
         </div>
 
         <!-- Notifications -->
         <div x-show="tab === 'notifications'">
-            <h2 class="text-xl font-semibold text-sumi-800 mb-6">Notification History</h2>
+            <h2 class="text-xl font-semibold text-sumi-800 mb-6">通知履歴</h2>
             <div class="space-y-3">
                 <template x-for="n in notifications" :key="n.id">
                     <div class="bg-white rounded border border-sumi-200 p-4">
                         <div class="flex justify-between items-center">
                             <div>
-                                <p class="font-medium text-sumi-800" x-text="n.facility_name || 'Facility'"></p>
+                                <p class="font-medium text-sumi-800" x-text="n.facility_name || '施設'"></p>
                                 <p class="text-sm text-sumi-500" x-text="n.slot_date + ' ' + n.slot_time"></p>
                             </div>
-                            <span class="px-2 py-0.5 text-xs rounded" :class="{'bg-wakakusa-100 text-wakakusa-700': n.status === 'sent', 'bg-kinari-200 text-sumi-600': n.status === 'pending', 'bg-sango-100 text-sango-700': n.status === 'failed'}" x-text="n.status"></span>
+                            <span class="px-2 py-0.5 text-xs rounded" :class="{'bg-wakakusa-100 text-wakakusa-700': n.status === 'sent', 'bg-kinari-200 text-sumi-600': n.status === 'pending', 'bg-sango-100 text-sango-700': n.status === 'failed'}" x-text="getNotificationStatus(n.status)"></span>
                         </div>
                     </div>
                 </template>
-                <p x-show="notifications.length === 0" class="text-sumi-400 text-center py-12">No notifications yet</p>
+                <p x-show="notifications.length === 0" class="text-sumi-400 text-center py-12">通知履歴がありません</p>
             </div>
         </div>
 
         <!-- Settings -->
         <div x-show="tab === 'settings'">
-            <h2 class="text-xl font-semibold text-sumi-800 mb-6">Settings</h2>
+            <h2 class="text-xl font-semibold text-sumi-800 mb-6">設定</h2>
 
             <!-- Account Settings -->
             <div class="bg-white rounded border border-sumi-200 p-6 space-y-4 mb-6">
-                <h3 class="font-semibold text-sumi-800">Account</h3>
+                <h3 class="font-semibold text-sumi-800">アカウント</h3>
                 <div>
-                    <label class="block text-sm text-sumi-500 mb-1">Team name</label>
+                    <label class="block text-sm text-sumi-500 mb-1">チーム名</label>
                     <input type="text" x-model="team?.name" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm bg-sumi-50" disabled>
                 </div>
                 <div>
-                    <label class="block text-sm text-sumi-500 mb-1">Email</label>
+                    <label class="block text-sm text-sumi-500 mb-1">メールアドレス</label>
                     <input type="email" x-model="team?.email" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm bg-sumi-50" disabled>
                 </div>
             </div>
 
             <!-- Notification Settings -->
             <div class="bg-white rounded border border-sumi-200 p-6 space-y-4 mb-6">
-                <h3 class="font-semibold text-sumi-800">Notification Settings</h3>
-                <p class="text-sm text-sumi-500">Choose how to receive alerts when slots become available.</p>
+                <h3 class="font-semibold text-sumi-800">通知設定</h3>
+                <p class="text-sm text-sumi-500">空きが見つかった時の通知方法を選択してください</p>
 
                 <div class="space-y-3">
                     <!-- Email -->
                     <label class="flex items-center p-3 border rounded cursor-pointer hover:bg-sumi-50 transition-colors" :class="notificationSettings.email ? 'border-ai-500 bg-ai-50' : 'border-sumi-200'">
                         <input type="checkbox" x-model="notificationSettings.email" class="mr-3 accent-ai-600">
                         <div class="flex-1">
-                            <p class="font-medium text-sumi-800 text-sm">Email notifications</p>
+                            <p class="font-medium text-sumi-800 text-sm">メール通知</p>
                             <p class="text-sm text-sumi-500" x-text="team?.email"></p>
                         </div>
                     </label>
@@ -396,8 +396,8 @@
                     <label class="flex items-center p-3 border border-sumi-100 rounded cursor-not-allowed opacity-50">
                         <input type="checkbox" disabled class="mr-3">
                         <div class="flex-1">
-                            <p class="font-medium text-sumi-800 text-sm">LINE notifications</p>
-                            <p class="text-sm text-sumi-400">Coming soon</p>
+                            <p class="font-medium text-sumi-800 text-sm">LINE 通知</p>
+                            <p class="text-sm text-sumi-400">近日公開予定</p>
                         </div>
                     </label>
 
@@ -405,46 +405,46 @@
                     <label class="flex items-center p-3 border border-sumi-100 rounded cursor-not-allowed opacity-50">
                         <input type="checkbox" disabled class="mr-3">
                         <div class="flex-1">
-                            <p class="font-medium text-sumi-800 text-sm">Slack notifications</p>
-                            <p class="text-sm text-sumi-400">Coming soon</p>
+                            <p class="font-medium text-sumi-800 text-sm">Slack 通知</p>
+                            <p class="text-sm text-sumi-400">近日公開予定</p>
                         </div>
                     </label>
                 </div>
 
                 <button @click="saveNotificationSettings()" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">
-                    Save Settings
+                    設定を保存
                 </button>
             </div>
 
             <!-- Plan -->
             <div class="bg-white rounded border border-sumi-200 p-6 space-y-4 mb-6">
                 <div class="flex justify-between items-center">
-                    <h3 class="font-semibold text-sumi-800">Plan</h3>
+                    <h3 class="font-semibold text-sumi-800">プラン</h3>
                     <div class="flex items-center gap-2 text-sm">
-                        <span class="text-sumi-500">Monthly</span>
+                        <span class="text-sumi-500">月払い</span>
                         <button @click="billingInterval = billingInterval === 'monthly' ? 'yearly' : 'monthly'"
                                 class="relative w-10 h-5 rounded-full transition-colors"
                                 :class="billingInterval === 'yearly' ? 'bg-ai-600' : 'bg-sumi-300'">
                             <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform"
                                   :class="billingInterval === 'yearly' ? 'translate-x-5' : ''"></span>
                         </button>
-                        <span class="text-sumi-500">Yearly</span>
-                        <span x-show="billingInterval === 'yearly'" class="text-xs text-wakakusa-600 font-medium">20% off</span>
+                        <span class="text-sumi-500">年払い</span>
+                        <span x-show="billingInterval === 'yearly'" class="text-xs text-wakakusa-600 font-medium">20%OFF</span>
                     </div>
                 </div>
 
                 <!-- Current Plan Info -->
                 <div class="bg-sumi-50 rounded p-3 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-sumi-500">Current plan</span>
+                        <span class="text-sumi-500">現在のプラン</span>
                         <span class="font-medium text-sumi-800" x-text="team?.plan?.charAt(0).toUpperCase() + team?.plan?.slice(1)"></span>
                     </div>
                     <div x-show="team?.billing_interval" class="flex justify-between mt-1">
-                        <span class="text-sumi-500">Billing cycle</span>
-                        <span class="text-sumi-700" x-text="team?.billing_interval === 'yearly' ? 'Yearly' : 'Monthly'"></span>
+                        <span class="text-sumi-500">請求サイクル</span>
+                        <span class="text-sumi-700" x-text="team?.billing_interval === 'yearly' ? '年払い' : '月払い'"></span>
                     </div>
                     <div x-show="team?.current_period_end" class="flex justify-between mt-1">
-                        <span class="text-sumi-500">Next renewal</span>
+                        <span class="text-sumi-500">次回更新日</span>
                         <span class="text-sumi-700" x-text="new Date(team?.current_period_end).toLocaleDateString('ja-JP')"></span>
                     </div>
                 </div>
@@ -458,21 +458,21 @@
                             <div class="mt-2">
                                 <p class="text-xl font-bold text-sumi-800">
                                     <span x-text="'¥' + (billingInterval === 'yearly' ? p.yearly_price : p.monthly_price).toLocaleString()"></span>
-                                    <span class="text-sm font-normal text-sumi-500" x-text="billingInterval === 'yearly' ? '/year' : '/month'"></span>
+                                    <span class="text-sm font-normal text-sumi-500" x-text="billingInterval === 'yearly' ? '/年' : '/月'"></span>
                                 </p>
                                 <p x-show="billingInterval === 'yearly' && p.yearly_savings > 0" class="text-xs text-wakakusa-600">
-                                    Save ¥<span x-text="p.yearly_savings.toLocaleString()"></span>/year
+                                    年間 ¥<span x-text="p.yearly_savings.toLocaleString()"></span> お得
                                 </p>
                             </div>
                             <p class="text-sm text-sumi-500 mt-2">
-                                <span x-text="p.max_facilities === -1 ? 'Unlimited' : p.max_facilities + ' facilities'"></span>
+                                <span x-text="p.max_facilities === -1 ? '施設数無制限' : p.max_facilities + ' 施設まで'"></span>
                             </p>
                             <button x-show="team?.plan !== p.id && p.id !== 'free'"
                                     @click="selectedPlan = p.id; showUpgradeModal = true"
                                     class="mt-3 w-full bg-ai-600 text-white py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">
-                                Upgrade
+                                アップグレード
                             </button>
-                            <span x-show="team?.plan === p.id" class="mt-3 block text-center text-ai-600 font-medium text-sm">Current</span>
+                            <span x-show="team?.plan === p.id" class="mt-3 block text-center text-ai-600 font-medium text-sm">現在のプラン</span>
                         </div>
                     </template>
                 </div>
@@ -480,7 +480,7 @@
                 <!-- Billing Portal Button -->
                 <div x-show="team?.stripe_subscription_id" class="pt-4 border-t border-sumi-200">
                     <button @click="openBillingPortal()" class="text-ai-600 hover:text-ai-700 text-sm font-medium transition-colors">
-                        Manage billing
+                        請求管理
                     </button>
                 </div>
             </div>
@@ -488,13 +488,13 @@
             <!-- Update Log -->
             <div class="bg-white rounded border border-sumi-200 p-6 mb-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold text-sumi-800">Update Log</h3>
-                    <button @click="loadJobs()" class="text-ai-600 hover:text-ai-700 text-sm font-medium transition-colors">Refresh</button>
+                    <h3 class="font-semibold text-sumi-800">更新ログ</h3>
+                    <button @click="loadJobs()" class="text-ai-600 hover:text-ai-700 text-sm font-medium transition-colors">更新</button>
                 </div>
-                <p class="text-sm text-sumi-500 mb-3">History of slot data updates.</p>
+                <p class="text-sm text-sumi-500 mb-3">スロットデータの更新履歴</p>
                 <div class="space-y-2 max-h-96 overflow-y-auto">
                     <template x-if="jobs.length === 0">
-                        <p class="text-sm text-sumi-400">No updates yet</p>
+                        <p class="text-sm text-sumi-400">更新履歴がありません</p>
                     </template>
                     <template x-for="job in jobs.slice(0, 10)" :key="job.id">
                         <div class="border-b border-sumi-100 last:border-0">
@@ -508,25 +508,25 @@
                                     </svg>
                                 </div>
                                 <div class="flex items-center gap-3 text-sumi-500">
-                                    <span x-show="job.status === 'completed'" x-text="job.slots_found + ' slots'"></span>
-                                    <span x-show="job.status === 'failed'" class="text-sango-500">Error</span>
+                                    <span x-show="job.status === 'completed'" x-text="job.slots_found + ' 件'"></span>
+                                    <span x-show="job.status === 'failed'" class="text-sango-500">エラー</span>
                                     <span x-text="formatJobTime(job.created_at)"></span>
                                 </div>
                             </div>
                             <div x-show="job.expanded" class="pl-4 pb-2 text-xs space-y-1">
                                 <div class="text-sumi-500">
-                                    <span class="font-medium">Status:</span> <span x-text="job.scrape_status || job.status"></span>
+                                    <span class="font-medium">ステータス:</span> <span x-text="job.scrape_status || job.status"></span>
                                 </div>
                                 <div x-show="job.error_message" class="text-sango-600">
-                                    <span class="font-medium">Error:</span> <span x-text="job.error_message"></span>
+                                    <span class="font-medium">エラー:</span> <span x-text="job.error_message"></span>
                                 </div>
                                 <div x-show="job.diagnostics" class="text-sumi-600">
-                                    <span class="font-medium">Log:</span>
+                                    <span class="font-medium">ログ:</span>
                                     <pre class="mt-1 p-2 bg-sumi-50 rounded text-xs overflow-x-auto whitespace-pre-wrap" x-text="formatDiagnostics(job.diagnostics)"></pre>
                                 </div>
                                 <div class="text-sumi-400">
-                                    <span x-show="job.started_at">Started: <span x-text="formatJobTime(job.started_at)"></span></span>
-                                    <span x-show="job.completed_at" class="ml-2">Completed: <span x-text="formatJobTime(job.completed_at)"></span></span>
+                                    <span x-show="job.started_at">開始: <span x-text="formatJobTime(job.started_at)"></span></span>
+                                    <span x-show="job.completed_at" class="ml-2">完了: <span x-text="formatJobTime(job.completed_at)"></span></span>
                                 </div>
                             </div>
                         </div>
@@ -536,14 +536,14 @@
 
             <!-- Danger Zone -->
             <div class="bg-white rounded border border-sango-200 p-6">
-                <h3 class="font-semibold text-sango-600 mb-4">Danger Zone</h3>
+                <h3 class="font-semibold text-sango-600 mb-4">危険な操作</h3>
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-medium text-sumi-800 text-sm">Delete Account</p>
-                            <p class="text-sm text-sumi-500">Permanently delete your account and all data</p>
+                            <p class="font-medium text-sumi-800 text-sm">アカウント削除</p>
+                            <p class="text-sm text-sumi-500">アカウントとすべてのデータを完全に削除します</p>
                         </div>
-                        <button @click="showDeleteModal = true" class="px-4 py-2 border border-sango-300 text-sango-600 rounded text-sm font-medium hover:bg-sango-50 transition-colors">Delete Account</button>
+                        <button @click="showDeleteModal = true" class="px-4 py-2 border border-sango-300 text-sango-600 rounded text-sm font-medium hover:bg-sango-50 transition-colors">アカウント削除</button>
                     </div>
                 </div>
             </div>
@@ -553,42 +553,42 @@
     <!-- Upgrade Modal -->
     <div x-show="showUpgradeModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50">
         <div class="bg-white rounded border border-sumi-200 p-6 w-full max-w-md mx-4">
-            <h3 class="text-lg font-semibold text-sumi-800 mb-4">Upgrade Plan</h3>
+            <h3 class="text-lg font-semibold text-sumi-800 mb-4">プランをアップグレード</h3>
             <div class="space-y-4">
                 <div class="bg-sumi-50 rounded p-4">
-                    <p class="text-sm text-sumi-500">Selected plan</p>
+                    <p class="text-sm text-sumi-500">選択中のプラン</p>
                     <p class="text-lg font-semibold text-sumi-800" x-text="plans.find(p => p.id === selectedPlan)?.name"></p>
                     <p class="text-xl font-bold text-ai-600 mt-1">
                         ¥<span x-text="(billingInterval === 'yearly' ? plans.find(p => p.id === selectedPlan)?.yearly_price : plans.find(p => p.id === selectedPlan)?.monthly_price)?.toLocaleString()"></span>
-                        <span class="text-sm font-normal text-sumi-500" x-text="billingInterval === 'yearly' ? '/year' : '/month'"></span>
+                        <span class="text-sm font-normal text-sumi-500" x-text="billingInterval === 'yearly' ? '/年' : '/月'"></span>
                     </p>
                 </div>
 
                 <!-- Promo Code -->
                 <div>
-                    <label class="block text-sm text-sumi-600 mb-1">Promo code (optional)</label>
+                    <label class="block text-sm text-sumi-600 mb-1">プロモコード（任意）</label>
                     <div class="flex gap-2">
                         <input type="text" x-model="promoCode" @input="promoCodeError = ''; promoCodeValid = null"
                                class="flex-1 border border-sumi-200 rounded px-3 py-2 text-sm uppercase focus:border-ai-500 focus:outline-none" placeholder="PROMO2024">
                         <button @click="validatePromoCode()" :disabled="!promoCode || promoCodeLoading"
                                 class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 disabled:opacity-50 transition-colors">
-                            <span x-show="!promoCodeLoading">Verify</span>
+                            <span x-show="!promoCodeLoading">確認</span>
                             <span x-show="promoCodeLoading">...</span>
                         </button>
                     </div>
                     <p x-show="promoCodeError" class="text-sango-500 text-sm mt-1" x-text="promoCodeError"></p>
                     <p x-show="promoCodeValid" class="text-wakakusa-600 text-sm mt-1">
-                        <span x-text="promoCodeValid?.discount"></span> will be applied
+                        <span x-text="promoCodeValid?.discount"></span> が適用されます
                     </p>
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
                 <button @click="showUpgradeModal = false; promoCode = ''; promoCodeValid = null; promoCodeError = ''"
-                        class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 transition-colors">Cancel</button>
+                        class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 transition-colors">キャンセル</button>
                 <button @click="startCheckout()" :disabled="checkoutLoading"
                         class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 disabled:opacity-50 transition-colors">
-                    <span x-show="!checkoutLoading">Proceed to Payment</span>
-                    <span x-show="checkoutLoading">Processing...</span>
+                    <span x-show="!checkoutLoading">お支払いへ進む</span>
+                    <span x-show="checkoutLoading">処理中...</span>
                 </button>
             </div>
         </div>
@@ -597,13 +597,13 @@
     <!-- Delete Account Modal -->
     <div x-show="showDeleteModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50">
         <div class="bg-white rounded border border-sumi-200 p-6 w-full max-w-md mx-4">
-            <h3 class="text-lg font-semibold text-sango-600 mb-4">Delete Account</h3>
+            <h3 class="text-lg font-semibold text-sango-600 mb-4">アカウント削除</h3>
             <div class="space-y-4">
                 <div class="bg-sango-50 border border-sango-200 rounded p-4">
-                    <p class="text-sm text-sango-700">This action cannot be undone. All your data including watch rules and notification history will be permanently deleted.</p>
+                    <p class="text-sm text-sango-700">この操作は取り消せません。監視ルールや通知履歴を含むすべてのデータが完全に削除されます。</p>
                 </div>
                 <div>
-                    <label class="block text-sm text-sumi-600 mb-1">Type your email to confirm: <span class="font-medium" x-text="team?.email"></span></label>
+                    <label class="block text-sm text-sumi-600 mb-1">確認のためメールアドレスを入力してください: <span class="font-medium" x-text="team?.email"></span></label>
                     <input type="email" x-model="deleteConfirmEmail"
                            class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:border-sango-500 focus:outline-none"
                            placeholder="your@email.com">
@@ -611,11 +611,11 @@
             </div>
             <div class="flex justify-end gap-2 mt-6">
                 <button @click="showDeleteModal = false; deleteConfirmEmail = ''"
-                        class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 transition-colors">Cancel</button>
+                        class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 transition-colors">キャンセル</button>
                 <button @click="deleteAccount()" :disabled="deleteLoading || deleteConfirmEmail !== team?.email"
                         class="px-4 py-2 bg-sango-600 text-white rounded text-sm font-medium hover:bg-sango-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    <span x-show="!deleteLoading">Delete Account</span>
-                    <span x-show="deleteLoading">Deleting...</span>
+                    <span x-show="!deleteLoading">アカウント削除</span>
+                    <span x-show="deleteLoading">削除中...</span>
                 </button>
             </div>
         </div>
@@ -624,60 +624,60 @@
     <!-- Add Condition Modal -->
     <div x-show="showConditionModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50">
         <div class="bg-white rounded border border-sumi-200 p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-semibold text-sumi-800 mb-4">Add Watch Rule</h3>
+            <h3 class="text-lg font-semibold text-sumi-800 mb-4">監視ルールを追加</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm text-sumi-600 mb-1">Region</label>
+                    <label class="block text-sm text-sumi-600 mb-1">地域</label>
                     <select x-model="newCondition.municipality_id" @change="newCondition.ground_id = ''" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:border-ai-500 focus:outline-none">
-                        <option value="">Select region</option>
+                        <option value="">地域を選択</option>
                         <template x-for="m in municipalities" :key="m.id">
                             <option :value="m.id" x-text="m.name"></option>
                         </template>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm text-sumi-600 mb-1">Facility</label>
+                    <label class="block text-sm text-sumi-600 mb-1">施設</label>
                     <select x-model="newCondition.ground_id" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:border-ai-500 focus:outline-none">
-                        <option value="">Select facility</option>
+                        <option value="">施設を選択</option>
                         <template x-for="g in groundsForSelectedMunicipality" :key="g.id">
                             <option :value="g.id" x-text="g.name"></option>
                         </template>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm text-sumi-600 mb-1">Days of week</label>
+                    <label class="block text-sm text-sumi-600 mb-1">曜日</label>
                     <div class="flex flex-wrap gap-2 mt-1">
-                        <template x-for="(day, i) in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="i">
+                        <template x-for="(day, i) in ['日', '月', '火', '水', '木', '金', '土']" :key="i">
                             <button type="button" @click="toggleDay(i)" class="px-3 py-1.5 border rounded text-sm transition-colors" :class="newCondition.days_of_week.includes(i) ? 'bg-ai-600 text-white border-ai-600' : 'border-sumi-200 text-sumi-600 hover:border-sumi-300'" x-text="day"></button>
                         </template>
                     </div>
-                    <p x-show="currentPlanLimit?.weekend_only" class="text-xs text-sango-500 mt-1">Free plan: weekends only</p>
+                    <p x-show="currentPlanLimit?.weekend_only" class="text-xs text-sango-500 mt-1">無料プラン: 週末のみ</p>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm text-sumi-600 mb-1">From</label>
+                        <label class="block text-sm text-sumi-600 mb-1">開始時間</label>
                         <input type="time" x-model="newCondition.time_from" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:border-ai-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm text-sumi-600 mb-1">To</label>
+                        <label class="block text-sm text-sumi-600 mb-1">終了時間</label>
                         <input type="time" x-model="newCondition.time_to" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:border-ai-500 focus:outline-none">
                     </div>
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6">
-                <button @click="showConditionModal = false" class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 transition-colors">Cancel</button>
-                <button @click="createCondition()" class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">Add</button>
+                <button @click="showConditionModal = false" class="px-4 py-2 border border-sumi-200 rounded text-sm hover:bg-sumi-50 transition-colors">キャンセル</button>
+                <button @click="createCondition()" class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">追加</button>
             </div>
         </div>
     </div>
 
     <script>
-    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
     const TAB_ITEMS = [
-        { id: 'slots', label: 'Availability' },
-        { id: 'conditions', label: 'Watch Rules' },
-        { id: 'notifications', label: 'Alerts' },
-        { id: 'settings', label: 'Settings' }
+        { id: 'slots', label: '空き状況' },
+        { id: 'conditions', label: '監視ルール' },
+        { id: 'notifications', label: '通知履歴' },
+        { id: 'settings', label: '設定' }
     ];
     const JOB_STATUS_COLORS = {
         completed: 'bg-wakakusa-500',
@@ -834,11 +834,11 @@
                 this.loginError = '';
                 this.debugLink = null;
                 if (!this.loginEmail) {
-                    this.loginError = 'Please enter your email address';
+                    this.loginError = 'メールアドレスを入力してください';
                     return;
                 }
                 if (this.isRegister && !this.loginName.trim()) {
-                    this.loginError = 'Please enter your team name';
+                    this.loginError = 'チーム名を入力してください';
                     return;
                 }
 
@@ -854,7 +854,7 @@
                     });
                     const data = await res.json();
                     if (!res.ok) {
-                        this.loginError = data.error || 'Request failed';
+                        this.loginError = data.error || 'リクエストに失敗しました';
                         return;
                     }
                     // Show email sent screen
@@ -864,7 +864,7 @@
                         this.debugLink = data.debug_link;
                     }
                 } catch (e) {
-                    this.loginError = 'Connection error';
+                    this.loginError = '接続エラー';
                 } finally {
                     this.loginLoading = false;
                 }
@@ -878,7 +878,7 @@
 
             async saveNotificationSettings() {
                 // For now just show confirmation - actual save would need team update API
-                alert('Notification settings saved');
+                alert('通知設定を保存しました');
             },
 
             async loadData() {
@@ -947,7 +947,7 @@
 
             getGroundName(id) {
                 const g = this.grounds.find(g => g.id === id);
-                return g ? g.name + ' (' + g.municipality_name + ')' : 'Unknown facility';
+                return g ? g.name + ' (' + g.municipality_name + ')' : '不明な施設';
             },
 
             formatDate(dateStr) {
@@ -985,7 +985,7 @@
 
             async createCondition() {
                 if (!this.newCondition.ground_id) {
-                    alert('Please select a facility');
+                    alert('施設を選択してください');
                     return;
                 }
                 await fetch('/api/conditions', {
@@ -1005,7 +1005,7 @@
             },
 
             async deleteCondition(id) {
-                if (!confirm('Delete this watch rule?')) return;
+                if (!confirm('この監視ルールを削除しますか？')) return;
                 await fetch('/api/conditions/' + id, { method: 'DELETE' });
                 await this.loadData();
             },
@@ -1062,9 +1062,9 @@
                 const d = new Date(dateStr);
                 const now = new Date();
                 const diff = now - d;
-                if (diff < 60000) return 'just now';
-                if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
-                if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+                if (diff < 60000) return 'たった今';
+                if (diff < 3600000) return Math.floor(diff / 60000) + '分前';
+                if (diff < 86400000) return Math.floor(diff / 3600000) + '時間前';
                 return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
             },
 
@@ -1073,14 +1073,14 @@
                 try {
                     const obj = typeof diag === 'string' ? JSON.parse(diag) : diag;
                     const lines = [];
-                    if (obj.search_started) lines.push(`Search started: ${obj.search_started}`);
-                    if (obj.search_completed) lines.push(`Search completed: ${obj.search_completed}`);
-                    if (obj.raw_results_count !== undefined) lines.push(`Raw results: ${obj.raw_results_count}`);
-                    if (obj.parsed_slots_count !== undefined) lines.push(`Parsed slots: ${obj.parsed_slots_count}`);
-                    if (obj.note) lines.push(`Note: ${obj.note}`);
-                    if (obj.parse_errors?.length > 0) lines.push(`Parse errors: ${obj.parse_errors.join(', ')}`);
-                    if (obj.exception_type) lines.push(`Exception: ${obj.exception_type}`);
-                    if (obj.html_verification?.confirmation) lines.push(`Verification: ${obj.html_verification.confirmation}`);
+                    if (obj.search_started) lines.push(`検索開始: ${obj.search_started}`);
+                    if (obj.search_completed) lines.push(`検索完了: ${obj.search_completed}`);
+                    if (obj.raw_results_count !== undefined) lines.push(`取得件数: ${obj.raw_results_count}`);
+                    if (obj.parsed_slots_count !== undefined) lines.push(`解析済み: ${obj.parsed_slots_count}`);
+                    if (obj.note) lines.push(`備考: ${obj.note}`);
+                    if (obj.parse_errors?.length > 0) lines.push(`解析エラー: ${obj.parse_errors.join(', ')}`);
+                    if (obj.exception_type) lines.push(`例外: ${obj.exception_type}`);
+                    if (obj.html_verification?.confirmation) lines.push(`検証: ${obj.html_verification.confirmation}`);
                     return lines.length > 0 ? lines.join('\n') : JSON.stringify(obj, null, 2);
                 } catch {
                     return String(diag);
@@ -1109,12 +1109,12 @@
                     });
                     const data = await res.json();
                     if (!res.ok) {
-                        this.promoCodeError = data.error || 'Invalid promo code';
+                        this.promoCodeError = data.error || '無効なプロモコード';
                         return;
                     }
                     this.promoCodeValid = data;
                 } catch (e) {
-                    this.promoCodeError = 'Connection error';
+                    this.promoCodeError = '接続エラー';
                 } finally {
                     this.promoCodeLoading = false;
                 }
@@ -1136,13 +1136,13 @@
                     });
                     const data = await res.json();
                     if (!res.ok) {
-                        alert(data.error || 'Checkout creation failed');
+                        alert(data.error || '決済画面の作成に失敗しました');
                         return;
                     }
                     // Redirect to Stripe Checkout
                     window.location.href = data.url;
                 } catch (e) {
-                    alert('Connection error');
+                    alert('接続エラー');
                 } finally {
                     this.checkoutLoading = false;
                 }
@@ -1157,7 +1157,7 @@
                     });
                     if (!res.ok) {
                         const data = await res.json();
-                        alert(data.error || 'Failed to delete account');
+                        alert(data.error || 'アカウントの削除に失敗しました');
                         return;
                     }
                     // Clear local state and show login
@@ -1165,9 +1165,9 @@
                     this.showDeleteModal = false;
                     this.deleteConfirmEmail = '';
                     localStorage.removeItem('akigura_team');
-                    alert('Your account has been deleted');
+                    alert('アカウントが削除されました');
                 } catch (e) {
-                    alert('Connection error');
+                    alert('接続エラー');
                 } finally {
                     this.deleteLoading = false;
                 }
@@ -1183,12 +1183,12 @@
                     });
                     const data = await res.json();
                     if (!res.ok) {
-                        alert(data.error || 'Portal creation failed');
+                        alert(data.error || '請求ポータルの作成に失敗しました');
                         return;
                     }
                     window.location.href = data.url;
                 } catch (e) {
-                    alert('Connection error');
+                    alert('接続エラー');
                 }
             }
         }
