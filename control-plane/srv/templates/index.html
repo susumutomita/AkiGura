@@ -714,17 +714,17 @@
             },
 
             async loadDashboard() {
-                const res = await fetch('/api/dashboard');
+                const res = await fetch('/admin/api/dashboard');
                 this.dashboard = await res.json();
             },
 
             async loadTeams() {
-                const res = await fetch('/api/teams');
+                const res = await fetch('/admin/api/teams');
                 this.teams = await res.json() || [];
             },
 
             async loadFacilities() {
-                const res = await fetch('/api/grounds');
+                const res = await fetch('/admin/api/grounds');
                 const grounds = await res.json();
                 // Map grounds to facilities format
                 this.facilities = (grounds || []).map(g => ({
@@ -737,18 +737,18 @@
             },
 
             async loadMunicipalities() {
-                const res = await fetch('/api/municipalities');
+                const res = await fetch('/admin/api/municipalities');
                 this.municipalities = await res.json() || [];
             },
 
             async loadGrounds() {
-                const res = await fetch('/api/grounds');
+                const res = await fetch('/admin/api/grounds');
                 this.grounds = await res.json() || [];
             },
 
             async loadSlots() {
                 // Load all slots (increased limit needed in API)
-                const res = await fetch('/api/slots?limit=5000');
+                const res = await fetch('/admin/api/slots?limit=5000');
                 this.slots = await res.json() || [];
             },
 
@@ -889,7 +889,7 @@
 
             // Worker methods
             async loadJobs() {
-                const res = await fetch('/api/jobs');
+                const res = await fetch('/admin/api/jobs');
                 const data = await res.json();
                 this.jobs = data || [];
             },
@@ -935,12 +935,12 @@
             },
 
             async loadTickets() {
-                const res = await fetch('/api/tickets');
+                const res = await fetch('/admin/api/tickets');
                 this.tickets = await res.json();
             },
 
             async createTeam() {
-                await fetch('/api/teams', {
+                await fetch('/admin/api/teams', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(this.newTeam)
@@ -952,7 +952,7 @@
             },
 
             async createFacility() {
-                await fetch('/api/facilities', {
+                await fetch('/admin/api/facilities', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(this.newFacility)
@@ -977,7 +977,7 @@
                 const msg = this.chatInput;
                 this.chatMessages.push({ role: 'user', content: msg });
                 this.chatInput = '';
-                const res = await fetch('/api/chat', {
+                const res = await fetch('/admin/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: msg })
