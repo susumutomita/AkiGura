@@ -2,11 +2,13 @@ package srv
 
 import (
 	"context"
+	"crypto/subtle"
 	"database/sql"
 	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -105,48 +107,85 @@ func (s *Server) setUpDatabase(dbPath string) error {
 // Serve starts the HTTP server with the configured routes
 func (s *Server) Serve(addr string) error {
 	mux := http.NewServeMux()
-	// Pages
-	mux.HandleFunc("GET /{$}", s.HandleRoot)
+
+	// Admin panel mux (protected by Basic Auth)
+	adminMux := http.NewServeMux()
+	adminMux.HandleFunc("GET /{$}", s.HandleRoot)
+	adminMux.HandleFunc("GET /api/dashboard", s.HandleDashboard)
+	adminMux.HandleFunc("GET /api/teams", s.HandleListTeams)
+	adminMux.HandleFunc("POST /api/teams", s.HandleCreateTeam)
+	adminMux.HandleFunc("DELETE /api/teams/{id}", s.HandleDeleteTeam)
+	adminMux.HandleFunc("GET /api/facilities", s.HandleListFacilities)
+	adminMux.HandleFunc("POST /api/facilities", s.HandleCreateFacility)
+	adminMux.HandleFunc("GET /api/conditions", s.HandleListConditions)
+	adminMux.HandleFunc("DELETE /api/conditions/{id}", s.HandleDeleteCondition)
+	adminMux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
+	adminMux.HandleFunc("GET /api/slots", s.HandleListSlots)
+	adminMux.HandleFunc("GET /api/jobs", s.HandleListJobs)
+	adminMux.HandleFunc("POST /api/scrape", s.HandleTriggerScrape)
+	adminMux.HandleFunc("GET /api/municipalities", s.HandleListMunicipalities)
+	adminMux.HandleFunc("GET /api/grounds", s.HandleListGrounds)
+	adminMux.HandleFunc("GET /api/tickets", s.HandleListTickets)
+	adminMux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
+	adminMux.HandleFunc("POST /api/chat", s.HandleAIChat)
+
+	// Mount admin routes with Basic Auth at /admin prefix
+	mux.Handle("/admin/", http.StripPrefix("/admin", basicAuthMiddleware(adminMux)))
+
+	// Public pages (no auth)
 	mux.HandleFunc("GET /user", s.HandleUserPage)
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.StaticDir))))
-	// API endpoints
-	mux.HandleFunc("GET /api/dashboard", s.HandleDashboard)
-	mux.HandleFunc("GET /api/teams", s.HandleListTeams)
-	mux.HandleFunc("POST /api/teams", s.HandleCreateTeam)
+
+	// User API endpoints (authenticated via session/JWT, not Basic Auth)
 	mux.HandleFunc("GET /api/teams/by-email", s.HandleGetTeamByEmail)
-	mux.HandleFunc("DELETE /api/teams/{id}", s.HandleDeleteTeam)
-	mux.HandleFunc("GET /api/facilities", s.HandleListFacilities)
-	mux.HandleFunc("POST /api/facilities", s.HandleCreateFacility)
-	mux.HandleFunc("GET /api/conditions", s.HandleListConditions)
 	mux.HandleFunc("POST /api/conditions", s.HandleCreateCondition)
-	mux.HandleFunc("DELETE /api/conditions/{id}", s.HandleDeleteCondition)
-	mux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
-	mux.HandleFunc("GET /api/slots", s.HandleListSlots)
-	mux.HandleFunc("GET /api/jobs", s.HandleListJobs)
-	mux.HandleFunc("POST /api/scrape", s.HandleTriggerScrape)
-	mux.HandleFunc("GET /api/municipalities", s.HandleListMunicipalities)
-	mux.HandleFunc("GET /api/grounds", s.HandleListGrounds)
 	mux.HandleFunc("GET /api/plan-limits", s.HandleGetPlanLimits)
-	mux.HandleFunc("GET /api/tickets", s.HandleListTickets)
-	mux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
-	mux.HandleFunc("POST /api/chat", s.HandleAIChat)
-	// Billing API
+
+	// Billing API (user-facing)
 	mux.HandleFunc("GET /api/plans", s.HandlePlans)
 	mux.HandleFunc("POST /api/billing/checkout", s.HandleCreateCheckout)
 	mux.HandleFunc("POST /api/billing/portal", s.HandleBillingPortal)
 	mux.HandleFunc("POST /api/billing/webhook", s.HandleStripeWebhook)
 	mux.HandleFunc("POST /api/billing/validate-promo", s.HandleValidatePromoCode)
-	// Auth endpoints
+
+	// Auth endpoints (public)
 	mux.HandleFunc("POST /api/auth/magic-link", s.HandleRequestMagicLink)
 	mux.HandleFunc("GET /auth/verify", s.HandleVerifyMagicLink)
-
-	// OAuth routes
 	mux.HandleFunc("GET /api/auth/config", s.HandleOAuthConfig)
 	mux.HandleFunc("GET /auth/google", s.HandleGoogleLogin)
 	mux.HandleFunc("GET /auth/google/callback", s.HandleGoogleCallback)
 
+	// Redirect root to admin for convenience
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/", http.StatusFound)
+	})
+
 	slog.Info("starting server", "addr", addr)
 	return http.ListenAndServe(addr, mux)
+}
+
+// basicAuthMiddleware wraps a handler with HTTP Basic Authentication.
+// Credentials are read from environment variables ADMIN_USER and ADMIN_PASS.
+// If either is not set, authentication is disabled.
+func basicAuthMiddleware(next http.Handler) http.Handler {
+	user := os.Getenv("ADMIN_USER")
+	pass := os.Getenv("ADMIN_PASS")
+
+	// If credentials not set, skip authentication
+	if user == "" || pass == "" {
+		slog.Warn("ADMIN_USER or ADMIN_PASS not set, admin panel has no authentication")
+		return next
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		u, p, ok := r.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(u), []byte(user)) != 1 || subtle.ConstantTimeCompare([]byte(p), []byte(pass)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="AkiGura Admin"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // mainDomainFromHost extracts the main domain from a host string by removing the first subdomain.
