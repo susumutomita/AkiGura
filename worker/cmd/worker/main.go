@@ -14,20 +14,23 @@ import (
 
 	"akigura.dev/worker"
 	"akigura.dev/worker/notifier"
+	"akigura.dev/worker/scraper"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	_ "modernc.org/sqlite"
 )
 
 var (
 	flagDBPath         = flag.String("db", "../control-plane/db.sqlite3", "database path (for local SQLite)")
-	flagScraperPath    = flag.String("scraper", "./scraper_wrapper.py", "scraper wrapper path")
-	flagPythonPath     = flag.String("python", "python3", "python interpreter path")
+	flagScraperPath    = flag.String("scraper", "./scraper_wrapper.py", "scraper wrapper path (legacy)")
+	flagPythonPath     = flag.String("python", "python3", "python interpreter path (legacy)")
 	flagInterval       = flag.Duration("interval", 15*time.Minute, "scrape interval")
 	flagJobInterval    = flag.Duration("job-interval", 30*time.Second, "pending job check interval")
 	flagNotifyInterval = flag.Duration("notify-interval", 1*time.Minute, "notification check interval")
 	flagOnce           = flag.Bool("once", false, "run once and exit")
 	flagNotifyOnly     = flag.Bool("notify-only", false, "only process notifications")
 	flagJobMode        = flag.Bool("job-mode", false, "process pending jobs from database")
+	flagNative         = flag.Bool("native", false, "use native Go scrapers instead of Python")
+	flagScraperType    = flag.String("scraper-type", "", "specific scraper to run (kanagawa, hiratsuka, yokohama)")
 )
 
 func main() {
@@ -69,9 +72,16 @@ func run() error {
 	w := worker.NewWorker(db, *flagScraperPath, *flagPythonPath)
 
 	if *flagOnce {
-		// Run scraper once for all municipalities
-		if err := w.ProcessAllFacilities(ctx); err != nil {
-			return err
+		if *flagNative {
+			// Use native Go scrapers
+			if err := runNativeScrapers(ctx, db, *flagScraperType); err != nil {
+				return err
+			}
+		} else {
+			// Run Python scraper once for all municipalities
+			if err := w.ProcessAllFacilities(ctx); err != nil {
+				return err
+			}
 		}
 		// Then send notifications
 		sent, failed, _ := sender.ProcessPending(ctx)
@@ -167,4 +177,75 @@ func openLocalSQLite(path string) (*sql.DB, error) {
 	}
 	slog.Info("db: connected to local SQLite", "path", path)
 	return db, nil
+}
+
+// runNativeScrapers runs the native Go scrapers.
+func runNativeScrapers(ctx context.Context, db *sql.DB, specificType string) error {
+	registry := scraper.NewRegistry()
+
+	var scraperNames []string
+	if specificType != "" {
+		scraperNames = []string{specificType}
+	} else {
+		scraperNames = registry.Names()
+	}
+
+	w := worker.NewWorker(db, "", "")
+
+	for _, name := range scraperNames {
+		s := registry.Get(name)
+		if s == nil {
+			slog.Warn("scraper not found", "name", name)
+			continue
+		}
+
+		slog.Info("running native scraper", "name", name)
+		result, err := s.Scrape(ctx)
+		if err != nil {
+			slog.Error("scraper error", "name", name, "error", err)
+			continue
+		}
+
+		if !result.Success {
+			slog.Warn("scraper failed", "name", name, "status", result.Status, "error", result.Error)
+			continue
+		}
+
+		slog.Info("scraper completed", "name", name, "slots", len(result.Slots), "status", result.Status)
+
+		// Convert scraper.Slot to worker.Slot and save
+		if len(result.Slots) > 0 {
+			// Get municipality ID for this scraper
+			var municipalityID string
+			err := db.QueryRowContext(ctx, `
+				SELECT id FROM municipalities WHERE scraper_type = ?
+			`, name).Scan(&municipalityID)
+			if err != nil {
+				slog.Warn("municipality not found", "scraper_type", name, "error", err)
+				continue
+			}
+
+			// Convert slots
+			workerSlots := make([]worker.Slot, len(result.Slots))
+			for i, slot := range result.Slots {
+				workerSlots[i] = worker.Slot{
+					Date:         &slot.Date,
+					TimeFrom:     &slot.TimeFrom,
+					TimeTo:       &slot.TimeTo,
+					CourtName:    &slot.CourtName,
+					RawText:      slot.RawText,
+					FacilityType: name,
+				}
+			}
+
+			saved, err := w.SaveSlots(ctx, municipalityID, workerSlots)
+			if err != nil {
+				slog.Error("failed to save slots", "name", name, "error", err)
+			} else {
+				slog.Info("saved slots", "name", name, "saved", saved)
+			}
+		}
+	}
+
+	return nil
 }
