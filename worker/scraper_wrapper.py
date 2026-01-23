@@ -47,6 +47,30 @@ class ScrapeStatus:
     SCRAPER_UNAVAILABLE = "scraper_unavailable"  # スクレイパーが利用不可
 
 
+# Patterns for facilities to exclude (not adult baseball/softball)
+EXCLUDED_FACILITY_PATTERNS = [
+    "少年",      # Youth/junior fields
+    "サッカー",    # Soccer
+    "テニス",     # Tennis
+    "ラグビー",    # Rugby
+    "フットサル",  # Futsal
+    "体育館",     # Gymnasium
+    "プール",     # Pool
+    "投球練習場",  # Pitching practice
+    "会議室",     # Meeting room
+]
+
+
+def should_exclude_facility(court_name: str) -> bool:
+    """Check if a facility should be excluded (not adult baseball/softball)."""
+    if not court_name:
+        return False
+    for pattern in EXCLUDED_FACILITY_PATTERNS:
+        if pattern in court_name:
+            return True
+    return False
+
+
 def _make_slot(date: str, time_from: str, time_to: str, court_name: str,
                 raw_text: str, facility_type: str) -> Dict[str, Any]:
     """Create a slot dict with parsed values."""
@@ -225,18 +249,24 @@ def search_facility(facility_type: str) -> Dict[str, Any]:
         diagnostics["raw_results_count"] = len(raw_results) if raw_results else 0
         diagnostics["search_completed"] = datetime.now().isoformat()
         
-        # Parse slots
+        # Parse slots and filter out non-baseball facilities
         slots = []
         parse_errors = 0
+        excluded_count = 0
         for slot_str in (raw_results or []):
             if slot_str:  # Skip empty strings
                 parsed = parse_slot_string(slot_str, facility_type)
+                # Filter out non-baseball facilities (soccer, tennis, youth, etc.)
+                if should_exclude_facility(parsed.get("court_name", "")):
+                    excluded_count += 1
+                    continue
                 slots.append(parsed)
                 if parsed.get("date") is None:
                     parse_errors += 1
         
         diagnostics["parsed_slots_count"] = len(slots)
         diagnostics["parse_errors"] = parse_errors
+        diagnostics["excluded_non_baseball"] = excluded_count
         
         # Determine status based on results
         if len(slots) > 0:
