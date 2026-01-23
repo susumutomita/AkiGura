@@ -74,15 +74,15 @@ func (w *Worker) RunScraper(ctx context.Context, facilityType string) (*ScraperR
 // excludedFacilityPatterns contains patterns for facilities to exclude
 // (not adult softball/baseball: youth fields, soccer, tennis, etc.)
 var excludedFacilityPatterns = []string{
-	"少年",      // Youth/junior fields
-	"サッカー",    // Soccer
-	"テニス",     // Tennis
-	"ラグビー",    // Rugby
-	"フットサル",  // Futsal
-	"体育館",     // Gymnasium
-	"プール",     // Pool
-	"投球練習場",  // Pitching practice
-	"会議室",     // Meeting room
+	"少年",    // Youth/junior fields
+	"サッカー",  // Soccer
+	"テニス",   // Tennis
+	"ラグビー",  // Rugby
+	"フットサル", // Futsal
+	"体育館",   // Gymnasium
+	"プール",   // Pool
+	"投球練習場", // Pitching practice
+	"会議室",   // Meeting room
 }
 
 // shouldExcludeFacility checks if a facility should be excluded

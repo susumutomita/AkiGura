@@ -27,11 +27,11 @@ type Result struct {
 
 // Status codes for scrape results.
 const (
-	StatusSuccess       = "success"
-	StatusSuccessEmpty  = "success_no_slots"
-	StatusNetworkError  = "network_error"
-	StatusParseError    = "parse_error"
-	StatusUnknownError  = "unknown_error"
+	StatusSuccess      = "success"
+	StatusSuccessEmpty = "success_no_slots"
+	StatusNetworkError = "network_error"
+	StatusParseError   = "parse_error"
+	StatusUnknownError = "unknown_error"
 )
 
 // Scraper defines the interface for facility scrapers.
@@ -45,15 +45,15 @@ type Scraper interface {
 // ExcludedPatterns contains patterns for facilities to exclude.
 // These are not adult baseball/softball facilities.
 var ExcludedPatterns = []string{
-	"少年",      // Youth/junior fields
-	"サッカー",    // Soccer
-	"テニス",     // Tennis
-	"ラグビー",    // Rugby
-	"フットサル",  // Futsal
-	"体育館",     // Gymnasium
-	"プール",     // Pool
-	"投球練習",   // Pitching practice
-	"会議室",     // Meeting room
+	"少年",    // Youth/junior fields
+	"サッカー",  // Soccer
+	"テニス",   // Tennis
+	"ラグビー",  // Rugby
+	"フットサル", // Futsal
+	"体育館",   // Gymnasium
+	"プール",   // Pool
+	"投球練習",  // Pitching practice
+	"会議室",   // Meeting room
 }
 
 // ShouldExclude checks if a facility should be excluded based on its name.

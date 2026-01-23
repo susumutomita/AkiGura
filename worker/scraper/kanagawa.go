@@ -18,8 +18,8 @@ import (
 // KanagawaScraper scrapes the e-kanagawa facility reservation system.
 // This covers facilities like Hodogaya Park (Kanagawa Prefecture).
 type KanagawaScraper struct {
-	client    *http.Client
-	baseURL   string
+	client     *http.Client
+	baseURL    string
 	facilities []kanagawaFacility
 }
 
@@ -87,14 +87,14 @@ func (s *KanagawaScraper) Scrape(ctx context.Context) (*Result, error) {
 
 	// Step 4: Select Hodogaya Park (000001) and get UFPS
 	formData := url.Values{
-		"__EVENTTARGET":       {"cmdNext"},
-		"__EVENTARGUMENT":     {""},
-		"__VIEWSTATE":         {viewState},
-		"slShisetsu$rbList":   {"000001"},
-		"slNen":               {"0"},
-		"slTsuki":             {"0"},
-		"slHi":                {"0"},
-		"cmdNext":             {"次へ"},
+		"__EVENTTARGET":     {"cmdNext"},
+		"__EVENTARGUMENT":   {""},
+		"__VIEWSTATE":       {viewState},
+		"slShisetsu$rbList": {"000001"},
+		"slNen":             {"0"},
+		"slTsuki":           {"0"},
+		"slHi":              {"0"},
+		"cmdNext":           {"次へ"},
 	}
 
 	body, err = s.post(ctx, s.baseURL+"/Kanagawa/SmartPhone/Wsp_ShisetsuSentaku.aspx", formData)

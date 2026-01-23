@@ -112,14 +112,14 @@ func (s *YokohamaScraper) searchMonth(ctx context.Context, token string, startDa
 		"HomeModel.SearchByDateTimeModel.SelectedPlaceClassCategory": {"1"},
 		"HomeModel.SearchByDateTimeModel.SelectedPurpose":            {"36"}, // 36=野球
 		"HomeModel.SearchByDateTimeModel.SelectedPurposeCategory":    {"1"},
-		"HomeModel.DateFrom":                       {startDate.Format("2006-01-02")},
-		"HomeModel.DateTo":                         {endDate.Format("2006-01-02")},
-		"HomeModel.TimeFrom":                       {"0600"},
-		"HomeModel.TimeTo":                         {"2100"},
-		"HomeModel.SelectedWeekDays":               {"月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日"},
-		"HomeModel.SelectedSearchTarget":           {"1"},
-		"SelectedLanguageCode":                     {"0"},
-		"__RequestVerificationToken":               {token},
+		"HomeModel.DateFrom":             {startDate.Format("2006-01-02")},
+		"HomeModel.DateTo":               {endDate.Format("2006-01-02")},
+		"HomeModel.TimeFrom":             {"0600"},
+		"HomeModel.TimeTo":               {"2100"},
+		"HomeModel.SelectedWeekDays":     {"月曜日,火曜日,水曜日,木曜日,金曜日,土曜日,日曜日"},
+		"HomeModel.SelectedSearchTarget": {"1"},
+		"SelectedLanguageCode":           {"0"},
+		"__RequestVerificationToken":     {token},
 	}
 
 	for key, values := range fields {

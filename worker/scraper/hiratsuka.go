@@ -102,8 +102,8 @@ func (s *HiratsukaScraper) Scrape(ctx context.Context) (*Result, error) {
 
 	// Step 5: Select room (facility)
 	formData = url.Values{
-		"heyacd": {"1"},
-		"g_sessionid": {token},
+		"heyacd":       {"1"},
+		"g_sessionid":  {token},
 		"u_genzai_idx": {"0"},
 	}
 
