@@ -25,18 +25,14 @@ INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled
 ('b20b1635-37a2-464e-934c-c06eb948ed7b', 'af168e03-6f16-455b-8319-000f6d2e32bf', '辻堂南部公園野球場', '辻堂', 1, CURRENT_TIMESTAMP),
 ('6cfb534f-363a-4c6a-b5ae-ab181b9375ee', 'af168e03-6f16-455b-8319-000f6d2e32bf', '長久保公園野球場', '長久保', 1, CURRENT_TIMESTAMP);
 
--- 横浜市（主な野球場）
+-- 横浜市（実在する野球場のみ）
+-- 横浜市の施設予約システムで確認できる野球場
 INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
 ('7b18fcbf-944e-45bf-9ba9-3e8cf8593a0c', 'e7f6a658-4549-4761-8b77-b316576b22d6', 'こども自然公園野球場', 'こども自然公園', 1, CURRENT_TIMESTAMP),
 ('7057dad4-e53a-46b8-9e4c-74697a53480d', 'e7f6a658-4549-4761-8b77-b316576b22d6', '今川公園野球場', '今川公園', 1, CURRENT_TIMESTAMP),
 ('462461c0-7c15-43c4-8783-83b953619510', 'e7f6a658-4549-4761-8b77-b316576b22d6', '岡村公園野球場', '岡村公園', 1, CURRENT_TIMESTAMP),
 ('5a6f0ebf-0f90-4e6a-b067-b7a4fd13bebc', 'e7f6a658-4549-4761-8b77-b316576b22d6', '俣野公園野球場', '俣野公園', 1, CURRENT_TIMESTAMP),
-('9299d1c0-8ffd-4660-85e8-1dc0467e7ce9', 'e7f6a658-4549-4761-8b77-b316576b22d6', '金井公園野球場', '金井公園', 1, CURRENT_TIMESTAMP),
-('a1234567-1111-2222-3333-444455556666', 'e7f6a658-4549-4761-8b77-b316576b22d6', '三ツ沢公園野球場', '三ツ沢公園', 1, CURRENT_TIMESTAMP),
-('b2345678-2222-3333-4444-555566667777', 'e7f6a658-4549-4761-8b77-b316576b22d6', '日野公園野球場', '日野公園', 1, CURRENT_TIMESTAMP),
-('c3456789-3333-4444-5555-666677778888', 'e7f6a658-4549-4761-8b77-b316576b22d6', '九沢江野球場', '九沢江', 1, CURRENT_TIMESTAMP),
-('d4567890-4444-5555-6666-777788889999', 'e7f6a658-4549-4761-8b77-b316576b22d6', '塩浜公園野球場', '塩浜公園', 1, CURRENT_TIMESTAMP),
-('e5678901-5555-6666-7777-888899990000', 'e7f6a658-4549-4761-8b77-b316576b22d6', '新横浜公園野球場', '新横浜公園', 1, CURRENT_TIMESTAMP);
+('9299d1c0-8ffd-4660-85e8-1dc0467e7ce9', 'e7f6a658-4549-4761-8b77-b316576b22d6', '金井公園野球場', '金井公園', 1, CURRENT_TIMESTAMP);
 
 -- 鎌倉市
 INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
@@ -53,13 +49,12 @@ DELETE FROM grounds WHERE name LIKE '%ラバーボール%';
 DELETE FROM grounds WHERE name LIKE '%少年%';
 DELETE FROM grounds WHERE name = 'テスト球場';
 
--- 施設名を「野球場」付きに統一
-UPDATE grounds SET name = 'こども自然公園野球場' WHERE name = 'こども自然公園';
-UPDATE grounds SET name = '今川公園野球場' WHERE name = '今川公園';
-UPDATE grounds SET name = '俣野公園野球場' WHERE name = '俣野公園';
-UPDATE grounds SET name = '岡村公園野球場' WHERE name = '岡村公園';
-UPDATE grounds SET name = '金井公園野球場' WHERE name = '金井公園';
-UPDATE grounds SET name = '保土ケ谷公園軟式野球場' WHERE name = '軟式野球場';
+-- 存在しない横浜市の野球場を削除
+DELETE FROM grounds WHERE id = 'a1234567-1111-2222-3333-444455556666';  -- 三ツ沢公園野球場
+DELETE FROM grounds WHERE id = 'b2345678-2222-3333-4444-555566667777';  -- 日野公園野球場
+DELETE FROM grounds WHERE id = 'c3456789-3333-4444-5555-666677778888';  -- 九沢江野球場
+DELETE FROM grounds WHERE id = 'd4567890-4444-5555-6666-777788889999';  -- 塩浜公園野球場
+DELETE FROM grounds WHERE id = 'e5678901-5555-6666-7777-888899990000';  -- 新横浜公園野球場
 
 -- Record execution of this migration
 INSERT OR IGNORE INTO migrations (migration_number, migration_name)
