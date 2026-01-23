@@ -937,6 +937,7 @@
 
             get groundsForSelectedMunicipality() {
                 if (!this.newCondition.municipality_id) return [];
+                if (!this.grounds || this.grounds.length === 0) return [];
                 return this.grounds.filter(g => g.municipality_id === this.newCondition.municipality_id);
             },
 

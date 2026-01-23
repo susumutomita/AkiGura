@@ -96,10 +96,13 @@ func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []S
 		}
 
 		// Match slot to ground by court_pattern
+		// Order by length(court_pattern) DESC to prefer more specific matches
+		// e.g., "大神グラウンド野球場" should match before "大神"
 		var groundID *string
 		err := w.DB.QueryRowContext(ctx, `
 			SELECT id FROM grounds 
 			WHERE municipality_id = ? AND instr(?, court_pattern) > 0
+			ORDER BY length(court_pattern) DESC
 			LIMIT 1
 		`, municipalityID, courtName).Scan(&groundID)
 		if err != nil && err != sql.ErrNoRows {
