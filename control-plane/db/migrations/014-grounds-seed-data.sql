@@ -1,24 +1,32 @@
 -- 施設マスターデータ（大人の軟式野球向け）
--- 横浜市施設予約システムで確認した正確なリスト
+-- 各自治体の施設予約システムで確認した正確なリスト
 
--- 神奈川県（保土ケ谷公園）
-INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
-('b2c3d4e5-2222-5333-9444-555566667777', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', 'サーティーフォー保土ケ谷球場', 'サーティーフォー保土ケ谷', 1, CURRENT_TIMESTAMP),
-('c3d4e5f6-3333-6444-0555-666677778888', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '保土ケ谷公園軟式野球場', '軟式野球場', 1, CURRENT_TIMESTAMP);
+-- 神奈川県（5施設）
+DELETE FROM grounds WHERE municipality_id = 'd9e5f0b2-3456-5789-0bcd-ef0123456789';
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
+('d0000001-0001-4000-8000-000000000001', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', 'サーティーフォー保土ケ谷球場', 'サーティーフォー保土ケ谷', 1, CURRENT_TIMESTAMP),
+('d0000001-0002-4000-8000-000000000002', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '保土ケ谷公園軟式野球場A面', '軟式野球場.*A', 1, CURRENT_TIMESTAMP),
+('d0000001-0003-4000-8000-000000000003', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '保土ケ谷公園軟式野球場B面', '軟式野球場.*B', 1, CURRENT_TIMESTAMP),
+('d0000001-0004-4000-8000-000000000004', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '保土ケ谷公園軟式野球場両面', '軟式野球場.*両面', 1, CURRENT_TIMESTAMP),
+('d0000001-0005-4000-8000-000000000005', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '三ツ池公園', '三ツ池公園', 1, CURRENT_TIMESTAMP);
 
--- 平塚市
-INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
-('ef58b68c-8992-402f-9092-bf469d9b891f', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '大神グラウンド野球場', '大神グラウンド野球場', 1, CURRENT_TIMESTAMP),
-('b0ddfeca-20c7-45d4-84c5-a70843ca8070', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '平塚球場', '平塚球場', 1, CURRENT_TIMESTAMP),
-('56849576-908b-4bfb-bc30-ac537fd1cb5c', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '総合公園野球場', '総合公園', 1, CURRENT_TIMESTAMP);
+-- 平塚市（3施設）
+DELETE FROM grounds WHERE municipality_id = '1438eb89-e0d1-4b49-b9a2-135718c207e2';
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
+('b0000001-0001-4000-8000-000000000001', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '土沢野球場', '土沢野球場', 1, CURRENT_TIMESTAMP),
+('b0000001-0002-4000-8000-000000000002', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '平塚球場', '平塚球場', 1, CURRENT_TIMESTAMP),
+('b0000001-0003-4000-8000-000000000003', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '大神グラウンド', '大神グラウンド', 1, CURRENT_TIMESTAMP);
 
--- 藤沢市
-INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
-('842ab6ef-e69e-4c61-a584-9b582285a1fa', 'af168e03-6f16-455b-8319-000f6d2e32bf', '八部球場', '八部', 1, CURRENT_TIMESTAMP),
-('cc39fe86-c23a-4fa2-9a86-697127ac8da3', 'af168e03-6f16-455b-8319-000f6d2e32bf', '秋葉台球場', '秋葉台', 1, CURRENT_TIMESTAMP);
+-- 藤沢市（5施設）
+DELETE FROM grounds WHERE municipality_id = 'af168e03-6f16-455b-8319-000f6d2e32bf';
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
+('c0000001-0001-4000-8000-000000000001', 'af168e03-6f16-455b-8319-000f6d2e32bf', '桐原公園野球場', '桐原公園', 1, CURRENT_TIMESTAMP),
+('c0000001-0002-4000-8000-000000000002', 'af168e03-6f16-455b-8319-000f6d2e32bf', '八部公園', '八部公園', 1, CURRENT_TIMESTAMP),
+('c0000001-0003-4000-8000-000000000003', 'af168e03-6f16-455b-8319-000f6d2e32bf', '辻堂南部公園野球場', '辻堂南部公園', 1, CURRENT_TIMESTAMP),
+('c0000001-0004-4000-8000-000000000004', 'af168e03-6f16-455b-8319-000f6d2e32bf', '葛原スポーツ広場', '葛原スポーツ広場', 1, CURRENT_TIMESTAMP),
+('c0000001-0005-4000-8000-000000000005', 'af168e03-6f16-455b-8319-000f6d2e32bf', '女坂スポーツ広場', '女坂スポーツ広場', 1, CURRENT_TIMESTAMP);
 
 -- 横浜市（施設予約システムで軟式野球として検索できる全25施設）
--- 既存データを削除してから挿入
 DELETE FROM grounds WHERE municipality_id = 'e7f6a658-4549-4761-8b77-b316576b22d6';
 INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
 ('a0000001-0001-4000-8000-000000000001', 'e7f6a658-4549-4761-8b77-b316576b22d6', '潮田公園', '潮田公園', 1, CURRENT_TIMESTAMP),
