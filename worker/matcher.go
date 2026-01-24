@@ -45,7 +45,9 @@ func NewMatcher(db *sql.DB) *Matcher {
 	return &Matcher{DB: db}
 }
 
-// GetActiveConditions retrieves all active watch conditions for a ground
+// GetActiveConditions retrieves all active watch conditions for a specific ground.
+// It only returns conditions for teams with 'active' status and enabled watch conditions.
+// The groundID parameter corresponds to the facility_id in the database schema.
 func (m *Matcher) GetActiveConditions(ctx context.Context, groundID string) ([]WatchCondition, error) {
 	rows, err := m.DB.QueryContext(ctx, `
 		SELECT wc.id, wc.team_id, t.email, t.name, wc.facility_id, 
@@ -74,7 +76,9 @@ func (m *Matcher) GetActiveConditions(ctx context.Context, groundID string) ([]W
 	return conditions, nil
 }
 
-// GetNewSlots retrieves slots scraped recently that haven't been notified
+// GetNewSlots retrieves slots that were scraped after the given time.
+// It filters out past dates and only returns future or current slots.
+// The since parameter is typically set to the last scraper run time to avoid duplicate processing.
 func (m *Matcher) GetNewSlots(ctx context.Context, groundID string, since time.Time) ([]MatchedSlot, error) {
 	rows, err := m.DB.QueryContext(ctx, `
 		SELECT id, ground_id, slot_date, time_from, time_to, COALESCE(court_name, '')
@@ -97,7 +101,9 @@ func (m *Matcher) GetNewSlots(ctx context.Context, groundID string, since time.T
 	return slots, nil
 }
 
-// MatchSlot checks if a slot matches a condition
+// MatchSlot determines if a slot satisfies a watch condition's criteria.
+// It checks: (1) day of week, (2) time range overlap, and (3) date range boundaries.
+// Returns true only if all specified criteria in the condition are met.
 func (m *Matcher) MatchSlot(slot MatchedSlot, cond WatchCondition) bool {
 	// Parse slot date - handle both YYYY-MM-DD and ISO formats
 	dateStr := slot.Date
@@ -150,6 +156,8 @@ func (m *Matcher) MatchSlot(slot MatchedSlot, cond WatchCondition) bool {
 	return true
 }
 
+// parseTimeToMinutes converts time strings (HH:MM or HHMM) to minutes since midnight.
+// This enables simple numeric comparison of time ranges.
 func parseTimeToMinutes(t string) int {
 	if len(t) < 4 {
 		return 0
@@ -166,7 +174,9 @@ func parseTimeToMinutes(t string) int {
 	return h*60 + m
 }
 
-// CreateNotification creates a notification record
+// CreateNotification creates a pending notification for a team about a matched slot.
+// It prevents duplicate notifications by checking if the same team/slot/condition combination already exists.
+// The channel parameter specifies the notification method (e.g., "email", "line").
 func (m *Matcher) CreateNotification(ctx context.Context, teamID, conditionID, slotID, channel string) error {
 	// Check if already notified
 	var exists int
@@ -186,7 +196,9 @@ func (m *Matcher) CreateNotification(ctx context.Context, teamID, conditionID, s
 	return err
 }
 
-// ProcessMatches finds matches and creates notifications for a ground
+// ProcessMatches finds all slots that match watch conditions for a specific ground.
+// It retrieves active conditions, compares them against new slots, and creates notifications for matches.
+// Returns the total number of matches found (notifications created).
 func (m *Matcher) ProcessMatches(ctx context.Context, groundID string, since time.Time) (int, error) {
 	conditions, err := m.GetActiveConditions(ctx, groundID)
 	if err != nil {
@@ -219,7 +231,9 @@ func (m *Matcher) ProcessMatches(ctx context.Context, groundID string, since tim
 	return matches, nil
 }
 
-// ProcessMatchesForMunicipality processes all grounds in a municipality
+// ProcessMatchesForMunicipality processes matches for all enabled grounds within a municipality.
+// It iterates through each ground and aggregates the total number of matches found.
+// Errors for individual grounds are logged but do not stop processing of other grounds.
 func (m *Matcher) ProcessMatchesForMunicipality(ctx context.Context, municipalityID string, since time.Time) (int, error) {
 	rows, err := m.DB.QueryContext(ctx, `
 		SELECT id FROM grounds WHERE municipality_id = ? AND enabled = 1
