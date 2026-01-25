@@ -35,11 +35,19 @@ type DashboardData struct {
 	OpenTicketCount     int64
 	TeamsByPlan         []PlanCount
 	RecentJobs          []dbgen.ListRecentScrapeJobsRow
+	FailedJobCount      int64
+	RecentActivity      []ActivityItem
 }
 
 type PlanCount struct {
 	Plan  string `json:"plan"`
 	Count int64  `json:"count"`
+}
+
+type ActivityItem struct {
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	Timestamp string `json:"timestamp"`
 }
 
 func New(dbPath, hostname string) (*Server, error) {
@@ -79,6 +87,15 @@ func (s *Server) HandleUserPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleAdminLogout clears Basic Auth credentials by returning 401
+func (s *Server) HandleAdminLogout(w http.ResponseWriter, r *http.Request) {
+	// Set WWW-Authenticate header to force browser to clear cached credentials
+	w.Header().Set("WWW-Authenticate", `Basic realm="AkiGura Admin"`)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	w.Write([]byte(`{"status":"logged_out"}`))
+}
+
 func (s *Server) renderTemplate(w http.ResponseWriter, name string, data any) error {
 	path := filepath.Join(s.TemplatesDir, name)
 	tmpl, err := template.ParseFiles(path)
@@ -114,9 +131,12 @@ func (s *Server) Serve(addr string) error {
 	adminMux.HandleFunc("GET /api/dashboard", s.HandleDashboard)
 	adminMux.HandleFunc("GET /api/teams", s.HandleListTeams)
 	adminMux.HandleFunc("POST /api/teams", s.HandleCreateTeam)
+	adminMux.HandleFunc("PUT /api/teams/{id}", s.HandleUpdateTeam)
 	adminMux.HandleFunc("DELETE /api/teams/{id}", s.HandleDeleteTeam)
 	adminMux.HandleFunc("GET /api/facilities", s.HandleListFacilities)
 	adminMux.HandleFunc("POST /api/facilities", s.HandleCreateFacility)
+	adminMux.HandleFunc("PUT /api/facilities/{id}", s.HandleUpdateFacility)
+	adminMux.HandleFunc("DELETE /api/facilities/{id}", s.HandleDeleteFacility)
 	adminMux.HandleFunc("GET /api/conditions", s.HandleListConditions)
 	adminMux.HandleFunc("DELETE /api/conditions/{id}", s.HandleDeleteCondition)
 	adminMux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
@@ -128,6 +148,7 @@ func (s *Server) Serve(addr string) error {
 	adminMux.HandleFunc("GET /api/tickets", s.HandleListTickets)
 	adminMux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
 	adminMux.HandleFunc("POST /api/chat", s.HandleAIChat)
+	adminMux.HandleFunc("POST /api/logout", s.HandleAdminLogout)
 
 	// Mount admin routes with Basic Auth at /admin prefix
 	mux.Handle("/admin/", http.StripPrefix("/admin", basicAuthMiddleware(adminMux)))

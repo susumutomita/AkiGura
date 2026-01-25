@@ -76,7 +76,50 @@
         }
     </script>
     <style>
+        /* デザイントークン */
+        :root {
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --radius-sm: 0.25rem;
+            --radius-md: 0.375rem;
+            --radius-lg: 0.5rem;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --transition-fast: 150ms ease;
+            --transition-normal: 200ms ease;
+        }
+
         [x-cloak] { display: none !important; }
+
+        /* アニメーション */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-8px); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn var(--transition-normal) ease forwards;
+        }
+        .animate-slideInRight {
+            animation: slideInRight var(--transition-normal) ease forwards;
+        }
+        .animate-slideOutRight {
+            animation: slideOutRight var(--transition-normal) ease forwards;
+        }
 
         /* 落ち着いたスクロールバー */
         ::-webkit-scrollbar {
@@ -110,8 +153,8 @@
             <!-- Mobile Header -->
             <div class="flex justify-between items-center">
                 <h1 class="text-lg md:text-xl font-semibold tracking-tight">AkiGura</h1>
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 hover:bg-sumi-700 rounded transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2.5 hover:bg-sumi-700 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <svg class="w-6 h-6 transition-transform duration-200" :class="mobileMenuOpen ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                         <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -124,16 +167,41 @@
                                 class="px-3 py-2 text-sm font-medium transition-colors"
                                 x-text="tab.label"></button>
                     </template>
+                    <div class="border-l border-sumi-600 h-5 mx-2"></div>
+                    <button @click="logout()" class="flex items-center gap-1.5 px-3 py-2 text-sm text-sumi-300 hover:text-kinari-50 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        ログアウト
+                    </button>
                 </nav>
             </div>
             <!-- Mobile Nav -->
-            <nav x-show="mobileMenuOpen" x-cloak class="md:hidden mt-3 pb-2 grid grid-cols-3 gap-2">
-                <template x-for="tab in navTabs" :key="tab.id">
-                    <button @click="currentTab = tab.id; mobileMenuOpen = false"
-                            :class="currentTab === tab.id ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                            class="px-2 py-2 rounded text-sm text-center transition-colors"
-                            x-text="tab.label"></button>
-                </template>
+            <nav x-show="mobileMenuOpen"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-2"
+                 x-cloak
+                 class="md:hidden mt-3 pb-2">
+                <div class="grid grid-cols-3 gap-2">
+                    <template x-for="tab in navTabs" :key="tab.id">
+                        <button @click="currentTab = tab.id; mobileMenuOpen = false"
+                                :class="currentTab === tab.id ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
+                                class="px-2 py-3 rounded text-sm text-center transition-colors min-h-[44px]"
+                                x-text="tab.label"></button>
+                    </template>
+                </div>
+                <div class="border-t border-sumi-600 mt-3 pt-3">
+                    <button @click="logout()" class="w-full flex items-center justify-center gap-2 px-3 py-3 text-sm text-sumi-300 hover:bg-sumi-700 rounded transition-colors min-h-[44px]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        ログアウト
+                    </button>
+                </div>
             </nav>
         </div>
     </header>
@@ -142,34 +210,203 @@
         <!-- Dashboard -->
         <div x-show="currentTab === 'dashboard'" x-cloak>
             <h2 class="text-xl font-semibold text-sumi-800 mb-6">ダッシュボード</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">登録チーム数</div>
-                    <div class="text-2xl font-semibold text-ai-600" x-text="dashboard.TeamCount">0</div>
-                </div>
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">対応施設数</div>
-                    <div class="text-2xl font-semibold text-wakakusa-600" x-text="dashboard.FacilityCount">0</div>
-                </div>
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">監視条件数</div>
-                    <div class="text-2xl font-semibold text-ai-500" x-text="dashboard.WatchConditionCount">0</div>
-                </div>
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">未対応チケット</div>
-                    <div class="text-2xl font-semibold text-sango-500" x-text="dashboard.OpenTicketCount">0</div>
+
+            <!-- エラーサマリー -->
+            <div x-show="dashboard.FailedJobCount > 0" x-cloak
+                 class="bg-sango-50 border border-sango-200 rounded-lg p-4 mb-6 animate-fadeIn">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-sango-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-sango-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="text-sango-800 font-medium">
+                                <span x-text="dashboard.FailedJobCount"></span> 件のスクレイピングが失敗しています
+                            </span>
+                            <p class="text-sm text-sango-600 mt-0.5">ワーカー管理ページで詳細を確認してください</p>
+                        </div>
+                    </div>
+                    <button @click="currentTab = 'worker'"
+                            class="px-4 py-2 bg-sango-600 text-white text-sm font-medium rounded hover:bg-sango-700 transition-colors">
+                        詳細を確認
+                    </button>
                 </div>
             </div>
-            <!-- Plan Distribution -->
-            <div class="bg-white border border-sumi-100 rounded p-6 mb-8">
-                <h3 class="text-sm font-medium text-sumi-700 mb-4">プラン別チーム数</h3>
-                <div class="flex flex-wrap gap-3">
-                    <template x-for="plan in dashboard.TeamsByPlan" :key="plan.plan">
-                        <div class="flex-1 min-w-[100px] bg-kinari-100 rounded p-4 text-center">
-                            <div class="text-xs text-sumi-500 mb-1" x-text="plan.plan"></div>
-                            <div class="text-xl font-semibold text-sumi-800" x-text="plan.count"></div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- 登録チーム数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'teams'">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">登録チーム数</span>
+                        <div class="w-10 h-10 bg-ai-50 rounded-lg flex items-center justify-center group-hover:bg-ai-100 transition-colors">
+                            <svg class="w-5 h-5 text-ai-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
                         </div>
-                    </template>
+                    </div>
+                    <div class="text-3xl font-bold text-ai-600" x-text="dashboard.TeamCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">チームを管理 →</div>
+                </div>
+
+                <!-- 対応施設数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'facilities'">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">対応施設数</span>
+                        <div class="w-10 h-10 bg-wakakusa-50 rounded-lg flex items-center justify-center group-hover:bg-wakakusa-100 transition-colors">
+                            <svg class="w-5 h-5 text-wakakusa-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-wakakusa-600" x-text="dashboard.FacilityCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">施設を管理 →</div>
+                </div>
+
+                <!-- 監視条件数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'slots'">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">監視条件数</span>
+                        <div class="w-10 h-10 bg-ai-50 rounded-lg flex items-center justify-center group-hover:bg-ai-100 transition-colors">
+                            <svg class="w-5 h-5 text-ai-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-ai-500" x-text="dashboard.WatchConditionCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">空き状況を確認 →</div>
+                </div>
+
+                <!-- 未対応チケット -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'support'"
+                     :class="dashboard.OpenTicketCount > 0 ? 'border-sango-200' : ''">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">未対応チケット</span>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                             :class="dashboard.OpenTicketCount > 0 ? 'bg-sango-100 group-hover:bg-sango-200' : 'bg-sumi-50 group-hover:bg-sumi-100'">
+                            <svg class="w-5 h-5" :class="dashboard.OpenTicketCount > 0 ? 'text-sango-600' : 'text-sumi-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold" :class="dashboard.OpenTicketCount > 0 ? 'text-sango-600' : 'text-sumi-400'" x-text="dashboard.OpenTicketCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">サポートを確認 →</div>
+                </div>
+            </div>
+
+            <!-- 2列レイアウト: プラン分布 + アクティビティ -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- プラン別チーム数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-6">
+                    <h3 class="text-sm font-medium text-sumi-700 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                        </svg>
+                        プラン別チーム数
+                    </h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <template x-for="plan in dashboard.TeamsByPlan" :key="plan.plan">
+                            <div class="bg-kinari-50 rounded-lg p-4 text-center hover:bg-kinari-100 transition-colors">
+                                <div class="text-xs font-medium text-sumi-500 mb-1 uppercase" x-text="plan.plan"></div>
+                                <div class="text-2xl font-bold text-sumi-800" x-text="plan.count"></div>
+                            </div>
+                        </template>
+                    </div>
+                    <!-- プランバー -->
+                    <div class="mt-4" x-show="dashboard.TeamsByPlan && dashboard.TeamsByPlan.length > 0">
+                        <div class="flex h-3 rounded-full overflow-hidden bg-sumi-100">
+                            <template x-for="(plan, index) in dashboard.TeamsByPlan" :key="plan.plan">
+                                <div class="h-full transition-all"
+                                     :class="[
+                                         plan.plan === 'free' ? 'bg-sumi-400' :
+                                         plan.plan === 'personal' ? 'bg-ai-400' :
+                                         plan.plan === 'pro' ? 'bg-ai-600' : 'bg-wakakusa-500'
+                                     ]"
+                                     :style="'width: ' + (plan.count / dashboard.TeamCount * 100) + '%'"></div>
+                            </template>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-sumi-500">
+                            <template x-for="plan in dashboard.TeamsByPlan" :key="plan.plan">
+                                <div class="flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full"
+                                          :class="plan.plan === 'free' ? 'bg-sumi-400' :
+                                                  plan.plan === 'personal' ? 'bg-ai-400' :
+                                                  plan.plan === 'pro' ? 'bg-ai-600' : 'bg-wakakusa-500'"></span>
+                                    <span x-text="plan.plan"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 最近のアクティビティ -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-6">
+                    <h3 class="text-sm font-medium text-sumi-700 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        最近のアクティビティ
+                    </h3>
+                    <div class="space-y-3" x-show="dashboard.RecentActivity && dashboard.RecentActivity.length > 0">
+                        <template x-for="activity in dashboard.RecentActivity" :key="activity.timestamp">
+                            <div class="flex items-start gap-3 text-sm">
+                                <div class="w-2 h-2 mt-1.5 rounded-full flex-shrink-0"
+                                     :class="activity.type === 'scrape' ? 'bg-ai-500' :
+                                             activity.type === 'team' ? 'bg-wakakusa-500' :
+                                             activity.type === 'notification' ? 'bg-yellow-500' : 'bg-sumi-400'"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sumi-700 truncate" x-text="activity.message"></div>
+                                    <div class="text-xs text-sumi-400" x-text="formatRelativeTime(activity.timestamp)"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="!dashboard.RecentActivity || dashboard.RecentActivity.length === 0" class="text-center py-8 text-sumi-400">
+                        <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-sm">最近のアクティビティはありません</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- クイックアクション -->
+            <div class="bg-white border border-sumi-100 rounded-lg p-6">
+                <h3 class="text-sm font-medium text-sumi-700 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    クイックアクション
+                </h3>
+                <div class="flex flex-wrap gap-3">
+                    <button @click="showTeamModal = true"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-ai-50 text-ai-700 rounded-lg hover:bg-ai-100 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        チーム追加
+                    </button>
+                    <button @click="showFacilityModal = true"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-wakakusa-50 text-wakakusa-700 rounded-lg hover:bg-wakakusa-100 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        施設追加
+                    </button>
+                    <button @click="currentTab = 'worker'; triggerScrape()"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-sumi-100 text-sumi-700 rounded-lg hover:bg-sumi-200 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        スクレイピング実行
+                    </button>
                 </div>
             </div>
         </div>
@@ -177,22 +414,126 @@
         <!-- Teams -->
         <div x-show="currentTab === 'teams'" x-cloak>
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-sumi-800">チーム管理</h2>
-                <button @click="showTeamModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">新規チーム追加</button>
+                <div class="flex items-center gap-3">
+                    <button @click="currentTab = 'dashboard'" class="p-2 text-sumi-500 hover:text-sumi-700 hover:bg-sumi-100 rounded-lg transition-colors" title="ダッシュボードに戻る">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    <h2 class="text-xl font-semibold text-sumi-800">チーム管理</h2>
+                </div>
+                <button @click="showTeamModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors min-h-[44px]">新規チーム追加</button>
             </div>
-            <div class="bg-white border border-sumi-100 rounded overflow-hidden">
+
+            <!-- Mobile: Card View -->
+            <div class="md:hidden space-y-3">
+                <template x-for="team in paginatedTeams" :key="team.id">
+                    <div class="bg-white rounded-lg p-4 border border-sumi-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-medium text-sumi-800" x-text="team.name"></span>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
+                                'bg-wakakusa-50 text-wakakusa-700': team.status === 'active',
+                                'bg-sango-50 text-sango-700': team.status === 'failed',
+                                'bg-sumi-100 text-sumi-600': team.status !== 'active' && team.status !== 'failed'
+                            }">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                    'bg-wakakusa-500': team.status === 'active',
+                                    'bg-sango-500': team.status === 'failed',
+                                    'bg-sumi-400': team.status !== 'active' && team.status !== 'failed'
+                                }"></span>
+                                <span x-text="team.status"></span>
+                            </span>
+                        </div>
+                        <div class="text-sm text-sumi-500 space-y-1">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                <span x-text="team.email"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                                </svg>
+                                <span class="px-2 py-0.5 text-xs rounded border" :class="{
+                                    'border-sumi-200 text-sumi-600': team.plan === 'free',
+                                    'border-ai-200 text-ai-600': team.plan === 'personal',
+                                    'border-ai-300 text-ai-700': team.plan === 'pro',
+                                    'border-wakakusa-200 text-wakakusa-600': team.plan === 'org'
+                                }" x-text="team.plan"></span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-sumi-100">
+                            <button @click="openEditTeamModal(team)" class="flex-1 py-2.5 text-sm text-ai-600 hover:bg-ai-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                編集
+                            </button>
+                            <button @click="confirmDeleteTeam(team)" class="flex-1 py-2.5 text-sm text-sango-600 hover:bg-sango-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <!-- Mobile Empty State -->
+                <div x-show="sortedTeams.length === 0" class="py-12 text-center text-sumi-500 bg-white rounded-lg border border-sumi-100">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <p class="text-sm">チームが登録されていません</p>
+                </div>
+                <!-- Mobile Pagination -->
+                <div x-show="sortedTeams.length > 0" class="flex items-center justify-between py-3">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(teamPage - 1) * teamPageSize + 1"></span>-<span x-text="Math.min(teamPage * teamPageSize, sortedTeams.length)"></span> / <span x-text="sortedTeams.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="teamPage--" :disabled="teamPage <= 1" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">前へ</button>
+                        <button @click="teamPage++" :disabled="teamPage >= teamTotalPages" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">次へ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop: Table View -->
+            <div class="hidden md:block bg-white border border-sumi-100 rounded overflow-hidden">
                 <table class="min-w-full">
                     <thead>
-                        <tr class="border-b border-sumi-100">
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">チーム名</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">メール</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">プラン</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">ステータス</th>
+                        <tr class="border-b border-sumi-200">
+                            <th @click="sortTeamsBy('name')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    チーム名
+                                    <span x-show="teamSort.field === 'name'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortTeamsBy('email')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    メール
+                                    <span x-show="teamSort.field === 'email'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortTeamsBy('plan')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    プラン
+                                    <span x-show="teamSort.field === 'plan'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortTeamsBy('status')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    ステータス
+                                    <span x-show="teamSort.field === 'status'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider">アクション</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-sumi-50">
-                        <template x-for="team in teams" :key="team.id">
-                            <tr class="hover:bg-kinari-50 transition-colors">
+                    <tbody>
+                        <template x-for="(team, idx) in paginatedTeams" :key="team.id">
+                            <tr class="border-b border-sumi-100 hover:bg-ai-50 transition-colors"
+                                :class="idx % 2 === 0 ? 'bg-white' : 'bg-kinari-50'">
                                 <td class="px-5 py-4 text-sm text-sumi-800" x-text="team.name"></td>
                                 <td class="px-5 py-4 text-sm text-sumi-600" x-text="team.email"></td>
                                 <td class="px-5 py-4">
@@ -204,57 +545,301 @@
                                     }" x-text="team.plan"></span>
                                 </td>
                                 <td class="px-5 py-4">
-                                    <span class="px-2 py-0.5 text-xs rounded" :class="{
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
                                         'bg-wakakusa-50 text-wakakusa-700': team.status === 'active',
-                                        'bg-sango-50 text-sango-700': team.status !== 'active'
-                                    }" x-text="team.status"></span>
+                                        'bg-sango-50 text-sango-700': team.status === 'failed',
+                                        'bg-sumi-100 text-sumi-600': team.status !== 'active' && team.status !== 'failed'
+                                    }">
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                            'bg-wakakusa-500': team.status === 'active',
+                                            'bg-sango-500': team.status === 'failed',
+                                            'bg-sumi-400': team.status !== 'active' && team.status !== 'failed'
+                                        }"></span>
+                                        <span x-text="team.status"></span>
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <button @click="openEditTeamModal(team)" class="p-1.5 text-ai-600 hover:bg-ai-100 rounded transition-colors" title="編集">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                        <button @click="confirmDeleteTeam(team)" class="p-1.5 text-sango-600 hover:bg-sango-100 rounded transition-colors" title="削除">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
+                <!-- Empty State -->
+                <div x-show="sortedTeams.length === 0" class="py-12 text-center text-sumi-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <p class="text-sm">チームが登録されていません</p>
+                </div>
+                <!-- Pagination -->
+                <div x-show="sortedTeams.length > 0" class="px-5 py-3 border-t border-sumi-100 flex items-center justify-between bg-kinari-50">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(teamPage - 1) * teamPageSize + 1"></span>-<span x-text="Math.min(teamPage * teamPageSize, sortedTeams.length)"></span> / <span x-text="sortedTeams.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="teamPage--" :disabled="teamPage <= 1" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">前へ</button>
+                        <span class="text-sm text-sumi-600"><span x-text="teamPage"></span> / <span x-text="teamTotalPages"></span></span>
+                        <button @click="teamPage++" :disabled="teamPage >= teamTotalPages" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">次へ</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Facilities -->
         <div x-show="currentTab === 'facilities'" x-cloak>
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-sumi-800">施設管理</h2>
-                <button @click="showFacilityModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">新規施設追加</button>
+                <div class="flex items-center gap-3">
+                    <button @click="currentTab = 'dashboard'" class="p-2 text-sumi-500 hover:text-sumi-700 hover:bg-sumi-100 rounded-lg transition-colors" title="ダッシュボードに戻る">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    <h2 class="text-xl font-semibold text-sumi-800">施設管理</h2>
+                </div>
+                <button @click="showFacilityModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors min-h-[44px]">新規施設追加</button>
             </div>
-            <div class="bg-white border border-sumi-100 rounded overflow-hidden">
+            <!-- Filter Controls -->
+            <div class="bg-white border border-sumi-100 rounded p-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-4 items-end">
+                    <!-- Search -->
+                    <div class="sm:col-span-2 lg:flex-1 lg:min-w-[200px]">
+                        <label class="block text-xs font-medium text-sumi-500 mb-1">検索</label>
+                        <input type="text" x-model="facilityFilter.search" placeholder="施設名・自治体で検索..."
+                               class="w-full px-3 py-2.5 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500 min-h-[44px]">
+                    </div>
+                    <!-- Municipality Filter -->
+                    <div class="lg:min-w-[180px]">
+                        <label class="block text-xs font-medium text-sumi-500 mb-1">自治体</label>
+                        <select x-model="facilityFilter.municipality"
+                                class="w-full px-3 py-2.5 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500 min-h-[44px]">
+                            <option value="">すべて</option>
+                            <template x-for="m in uniqueFacilityMunicipalities" :key="m">
+                                <option :value="m" x-text="m"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <!-- Status Filter -->
+                    <div class="lg:min-w-[140px]">
+                        <label class="block text-xs font-medium text-sumi-500 mb-1">ステータス</label>
+                        <select x-model="facilityFilter.status"
+                                class="w-full px-3 py-2.5 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500 min-h-[44px]">
+                            <option value="">すべて</option>
+                            <option value="enabled">有効</option>
+                            <option value="disabled">無効</option>
+                        </select>
+                    </div>
+                    <!-- Clear Filters -->
+                    <button @click="clearFacilityFilters()" 
+                            x-show="facilityFilter.search || facilityFilter.municipality || facilityFilter.status"
+                            class="px-4 py-2.5 text-sm text-sumi-600 hover:text-sumi-800 hover:bg-sumi-100 rounded transition-colors min-h-[44px]">
+                        クリア
+                    </button>
+                </div>
+                <!-- Result Count -->
+                <div class="mt-3 text-sm text-sumi-500">
+                    <span x-text="filteredFacilities.length"></span>件
+                    <span x-show="filteredFacilities.length !== facilities.length">
+                        (全<span x-text="facilities.length"></span>件中)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Mobile: Card View -->
+            <div class="md:hidden space-y-3">
+                <template x-for="f in paginatedFacilities" :key="f.id">
+                    <div class="bg-white rounded-lg p-4 border border-sumi-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-medium text-sumi-800" x-text="f.name"></span>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
+                                'bg-wakakusa-50 text-wakakusa-700': f.enabled,
+                                'bg-sumi-100 text-sumi-600': !f.enabled
+                            }">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                    'bg-wakakusa-500': f.enabled,
+                                    'bg-sumi-400': !f.enabled
+                                }"></span>
+                                <span x-text="f.enabled ? '有効' : '無効'"></span>
+                            </span>
+                        </div>
+                        <div class="text-sm text-sumi-500 space-y-1">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span x-text="f.municipality"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span class="text-xs text-sumi-500" x-text="f.scraper_type"></span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-sumi-100">
+                            <button @click="openEditFacilityModal(f)" class="flex-1 py-2.5 text-sm text-ai-600 hover:bg-ai-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                編集
+                            </button>
+                            <button @click="confirmDeleteFacility(f)" class="flex-1 py-2.5 text-sm text-sango-600 hover:bg-sango-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <!-- Mobile Empty State -->
+                <div x-show="sortedFilteredFacilities.length === 0" class="py-12 text-center text-sumi-500 bg-white rounded-lg border border-sumi-100">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <p class="text-sm">施設が見つかりません</p>
+                </div>
+                <!-- Mobile Pagination -->
+                <div x-show="sortedFilteredFacilities.length > 0" class="flex items-center justify-between py-3">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(facilityPage - 1) * facilityPageSize + 1"></span>-<span x-text="Math.min(facilityPage * facilityPageSize, sortedFilteredFacilities.length)"></span> / <span x-text="sortedFilteredFacilities.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="facilityPage--" :disabled="facilityPage <= 1" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">前へ</button>
+                        <button @click="facilityPage++" :disabled="facilityPage >= facilityTotalPages" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">次へ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop: Table View -->
+            <div class="hidden md:block bg-white border border-sumi-100 rounded overflow-hidden">
                 <table class="min-w-full">
                     <thead>
-                        <tr class="border-b border-sumi-100">
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">施設名</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">自治体</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">スクレイパー</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">ステータス</th>
+                        <tr class="border-b border-sumi-200">
+                            <th @click="sortFacilitiesBy('name')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    施設名
+                                    <span x-show="facilitySort.field === 'name'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortFacilitiesBy('municipality')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    自治体
+                                    <span x-show="facilitySort.field === 'municipality'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortFacilitiesBy('scraper_type')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    スクレイパー
+                                    <span x-show="facilitySort.field === 'scraper_type'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortFacilitiesBy('enabled')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    ステータス
+                                    <span x-show="facilitySort.field === 'enabled'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider">アクション</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-sumi-50">
-                        <template x-for="f in facilities" :key="f.id">
-                            <tr class="hover:bg-kinari-50 transition-colors">
+                    <tbody>
+                        <template x-for="(f, idx) in paginatedFacilities" :key="f.id">
+                            <tr class="border-b border-sumi-100 hover:bg-ai-50 transition-colors"
+                                :class="idx % 2 === 0 ? 'bg-white' : 'bg-kinari-50'">
                                 <td class="px-5 py-4 text-sm text-sumi-800" x-text="f.name"></td>
                                 <td class="px-5 py-4 text-sm text-sumi-600" x-text="f.municipality"></td>
                                 <td class="px-5 py-4 text-sm text-sumi-600" x-text="f.scraper_type"></td>
                                 <td class="px-5 py-4">
-                                    <span class="px-2 py-0.5 text-xs rounded" :class="{
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
                                         'bg-wakakusa-50 text-wakakusa-700': f.enabled,
-                                        'bg-sango-50 text-sango-700': !f.enabled
-                                    }" x-text="f.enabled ? '有効' : '無効'"></span>
+                                        'bg-sumi-100 text-sumi-600': !f.enabled
+                                    }">
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                            'bg-wakakusa-500': f.enabled,
+                                            'bg-sumi-400': !f.enabled
+                                        }"></span>
+                                        <span x-text="f.enabled ? '有効' : '無効'"></span>
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <button @click="openEditFacilityModal(f)" class="p-1.5 text-ai-600 hover:bg-ai-100 rounded transition-colors" title="編集">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                        <button @click="confirmDeleteFacility(f)" class="p-1.5 text-sango-600 hover:bg-sango-100 rounded transition-colors" title="削除">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
+                <!-- Empty State -->
+                <div x-show="sortedFilteredFacilities.length === 0" class="py-12 text-center text-sumi-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <p class="text-sm">施設が見つかりません</p>
+                </div>
+                <!-- Pagination -->
+                <div x-show="sortedFilteredFacilities.length > 0" class="px-5 py-3 border-t border-sumi-100 flex items-center justify-between bg-kinari-50">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(facilityPage - 1) * facilityPageSize + 1"></span>-<span x-text="Math.min(facilityPage * facilityPageSize, sortedFilteredFacilities.length)"></span> / <span x-text="sortedFilteredFacilities.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="facilityPage--" :disabled="facilityPage <= 1" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">前へ</button>
+                        <span class="text-sm text-sumi-600"><span x-text="facilityPage"></span> / <span x-text="facilityTotalPages"></span></span>
+                        <button @click="facilityPage++" :disabled="facilityPage >= facilityTotalPages" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">次へ</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Slots (空き状況) - Calendar View -->
         <div x-show="currentTab === 'slots'" x-cloak>
-            <!-- Breadcrumb -->
-            <div class="flex items-center gap-2 mb-4 text-sm">
+            <!-- Header with back button -->
+            <div class="flex items-center gap-3 mb-4">
+                <button @click="currentTab = 'dashboard'" class="p-2 text-sumi-500 hover:text-sumi-700 hover:bg-sumi-100 rounded-lg transition-colors" title="ダッシュボードに戻る">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </button>
+                <h2 class="text-xl font-semibold text-sumi-800">空き状況</h2>
+            </div>
+            <!-- View Toggle Tabs -->
+            <div class="flex items-center gap-1 mb-4 border-b border-sumi-200">
+                <button @click="slotView = 'all-calendar'; selectedMunicipality = null; selectedGround = null"
+                        class="px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px"
+                        :class="slotView === 'all-calendar' ? 'text-ai-600 border-ai-600' : 'text-sumi-500 border-transparent hover:text-sumi-700'">📅 全施設カレンダー</button>
+                <button @click="slotView = 'trends'; selectedMunicipality = null; selectedGround = null"
+                        class="px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px"
+                        :class="slotView === 'trends' ? 'text-ai-600 border-ai-600' : 'text-sumi-500 border-transparent hover:text-sumi-700'">📊 狙い目分析</button>
+                <button @click="slotView = 'municipalities'; selectedMunicipality = null; selectedGround = null"
+                        class="px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px"
+                        :class="slotView === 'municipalities' || slotView === 'grounds' || slotView === 'calendar' ? 'text-ai-600 border-ai-600' : 'text-sumi-500 border-transparent hover:text-sumi-700'">🏢 自治体別</button>
+            </div>
+
+            <!-- Breadcrumb (自治体別ビュー用) -->
+            <div x-show="slotView === 'municipalities' || slotView === 'grounds' || slotView === 'calendar'" class="flex items-center gap-2 mb-4 text-sm">
                 <button @click="slotView = 'municipalities'; selectedMunicipality = null; selectedGround = null"
                         class="hover:text-ai-600 transition-colors" :class="slotView === 'municipalities' ? 'text-sumi-800 font-medium' : 'text-sumi-500'">自治体一覧</button>
                 <template x-if="selectedMunicipality">
@@ -272,22 +857,333 @@
                 </template>
             </div>
 
+            <!-- 全施設カレンダービュー -->
+            <div x-show="slotView === 'all-calendar'">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-sumi-800">全施設カレンダー</h2>
+                    <button @click="loadSlots(); loadGrounds()" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">更新</button>
+                </div>
+
+                <!-- サマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-4">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">総空き枠数</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="slots.length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある自治体</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="getGroundsWithSlots().length + '/' + municipalities.length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある日数</span>
+                                <div class="text-2xl font-semibold text-wakakusa-500" x-text="getUniqueDatesAll()"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 items-center text-xs">
+                            <span class="text-sumi-500">凡例:</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-50 text-wakakusa-700">1-2自治体</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-100 text-wakakusa-700">3-5自治体</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-200 text-wakakusa-800">6自治体以上</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Navigation -->
+                <div class="flex justify-between items-center mb-4">
+                    <button @click="prevMonth()" class="px-4 py-2 text-sumi-600 hover:text-sumi-800 hover:bg-kinari-200 rounded transition-colors text-sm">前月</button>
+                    <h3 class="font-medium text-sumi-800" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
+                    <button @click="nextMonth()" class="px-4 py-2 text-sumi-600 hover:text-sumi-800 hover:bg-kinari-200 rounded transition-colors text-sm">翌月</button>
+                </div>
+
+                <!-- All-Facilities Calendar Grid -->
+                <div class="bg-white border border-sumi-100 rounded overflow-hidden">
+                    <div class="grid grid-cols-7 border-b border-sumi-100">
+                        <template x-for="day in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
+                            <div class="py-2 text-center text-xs font-medium" :class="day === '日' ? 'text-sango-500' : day === '土' ? 'text-ai-500' : 'text-sumi-600'" x-text="day"></div>
+                        </template>
+                    </div>
+                    <div class="grid grid-cols-7">
+                        <template x-for="(day, idx) in calendarDays" :key="idx">
+                            <div
+                                class="min-h-[90px] border-b border-r border-sumi-50 p-1 cursor-pointer transition-colors relative"
+                                :class="{
+                                    'bg-sumi-50': !day.currentMonth,
+                                    'bg-wakakusa-200': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length >= 6,
+                                    'bg-wakakusa-100': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length >= 3 && getGroundsWithSlotsForDate(day.dateStr).length < 6,
+                                    'bg-wakakusa-50': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length > 0 && getGroundsWithSlotsForDate(day.dateStr).length < 3,
+                                    'bg-white hover:bg-ai-50': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length === 0,
+                                    'ring-2 ring-ai-400 ring-inset': allCalendarSelectedDate === day.dateStr,
+                                    'border-l border-sumi-50': idx % 7 === 0
+                                }"
+                                @click="day.currentMonth && selectAllCalendarDate(day.dateStr)"
+                            >
+                                <div class="flex justify-between items-start">
+                                    <span class="text-sm font-medium"
+                                        :class="{
+                                            'text-sumi-300': !day.currentMonth,
+                                            'text-sango-600': day.currentMonth && day.dayOfWeek === 0,
+                                            'text-ai-600': day.currentMonth && day.dayOfWeek === 6,
+                                            'text-sumi-800': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
+                                        }"
+                                        x-text="day.day"
+                                    ></span>
+                                    <template x-if="day.currentMonth && getSlotsForDate(day.dateStr).length > 0">
+                                        <span class="px-1.5 py-0.5 text-xs font-bold rounded bg-wakakusa-500 text-white"
+                                              x-text="getSlotsForDate(day.dateStr).length + '枠'"></span>
+                                    </template>
+                                </div>
+                                <!-- 自治体数表示 -->
+                                <template x-if="day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length > 0">
+                                    <div class="mt-1 text-xs text-wakakusa-700 font-medium" x-text="getGroundsWithSlotsForDate(day.dateStr).length + '自治体'"></div>
+                                </template>
+                                <!-- 自治体名プレビュー (最大3つ) -->
+                                <div class="mt-1 space-y-0.5 overflow-hidden max-h-[36px]">
+                                    <template x-for="municipality in getGroundsWithSlotsForDate(day.dateStr).slice(0, 3)" :key="municipality.id">
+                                        <div class="text-xs px-1 py-0.5 bg-wakakusa-500/20 text-wakakusa-800 rounded truncate" x-text="municipality.name"></div>
+                                    </template>
+                                </div>
+                                <!-- 空き枠インジケーターバー -->
+                                <div x-show="day.currentMonth && getSlotsForDate(day.dateStr).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-300">
+                                    <div class="h-full bg-wakakusa-600" :style="'width: ' + Math.min(100, getSlotsForDate(day.dateStr).length * 2) + '%'"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Selected Date Detail (全施設) -->
+                <div x-show="allCalendarSelectedDate" class="mt-6 bg-white border border-sumi-100 rounded p-5">
+                    <h3 class="font-medium text-sumi-800 mb-4" x-text="formatDateFull(allCalendarSelectedDate) + ' の空き状況'"></h3>
+                    <div x-show="getSlotsForDate(allCalendarSelectedDate).length === 0" class="text-sumi-500 text-center py-4 text-sm">
+                        この日の空き枠はありません
+                    </div>
+                    <!-- 自治体別にグループ化して表示 -->
+                    <div class="space-y-4">
+                        <template x-for="municipality in getGroundsWithSlotsForDate(allCalendarSelectedDate)" :key="municipality.id">
+                            <div class="border border-sumi-100 rounded p-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium text-sumi-800 text-sm" x-text="municipality.name"></h4>
+                                    <span class="px-2 py-0.5 text-xs rounded bg-wakakusa-100 text-wakakusa-700"
+                                          x-text="getSlotsForMunicipalityDate(municipality.id, allCalendarSelectedDate).length + '枠'"></span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="slot in getSlotsForMunicipalityDate(municipality.id, allCalendarSelectedDate)" :key="slot.id">
+                                        <span class="px-2 py-1 bg-wakakusa-50 text-wakakusa-800 text-xs rounded"
+                                              x-text="slot.time_from + '-' + slot.time_to + (slot.court_name ? ' (' + slot.court_name + ')' : '')"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 狙い目分析ビュー -->
+            <div x-show="slotView === 'trends'">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-sumi-800">狙い目分析</h2>
+                    <button @click="loadSlots()" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">更新</button>
+                </div>
+
+                <!-- 分析サマリー -->
+                <div class="bg-gradient-to-r from-ai-50 to-wakakusa-50 border border-ai-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-lg">🎯</span>
+                        <h3 class="font-semibold text-sumi-800">抽選の狙い目</h3>
+                    </div>
+                    <p class="text-sm text-sumi-600">過去の空き状況データから、空きが出やすい曜日・時間帯・自治体を分析しています。</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 曜日別空き状況 -->
+                    <div class="bg-white border border-sumi-100 rounded-lg p-5">
+                        <h3 class="font-semibold text-sumi-800 mb-4 flex items-center gap-2">
+                            <span>📆</span> 曜日別の空き状況
+                        </h3>
+                        <div class="space-y-3">
+                            <template x-for="(day, idx) in getSlotsByDayOfWeek()" :key="idx">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-8 text-sm font-medium" :class="{
+                                        'text-sango-600': idx === 0,
+                                        'text-ai-600': idx === 6,
+                                        'text-sumi-700': idx > 0 && idx < 6
+                                    }" x-text="['日', '月', '火', '水', '木', '金', '土'][idx]"></span>
+                                    <div class="flex-1 bg-sumi-100 rounded-full h-6 relative overflow-hidden">
+                                        <div class="h-full rounded-full transition-all"
+                                             :class="day.count > 0 ? 'bg-wakakusa-500' : 'bg-sumi-200'"
+                                             :style="'width: ' + (day.percentage || 0) + '%'"></div>
+                                        <span class="absolute inset-0 flex items-center justify-center text-xs font-medium"
+                                              :class="day.percentage > 50 ? 'text-white' : 'text-sumi-700'"
+                                              x-text="day.count + '枠'"></span>
+                                    </div>
+                                    <span x-show="day.isHot" class="text-xs px-2 py-0.5 bg-sango-100 text-sango-700 rounded font-medium">狙い目！</span>
+                                </div>
+                            </template>
+                        </div>
+                        <p class="mt-4 text-xs text-sumi-500">※ 黒鈴が空きになりやすい曜日が「狙い目」です</p>
+                    </div>
+
+                    <!-- 時間帯別空き状況 -->
+                    <div class="bg-white border border-sumi-100 rounded-lg p-5">
+                        <h3 class="font-semibold text-sumi-800 mb-4 flex items-center gap-2">
+                            <span>⏰</span> 時間帯別の空き状況
+                        </h3>
+                        <div class="space-y-2">
+                            <template x-for="slot in getSlotsByTimeRange()" :key="slot.range">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-24 text-sm text-sumi-600" x-text="slot.range"></span>
+                                    <div class="flex-1 bg-sumi-100 rounded-full h-5 relative overflow-hidden">
+                                        <div class="h-full bg-ai-500 rounded-full transition-all"
+                                             :style="'width: ' + (slot.percentage || 0) + '%'"></div>
+                                        <span class="absolute inset-0 flex items-center justify-center text-xs font-medium"
+                                              :class="slot.percentage > 50 ? 'text-white' : 'text-sumi-700'"
+                                              x-text="slot.count + '枠'"></span>
+                                    </div>
+                                    <span x-show="slot.isHot" class="text-xs px-2 py-0.5 bg-sango-100 text-sango-700 rounded font-medium">狙い目！</span>
+                                </div>
+                            </template>
+                        </div>
+                        <p class="mt-4 text-xs text-sumi-500">※ 競争が少なく空きが出やすい時間帯が「狙い目」です</p>
+                    </div>
+
+                    <!-- 自治体別空き状況 -->
+                    <div class="bg-white border border-sumi-100 rounded-lg p-5">
+                        <h3 class="font-semibold text-sumi-800 mb-4 flex items-center gap-2">
+                            <span>🏢</span> 自治体別の空き状況
+                        </h3>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            <template x-for="muni in getSlotsByMunicipality()" :key="muni.id">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-20 text-sm text-sumi-700 truncate" x-text="muni.name"></span>
+                                    <div class="flex-1 bg-sumi-100 rounded-full h-5 relative overflow-hidden">
+                                        <div class="h-full bg-wakakusa-500 rounded-full transition-all"
+                                             :style="'width: ' + (muni.percentage || 0) + '%'"></div>
+                                        <span class="absolute inset-0 flex items-center justify-center text-xs font-medium"
+                                              :class="muni.percentage > 50 ? 'text-white' : 'text-sumi-700'"
+                                              x-text="muni.count + '枠'"></span>
+                                    </div>
+                                    <span x-show="muni.isHot" class="text-xs px-2 py-0.5 bg-sango-100 text-sango-700 rounded font-medium">狙い目！</span>
+                                </div>
+                            </template>
+                        </div>
+                        <p class="mt-4 text-xs text-sumi-500">※ 空き枠が多い自治体が「狙い目」です</p>
+                    </div>
+
+                    <!-- コート別空き状況 -->
+                    <div class="bg-white border border-sumi-100 rounded-lg p-5">
+                        <h3 class="font-semibold text-sumi-800 mb-4 flex items-center gap-2">
+                            <span>⚾</span> コート別の空き状況 TOP10
+                        </h3>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            <template x-for="(court, idx) in getSlotsByCourt().slice(0, 10)" :key="court.name">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 text-sm font-medium text-sumi-400" x-text="idx + 1"></span>
+                                    <span class="flex-1 text-sm text-sumi-700 truncate" x-text="court.name"></span>
+                                    <span class="text-sm font-medium" :class="court.count > 20 ? 'text-wakakusa-600' : 'text-sumi-600'" x-text="court.count + '枠'"></span>
+                                </div>
+                            </template>
+                        </div>
+                        <p class="mt-4 text-xs text-sumi-500">※ 空きの出やすいコートランキングです</p>
+                    </div>
+                </div>
+
+                <!-- 曜日×時間帯ヒートマップ -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 mt-6">
+                    <h3 class="font-semibold text-sumi-800 mb-4 flex items-center gap-2">
+                        <span>🗺️</span> 曜日×時間帯 ヒートマップ
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="p-2 text-left text-sumi-500"></th>
+                                    <template x-for="(day, idx) in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
+                                        <th class="p-2 text-center font-medium" :class="{
+                                            'text-sango-600': idx === 0,
+                                            'text-ai-600': idx === 6,
+                                            'text-sumi-600': idx > 0 && idx < 6
+                                        }" x-text="day"></th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="timeRange in getTimeRangesForHeatmap()" :key="timeRange">
+                                    <tr>
+                                        <td class="p-2 text-sumi-600 whitespace-nowrap" x-text="timeRange"></td>
+                                        <template x-for="dayIdx in [0, 1, 2, 3, 4, 5, 6]" :key="dayIdx">
+                                            <td class="p-1">
+                                                <div class="w-full h-8 rounded flex items-center justify-center text-xs font-medium"
+                                                     :class="getHeatmapCellClass(dayIdx, timeRange)"
+                                                     x-text="getHeatmapValue(dayIdx, timeRange)"></div>
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex items-center gap-4 mt-4 text-xs text-sumi-500">
+                        <span>凡例:</span>
+                        <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-sumi-100"></span> 0</span>
+                        <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-wakakusa-100"></span> 1-5</span>
+                        <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-wakakusa-300"></span> 6-15</span>
+                        <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-wakakusa-500"></span> 16+</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- 自治体一覧 -->
             <div x-show="slotView === 'municipalities'">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-sumi-800">自治体別空き状況</h2>
                     <button @click="loadSlots(); loadGrounds()" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">更新</button>
                 </div>
+
+                <!-- 空き状況サマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-6">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">総空き枠数</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="slots.length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある自治体</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="municipalities.filter(m => getSlotsForMunicipality(m.id).length > 0).length + '/' + municipalities.length"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 items-center text-xs">
+                            <span class="text-sumi-500">凡例:</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-50 text-wakakusa-700">1-10件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-100 text-wakakusa-700">11-50件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-200 text-wakakusa-800">51件以上</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="m in municipalities" :key="m.id">
                         <div @click="selectMunicipality(m)"
-                             class="bg-white border border-sumi-100 rounded p-4 cursor-pointer hover:border-ai-300 transition-colors">
+                             class="border rounded p-4 cursor-pointer hover:border-ai-300 transition-colors relative overflow-hidden"
+                             :class="{
+                                 'bg-wakakusa-200 border-wakakusa-300': getSlotsForMunicipality(m.id).length > 50,
+                                 'bg-wakakusa-100 border-wakakusa-200': getSlotsForMunicipality(m.id).length > 10 && getSlotsForMunicipality(m.id).length <= 50,
+                                 'bg-wakakusa-50 border-wakakusa-100': getSlotsForMunicipality(m.id).length > 0 && getSlotsForMunicipality(m.id).length <= 10,
+                                 'bg-white border-sumi-100': getSlotsForMunicipality(m.id).length === 0
+                             }">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-medium text-sumi-800" x-text="m.name"></h3>
-                                <span class="px-2 py-0.5 text-xs rounded bg-wakakusa-50 text-wakakusa-700"
+                                <span class="px-2 py-0.5 text-xs rounded font-medium"
+                                      :class="getSlotsForMunicipality(m.id).length > 0 ? 'bg-wakakusa-500 text-white' : 'bg-sumi-100 text-sumi-500'"
                                       x-text="getSlotsForMunicipality(m.id).length + '件'"></span>
                             </div>
                             <p class="text-sm text-sumi-500 mt-1" x-text="getGroundsForMunicipality(m.id).length + '施設'"></p>
+                            <!-- プログレスバー -->
+                            <div x-show="getSlotsForMunicipality(m.id).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-200">
+                                <div class="h-full bg-wakakusa-500" :style="'width: ' + Math.min(100, getSlotsForMunicipality(m.id).length / 2) + '%'"></div>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -298,16 +1194,44 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-sumi-800" x-text="selectedMunicipality?.name + ' の施設'"></h2>
                 </div>
+
+                <!-- グラウンドサマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-6">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">この自治体の空き枠</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="getSlotsForMunicipality(selectedMunicipality?.id).length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある施設</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="getGroundsForMunicipality(selectedMunicipality?.id).filter(g => getSlotsForGround(g.id).length > 0).length + '/' + getGroundsForMunicipality(selectedMunicipality?.id).length"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="g in getGroundsForMunicipality(selectedMunicipality?.id)" :key="g.id">
                         <div @click="selectGround(g)"
-                             class="bg-white border border-sumi-100 rounded p-4 cursor-pointer hover:border-ai-300 transition-colors">
+                             class="border rounded p-4 cursor-pointer hover:border-ai-300 transition-colors relative overflow-hidden"
+                             :class="{
+                                 'bg-wakakusa-200 border-wakakusa-300': getSlotsForGround(g.id).length > 20,
+                                 'bg-wakakusa-100 border-wakakusa-200': getSlotsForGround(g.id).length > 5 && getSlotsForGround(g.id).length <= 20,
+                                 'bg-wakakusa-50 border-wakakusa-100': getSlotsForGround(g.id).length > 0 && getSlotsForGround(g.id).length <= 5,
+                                 'bg-white border-sumi-100': getSlotsForGround(g.id).length === 0
+                             }">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-medium text-sumi-800" x-text="g.name"></h3>
-                                <span class="px-2 py-0.5 text-xs rounded bg-wakakusa-50 text-wakakusa-700"
+                                <span class="px-2 py-0.5 text-xs rounded font-medium"
+                                      :class="getSlotsForGround(g.id).length > 0 ? 'bg-wakakusa-500 text-white' : 'bg-sumi-100 text-sumi-500'"
                                       x-text="getSlotsForGround(g.id).length + '件'"></span>
                             </div>
                             <p class="text-sm text-sumi-500 mt-1" x-text="g.court_pattern || ''"></p>
+                            <!-- プログレスバー -->
+                            <div x-show="getSlotsForGround(g.id).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-200">
+                                <div class="h-full bg-wakakusa-500" :style="'width: ' + Math.min(100, getSlotsForGround(g.id).length * 5) + '%'"></div>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -317,6 +1241,28 @@
             <div x-show="slotView === 'calendar' && selectedGround">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-sumi-800" x-text="selectedGround?.name + ' の空き状況'"></h2>
+                </div>
+
+                <!-- カレンダーサマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-4">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">この施設の空き枠</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="getSlotsForGround(selectedGround?.id).length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある日数</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="getUniqueDatesForGround(selectedGround?.id)"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 items-center text-xs">
+                            <span class="text-sumi-500">凡例:</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-50 text-wakakusa-700">1-2件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-100 text-wakakusa-700">3-5件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-200 text-wakakusa-800">6件以上</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Calendar Navigation -->
@@ -336,34 +1282,41 @@
                     <div class="grid grid-cols-7">
                         <template x-for="(day, idx) in calendarDays" :key="idx">
                             <div
-                                class="min-h-[80px] border-b border-r border-sumi-50 p-1 cursor-pointer transition-colors"
+                                class="min-h-[80px] border-b border-r border-sumi-50 p-1 cursor-pointer transition-colors relative"
                                 :class="{
                                     'bg-sumi-50': !day.currentMonth,
-                                    'hover:bg-ai-50': day.currentMonth,
-                                    'bg-ai-50 border-ai-200': selectedDate === day.dateStr,
+                                    'bg-wakakusa-200': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length >= 6,
+                                    'bg-wakakusa-100': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length >= 3 && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length < 6,
+                                    'bg-wakakusa-50': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length > 0 && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length < 3,
+                                    'bg-white hover:bg-ai-50': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length === 0,
+                                    'ring-2 ring-ai-400 ring-inset': selectedDate === day.dateStr,
                                     'border-l border-sumi-50': idx % 7 === 0
                                 }"
                                 @click="day.currentMonth && selectDate(day.dateStr)"
                             >
                                 <div class="flex justify-between items-start">
-                                    <span class="text-sm"
+                                    <span class="text-sm font-medium"
                                         :class="{
                                             'text-sumi-300': !day.currentMonth,
-                                            'text-sango-500': day.currentMonth && day.dayOfWeek === 0,
-                                            'text-ai-500': day.currentMonth && day.dayOfWeek === 6,
-                                            'text-sumi-700': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
+                                            'text-sango-600': day.currentMonth && day.dayOfWeek === 0,
+                                            'text-ai-600': day.currentMonth && day.dayOfWeek === 6,
+                                            'text-sumi-800': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
                                         }"
                                         x-text="day.day"
                                     ></span>
                                     <template x-if="day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length > 0">
-                                        <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-wakakusa-500 text-white"
+                                        <span class="px-1.5 py-0.5 text-xs font-bold rounded bg-wakakusa-500 text-white"
                                               x-text="getSlotsForGroundDate(selectedGround?.id, day.dateStr).length"></span>
                                     </template>
                                 </div>
                                 <div class="mt-1 space-y-0.5 overflow-hidden max-h-[40px]">
                                     <template x-for="slot in getSlotsForGroundDate(selectedGround?.id, day.dateStr).slice(0, 2)" :key="slot.id">
-                                        <div class="text-xs px-1 py-0.5 bg-wakakusa-50 text-wakakusa-700 rounded truncate" x-text="slot.time_from + '-' + slot.time_to"></div>
+                                        <div class="text-xs px-1 py-0.5 bg-wakakusa-500/20 text-wakakusa-800 rounded truncate font-medium" x-text="slot.time_from + '-' + slot.time_to"></div>
                                     </template>
+                                </div>
+                                <!-- 空き枠インジケーターバー -->
+                                <div x-show="day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-300">
+                                    <div class="h-full bg-wakakusa-600" :style="'width: ' + Math.min(100, getSlotsForGroundDate(selectedGround?.id, day.dateStr).length * 15) + '%'"></div>
                                 </div>
                             </div>
                         </template>
@@ -399,7 +1352,14 @@
         <div x-show="currentTab === 'worker'" x-cloak>
             <!-- Header with actions -->
             <div class="mb-4">
-                <h2 class="text-xl font-semibold text-sumi-800 mb-3">ワーカー管理</h2>
+                <div class="flex items-center gap-3 mb-3">
+                    <button @click="currentTab = 'dashboard'" class="p-2 text-sumi-500 hover:text-sumi-700 hover:bg-sumi-100 rounded-lg transition-colors" title="ダッシュボードに戻る">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    <h2 class="text-xl font-semibold text-sumi-800">ワーカー管理</h2>
+                </div>
                 <div class="flex flex-col sm:flex-row gap-2">
                     <select x-model="selectedMunicipalityForScrape" class="border border-sumi-200 rounded px-3 py-2 text-sm flex-1 bg-white text-sumi-700 focus:outline-none focus:border-ai-400">
                         <option value="">全ての自治体</option>
@@ -547,7 +1507,14 @@
 
         <!-- AI Support -->
         <div x-show="currentTab === 'support'" x-cloak>
-            <h2 class="text-xl font-semibold text-sumi-800 mb-6">AI サポート</h2>
+            <div class="flex items-center gap-3 mb-6">
+                <button @click="currentTab = 'dashboard'" class="p-2 text-sumi-500 hover:text-sumi-700 hover:bg-sumi-100 rounded-lg transition-colors" title="ダッシュボードに戻る">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </button>
+                <h2 class="text-xl font-semibold text-sumi-800">AI サポート</h2>
+            </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Chat -->
                 <div class="bg-white border border-sumi-100 rounded p-5">
@@ -617,6 +1584,61 @@
         </div>
     </div>
 
+    <!-- Date Detail Modal -->
+    <div x-show="showDateDetailModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4" @click.self="showDateDetailModal = false">
+        <div class="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-sumi-100 flex justify-between items-center">
+                <h3 class="font-semibold text-sumi-800" x-text="formatDateFull(allCalendarSelectedDate) + ' の空き状況'"></h3>
+                <button @click="showDateDetailModal = false" class="text-sumi-400 hover:text-sumi-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <div x-show="getSlotsForDate(allCalendarSelectedDate).length === 0" class="text-sumi-500 text-center py-8">
+                    この日の空き枠はありません
+                </div>
+                <!-- サマリー -->
+                <div x-show="getSlotsForDate(allCalendarSelectedDate).length > 0" class="mb-4 p-3 bg-wakakusa-50 rounded-lg">
+                    <div class="flex gap-4">
+                        <div>
+                            <span class="text-xs text-sumi-500">総空き枠</span>
+                            <div class="text-xl font-semibold text-wakakusa-700" x-text="getSlotsForDate(allCalendarSelectedDate).length + '枠'"></div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-sumi-500">自治体数</span>
+                            <div class="text-xl font-semibold text-ai-600" x-text="getGroundsWithSlotsForDate(allCalendarSelectedDate).length"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 自治体別にグループ化して表示 -->
+                <div class="space-y-4">
+                    <template x-for="municipality in getGroundsWithSlotsForDate(allCalendarSelectedDate)" :key="municipality.id">
+                        <div class="border border-sumi-100 rounded-lg overflow-hidden">
+                            <div class="flex justify-between items-center p-3 bg-sumi-50">
+                                <h4 class="font-medium text-sumi-800" x-text="municipality.name"></h4>
+                                <span class="px-2 py-0.5 text-xs rounded bg-wakakusa-500 text-white font-medium"
+                                      x-text="getSlotsForMunicipalityDate(municipality.id, allCalendarSelectedDate).length + '枠'"></span>
+                            </div>
+                            <div class="p-3">
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="slot in getSlotsForMunicipalityDate(municipality.id, allCalendarSelectedDate)" :key="slot.id">
+                                        <span class="px-2 py-1 bg-wakakusa-50 text-wakakusa-800 text-xs rounded border border-wakakusa-200"
+                                              x-text="slot.time_from + '-' + slot.time_to + (slot.court_name ? ' (' + slot.court_name + ')' : '')"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            <div class="p-4 border-t border-sumi-100 bg-sumi-50">
+                <button @click="showDateDetailModal = false" class="w-full px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Facility Modal -->
     <div x-show="showFacilityModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded p-6 w-full max-w-md" @click.away="showFacilityModal = false">
@@ -644,6 +1666,136 @@
                 <button @click="createFacility()" class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">追加</button>
             </div>
         </div>
+    </div>
+
+    <!-- Edit Team Modal -->
+    <div x-show="showEditTeamModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded p-6 w-full max-w-md" @click.away="showEditTeamModal = false">
+            <h3 class="font-semibold text-sumi-800 mb-4">チーム編集</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">チーム名</label>
+                    <input type="text" x-model="editTeam.name" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">メールアドレス</label>
+                    <input type="email" x-model="editTeam.email" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">プラン</label>
+                    <select x-model="editTeam.plan" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400 bg-white">
+                        <option value="free">Free</option>
+                        <option value="personal">Personal</option>
+                        <option value="pro">Pro</option>
+                        <option value="org">Org</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">ステータス</label>
+                    <select x-model="editTeam.status" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400 bg-white">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showEditTeamModal = false" class="px-4 py-2 border border-sumi-200 rounded text-sm text-sumi-600 hover:bg-kinari-100 transition-colors">キャンセル</button>
+                <button @click="updateTeam()" class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Facility Modal -->
+    <div x-show="showEditFacilityModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded p-6 w-full max-w-md" @click.away="showEditFacilityModal = false">
+            <h3 class="font-semibold text-sumi-800 mb-4">施設編集</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">施設名</label>
+                    <input type="text" x-model="editFacility.name" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">自治体</label>
+                    <input type="text" x-model="editFacility.municipality" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">スクレイパータイプ</label>
+                    <input type="text" x-model="editFacility.scraper_type" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">URL</label>
+                    <input type="url" x-model="editFacility.url" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="flex items-center gap-2 text-sm font-medium text-sumi-700">
+                        <input type="checkbox" x-model="editFacility.enabled" class="rounded border-sumi-300 text-ai-600 focus:ring-ai-500">
+                        有効
+                    </label>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showEditFacilityModal = false" class="px-4 py-2 border border-sumi-200 rounded text-sm text-sumi-600 hover:bg-kinari-100 transition-colors">キャンセル</button>
+                <button @click="updateFacility()" class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="showDeleteConfirmModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm" @click.away="showDeleteConfirmModal = false">
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto mb-4 bg-sango-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-sango-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-sumi-800 mb-2">削除の確認</h3>
+                <p class="text-sm text-sumi-600 mb-6">
+                    <span class="font-medium text-sumi-800" x-text="deleteTarget?.name"></span> を削除しますか？<br>
+                    <span class="text-sango-600">この操作は取り消せません。</span>
+                </p>
+                <div class="flex gap-3">
+                    <button @click="showDeleteConfirmModal = false" class="flex-1 px-4 py-2 border border-sumi-200 rounded text-sm text-sumi-600 hover:bg-kinari-100 transition-colors">キャンセル</button>
+                    <button @click="executeDelete()" class="flex-1 px-4 py-2 bg-sango-600 text-white rounded text-sm font-medium hover:bg-sango-700 transition-colors">削除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div class="pointer-events-auto px-4 py-3 rounded-lg shadow-lg text-white text-sm flex items-center gap-2 min-w-[280px] max-w-md"
+                 :class="[
+                     toast.type === 'error' ? 'bg-sango-600' :
+                     toast.type === 'success' ? 'bg-wakakusa-600' :
+                     toast.type === 'warning' ? 'bg-yellow-500' : 'bg-ai-600',
+                     toast.removing ? 'animate-slideOutRight' : 'animate-slideInRight'
+                 ]"
+                 style="animation-fill-mode: forwards;">
+                <!-- アイコン -->
+                <svg x-show="toast.type === 'success'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <svg x-show="toast.type === 'error'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <svg x-show="toast.type === 'warning'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <svg x-show="toast.type === 'info' || !['success', 'error', 'warning'].includes(toast.type)" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span x-text="toast.message" class="flex-1"></span>
+                <!-- 閉じるボタン -->
+                <button @click="removeToast(toast.id)" class="ml-2 hover:opacity-80 transition-opacity flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </template>
     </div>
 
     <script>
@@ -674,19 +1826,21 @@
             navTabs: NAV_TABS,
             currentTab: 'dashboard',
             mobileMenuOpen: false,
-            dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [] },
+            dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [], FailedJobCount: 0, RecentActivity: [] },
             teams: [],
             facilities: [],
             grounds: [],
             slots: [],
             municipalities: [],
-            slotView: 'municipalities',
+            slotView: 'all-calendar',
             selectedMunicipality: null,
             selectedGround: null,
             slotFilter: { municipalityId: '' },
             calendarYear: new Date().getFullYear(),
             calendarMonth: new Date().getMonth(),
             selectedDate: null,
+            allCalendarSelectedDate: null,
+            showDateDetailModal: false,
             showLogs: window.innerWidth >= 768,
             jobs: [],
             workerLogs: [],
@@ -701,6 +1855,79 @@
             showFacilityModal: false,
             newTeam: { name: '', email: '', plan: 'free' },
             newFacility: { name: '', municipality: '', scraper_type: '', url: '' },
+            facilityFilter: { search: '', municipality: '', status: '' },
+
+            // Team table state
+            teamSort: { field: 'name', dir: 'asc' },
+            teamPage: 1,
+            teamPageSize: 20,
+            showEditTeamModal: false,
+            editTeam: { id: null, name: '', email: '', plan: 'free', status: 'active' },
+
+            // Facility table state
+            facilitySort: { field: 'name', dir: 'asc' },
+            facilityPage: 1,
+            facilityPageSize: 20,
+            showEditFacilityModal: false,
+            editFacility: { id: null, name: '', municipality: '', scraper_type: '', url: '', enabled: true },
+
+            // Delete confirmation state
+            showDeleteConfirmModal: false,
+            deleteTarget: null,
+            deleteType: null, // 'team' or 'facility'
+
+            // トースト通知システム
+            toasts: [],
+            toastIdCounter: 0,
+
+            addToast(type, message, duration = 5000) {
+                const id = ++this.toastIdCounter;
+                this.toasts.push({ id, type, message, removing: false });
+                if (duration > 0) {
+                    setTimeout(() => this.removeToast(id), duration);
+                }
+                return id;
+            },
+
+            removeToast(id) {
+                const toast = this.toasts.find(t => t.id === id);
+                if (toast) {
+                    toast.removing = true;
+                    setTimeout(() => {
+                        this.toasts = this.toasts.filter(t => t.id !== id);
+                    }, 200);
+                }
+            },
+
+            // API呼び出しラッパー
+            async apiCall(url, options = {}) {
+                try {
+                    const res = await fetch(url, options);
+                    if (!res.ok) {
+                        let errorMsg = '操作に失敗しました';
+                        try {
+                            const error = await res.json();
+                            errorMsg = error.message || error.error || errorMsg;
+                        } catch (e) {
+                            errorMsg = res.statusText || errorMsg;
+                        }
+                        this.addToast('error', errorMsg);
+                        throw new Error(errorMsg);
+                    }
+                    const text = await res.text();
+                    if (!text) return null;
+                    try {
+                        return JSON.parse(text);
+                    } catch {
+                        return text;
+                    }
+                } catch (e) {
+                    if (e.name === 'TypeError') {
+                        this.addToast('error', 'ネットワークエラーが発生しました');
+                    }
+                    throw e;
+                }
+            },
 
             async init() {
                 await this.loadDashboard();
@@ -711,6 +1938,19 @@
                 await this.loadSlots();
                 await this.loadJobs();
                 await this.loadTickets();
+            },
+
+            logout() {
+                // Basic Auth のログアウト処理
+                // 1. サーバーに401を返させてブラウザの認証キャッシュをクリア
+                // 2. ユーザーページにリダイレクト
+                fetch('/admin/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                }).finally(() => {
+                    // 401が返ってくるので、finallyでリダイレクト
+                    window.location.href = '/user';
+                });
             },
 
             async loadDashboard() {
@@ -724,16 +1964,17 @@
             },
 
             async loadFacilities() {
-                const res = await fetch('/admin/api/grounds');
-                const grounds = await res.json();
-                // Map grounds to facilities format
-                this.facilities = (grounds || []).map(g => ({
-                    id: g.id,
-                    name: g.name,
-                    municipality: g.municipality_name,
-                    scraper_type: g.court_pattern,
-                    enabled: g.enabled
+                const res = await fetch('/admin/api/facilities');
+                const facilities = await res.json();
+                this.facilities = (facilities || []).map(f => ({
+                    id: f.id,
+                    name: f.name,
+                    municipality: f.municipality,
+                    scraper_type: f.scraper_type,
+                    url: f.url,
+                    enabled: f.enabled === 1 || f.enabled === true
                 }));
+                this.facilityPage = 1;
             },
 
             async loadMunicipalities() {
@@ -797,11 +2038,350 @@
                 this.selectedDate = this.selectedDate === dateStr ? null : dateStr;
             },
 
+            selectAllCalendarDate(dateStr) {
+                this.allCalendarSelectedDate = dateStr;
+                if (this.getSlotsForDate(dateStr).length > 0) {
+                    this.showDateDetailModal = true;
+                }
+            },
+
             getSlotsForDate(dateStr) {
                 return this.slots.filter(s => {
                     const slotDate = s.slot_date.split('T')[0];
                     return slotDate === dateStr;
                 }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
+            // 全施設カレンダー用: 空きのある自治体一覧を取得
+            getGroundsWithSlots() {
+                const municipalityIds = new Set(this.slots.map(s => s.municipality_id));
+                return this.municipalities.filter(m => municipalityIds.has(m.id));
+            },
+
+            // 全施設カレンダー用: 全体の空きのある日数を取得
+            getUniqueDatesAll() {
+                const dates = new Set();
+                this.slots.forEach(s => {
+                    dates.add(s.slot_date.split('T')[0]);
+                });
+                return dates.size;
+            },
+
+            // 全施設カレンダー用: 指定日に空きのある自治体一覧（ユニークな court_name でカウント）
+            getGroundsWithSlotsForDate(dateStr) {
+                const municipalities = {};
+                this.slots.forEach(s => {
+                    if (s.slot_date.split('T')[0] === dateStr) {
+                        if (!municipalities[s.municipality_id]) {
+                            municipalities[s.municipality_id] = {
+                                id: s.municipality_id,
+                                name: s.municipality_name || '不明',
+                                municipality_name: s.municipality_name || '不明',
+                                courtNames: new Set()
+                            };
+                        }
+                        municipalities[s.municipality_id].courtNames.add(s.court_name);
+                    }
+                });
+                return Object.values(municipalities).map(m => ({
+                    ...m,
+                    slotCount: m.courtNames.size
+                }));
+            },
+
+            // 全施設カレンダー用: 指定日・自治体のスロット一覧
+            getSlotsForMunicipalityDate(municipalityId, dateStr) {
+                return this.slots.filter(s => {
+                    const slotDate = s.slot_date.split('T')[0];
+                    return s.municipality_id === municipalityId && slotDate === dateStr;
+                }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
+            // 狙い目分析: 曜日別の空き状況
+            getSlotsByDayOfWeek() {
+                const days = [0, 1, 2, 3, 4, 5, 6].map(() => ({ count: 0 }));
+                this.slots.forEach(s => {
+                    const date = new Date(s.slot_date);
+                    const dayOfWeek = date.getDay();
+                    days[dayOfWeek].count++;
+                });
+                const maxCount = Math.max(...days.map(d => d.count), 1);
+                const avgCount = days.reduce((sum, d) => sum + d.count, 0) / 7;
+                return days.map((d, idx) => ({
+                    ...d,
+                    percentage: Math.round((d.count / maxCount) * 100),
+                    isHot: d.count > avgCount * 1.2
+                }));
+            },
+
+            // 狙い目分析: 時間帯別の空き状況
+            getSlotsByTimeRange() {
+                const ranges = [
+                    { range: '06:00-08:00', start: 6, end: 8, count: 0 },
+                    { range: '08:00-10:00', start: 8, end: 10, count: 0 },
+                    { range: '10:00-12:00', start: 10, end: 12, count: 0 },
+                    { range: '12:00-14:00', start: 12, end: 14, count: 0 },
+                    { range: '14:00-16:00', start: 14, end: 16, count: 0 },
+                    { range: '16:00-18:00', start: 16, end: 18, count: 0 },
+                    { range: '18:00-20:00', start: 18, end: 20, count: 0 },
+                    { range: '20:00-22:00', start: 20, end: 22, count: 0 }
+                ];
+                this.slots.forEach(s => {
+                    const hour = parseInt(s.time_from.split(':')[0]);
+                    const range = ranges.find(r => hour >= r.start && hour < r.end);
+                    if (range) range.count++;
+                });
+                const maxCount = Math.max(...ranges.map(r => r.count), 1);
+                const avgCount = ranges.reduce((sum, r) => sum + r.count, 0) / ranges.length;
+                return ranges.map(r => ({
+                    ...r,
+                    percentage: Math.round((r.count / maxCount) * 100),
+                    isHot: r.count > avgCount * 1.2
+                }));
+            },
+
+            // 狙い目分析: 自治体別の空き状況
+            getSlotsByMunicipality() {
+                const muniMap = {};
+                this.slots.forEach(s => {
+                    const key = s.municipality_id;
+                    if (!muniMap[key]) {
+                        muniMap[key] = { id: key, name: s.municipality_name || '不明', count: 0 };
+                    }
+                    muniMap[key].count++;
+                });
+                const munis = Object.values(muniMap).sort((a, b) => b.count - a.count);
+                const maxCount = Math.max(...munis.map(m => m.count), 1);
+                const avgCount = munis.reduce((sum, m) => sum + m.count, 0) / Math.max(munis.length, 1);
+                return munis.map(m => ({
+                    ...m,
+                    percentage: Math.round((m.count / maxCount) * 100),
+                    isHot: m.count > avgCount * 1.2
+                }));
+            },
+
+            // 狙い目分析: コート別の空き状況
+            getSlotsByCourt() {
+                const courtMap = {};
+                this.slots.forEach(s => {
+                    const name = s.court_name || '不明';
+                    if (!courtMap[name]) {
+                        courtMap[name] = { name, count: 0 };
+                    }
+                    courtMap[name].count++;
+                });
+                return Object.values(courtMap).sort((a, b) => b.count - a.count);
+            },
+
+            // 狙い目分析: ヒートマップ用の時間帯一覧
+            getTimeRangesForHeatmap() {
+                return ['06:00-08:00', '08:00-10:00', '10:00-12:00', '12:00-14:00', '14:00-16:00', '16:00-18:00', '18:00-20:00', '20:00-22:00'];
+            },
+
+            // 狙い目分析: ヒートマップの値を取得
+            getHeatmapValue(dayOfWeek, timeRange) {
+                const [startStr] = timeRange.split('-');
+                const startHour = parseInt(startStr.split(':')[0]);
+                const endHour = startHour + 2;
+                return this.slots.filter(s => {
+                    const date = new Date(s.slot_date);
+                    const slotDayOfWeek = date.getDay();
+                    const hour = parseInt(s.time_from.split(':')[0]);
+                    return slotDayOfWeek === dayOfWeek && hour >= startHour && hour < endHour;
+                }).length;
+            },
+
+            // 狙い目分析: ヒートマップのセルのクラスを取得
+            getHeatmapCellClass(dayOfWeek, timeRange) {
+                const value = this.getHeatmapValue(dayOfWeek, timeRange);
+                if (value === 0) return 'bg-sumi-100 text-sumi-400';
+                if (value <= 5) return 'bg-wakakusa-100 text-wakakusa-800';
+                if (value <= 15) return 'bg-wakakusa-300 text-wakakusa-900';
+                return 'bg-wakakusa-500 text-white';
+            },
+
+            // Filtered facilities for facility management tab
+            get filteredFacilities() {
+                return this.facilities.filter(f => {
+                    // Search filter (name or municipality)
+                    if (this.facilityFilter.search) {
+                        const search = this.facilityFilter.search.toLowerCase();
+                        if (!f.name.toLowerCase().includes(search) && 
+                            !f.municipality?.toLowerCase().includes(search)) {
+                            return false;
+                        }
+                    }
+                    // Municipality filter
+                    if (this.facilityFilter.municipality && f.municipality !== this.facilityFilter.municipality) {
+                        return false;
+                    }
+                    // Status filter
+                    if (this.facilityFilter.status !== '') {
+                        const isEnabled = this.facilityFilter.status === 'enabled';
+                        if (f.enabled !== isEnabled) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            },
+
+            // Unique municipalities from facilities
+            get uniqueFacilityMunicipalities() {
+                const munis = [...new Set(this.facilities.map(f => f.municipality).filter(Boolean))];
+                return munis.sort();
+            },
+
+            clearFacilityFilters() {
+                this.facilityFilter = { search: '', municipality: '', status: '' };
+                this.facilityPage = 1;
+            },
+
+            // Team sorting and pagination
+            sortTeamsBy(field) {
+                if (this.teamSort.field === field) {
+                    this.teamSort.dir = this.teamSort.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.teamSort.field = field;
+                    this.teamSort.dir = 'asc';
+                }
+                this.teamPage = 1;
+            },
+
+            get sortedTeams() {
+                return [...this.teams].sort((a, b) => {
+                    const modifier = this.teamSort.dir === 'asc' ? 1 : -1;
+                    const aVal = a[this.teamSort.field] || '';
+                    const bVal = b[this.teamSort.field] || '';
+                    if (aVal < bVal) return -1 * modifier;
+                    if (aVal > bVal) return 1 * modifier;
+                    return 0;
+                });
+            },
+
+            get paginatedTeams() {
+                const start = (this.teamPage - 1) * this.teamPageSize;
+                return this.sortedTeams.slice(start, start + this.teamPageSize);
+            },
+
+            get teamTotalPages() {
+                return Math.max(1, Math.ceil(this.sortedTeams.length / this.teamPageSize));
+            },
+
+            // Facility sorting and pagination
+            sortFacilitiesBy(field) {
+                if (this.facilitySort.field === field) {
+                    this.facilitySort.dir = this.facilitySort.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.facilitySort.field = field;
+                    this.facilitySort.dir = 'asc';
+                }
+                this.facilityPage = 1;
+            },
+
+            get sortedFilteredFacilities() {
+                return [...this.filteredFacilities].sort((a, b) => {
+                    const modifier = this.facilitySort.dir === 'asc' ? 1 : -1;
+                    let aVal = a[this.facilitySort.field];
+                    let bVal = b[this.facilitySort.field];
+                    // Handle boolean (enabled)
+                    if (typeof aVal === 'boolean') {
+                        aVal = aVal ? 1 : 0;
+                        bVal = bVal ? 1 : 0;
+                    }
+                    aVal = aVal || '';
+                    bVal = bVal || '';
+                    if (aVal < bVal) return -1 * modifier;
+                    if (aVal > bVal) return 1 * modifier;
+                    return 0;
+                });
+            },
+
+            get paginatedFacilities() {
+                const start = (this.facilityPage - 1) * this.facilityPageSize;
+                return this.sortedFilteredFacilities.slice(start, start + this.facilityPageSize);
+            },
+
+            get facilityTotalPages() {
+                return Math.max(1, Math.ceil(this.sortedFilteredFacilities.length / this.facilityPageSize));
+            },
+
+            // Team edit/delete methods
+            openEditTeamModal(team) {
+                this.editTeam = { ...team };
+                this.showEditTeamModal = true;
+            },
+
+            async updateTeam() {
+                try {
+                    await this.apiCall(`/admin/api/teams/${this.editTeam.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.editTeam)
+                    });
+                    this.showEditTeamModal = false;
+                    this.addToast('success', 'チームを更新しました');
+                    await this.loadTeams();
+                    await this.loadDashboard();
+                } catch (e) {
+                    // Error already handled by apiCall
+                }
+            },
+
+            confirmDeleteTeam(team) {
+                this.deleteTarget = team;
+                this.deleteType = 'team';
+                this.showDeleteConfirmModal = true;
+            },
+
+            // Facility edit/delete methods
+            openEditFacilityModal(facility) {
+                this.editFacility = { ...facility };
+                this.showEditFacilityModal = true;
+            },
+
+            async updateFacility() {
+                try {
+                    await this.apiCall(`/admin/api/facilities/${this.editFacility.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.editFacility)
+                    });
+                    this.showEditFacilityModal = false;
+                    this.addToast('success', '施設を更新しました');
+                    await this.loadFacilities();
+                    await this.loadDashboard();
+                } catch (e) {
+                    // Error already handled by apiCall
+                }
+            },
+
+            confirmDeleteFacility(facility) {
+                this.deleteTarget = facility;
+                this.deleteType = 'facility';
+                this.showDeleteConfirmModal = true;
+            },
+
+            async executeDelete() {
+                if (!this.deleteTarget || !this.deleteType) return;
+                try {
+                    const endpoint = this.deleteType === 'team'
+                        ? `/admin/api/teams/${this.deleteTarget.id}`
+                        : `/admin/api/facilities/${this.deleteTarget.id}`;
+                    await this.apiCall(endpoint, { method: 'DELETE' });
+                    this.showDeleteConfirmModal = false;
+                    this.addToast('success', `${this.deleteType === 'team' ? 'チーム' : '施設'}を削除しました`);
+                    if (this.deleteType === 'team') {
+                        await this.loadTeams();
+                    } else {
+                        await this.loadFacilities();
+                    }
+                    await this.loadDashboard();
+                    this.deleteTarget = null;
+                    this.deleteType = null;
+                } catch (e) {
+                    // Error already handled by apiCall
+                }
             },
 
             // Drilldown methods
@@ -824,6 +2404,15 @@
                     const slotDate = s.slot_date.split('T')[0];
                     return s.ground_id === groundId && slotDate === dateStr;
                 }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
+            getUniqueDatesForGround(groundId) {
+                if (!groundId) return 0;
+                const dates = new Set();
+                this.slots.filter(s => s.ground_id === groundId).forEach(s => {
+                    dates.add(s.slot_date.split('T')[0]);
+                });
+                return dates.size;
             },
 
             selectMunicipality(m) {
@@ -937,6 +2526,24 @@
             async loadTickets() {
                 const res = await fetch('/admin/api/tickets');
                 this.tickets = await res.json();
+            },
+
+            // 相対時間フォーマット
+            formatRelativeTime(timestamp) {
+                if (!timestamp) return '';
+                const now = new Date();
+                const date = new Date(timestamp);
+                const diffMs = now - date;
+                const diffSec = Math.floor(diffMs / 1000);
+                const diffMin = Math.floor(diffSec / 60);
+                const diffHour = Math.floor(diffMin / 60);
+                const diffDay = Math.floor(diffHour / 24);
+
+                if (diffSec < 60) return 'たった今';
+                if (diffMin < 60) return `${diffMin}分前`;
+                if (diffHour < 24) return `${diffHour}時間前`;
+                if (diffDay < 7) return `${diffDay}日前`;
+                return date.toLocaleDateString('ja-JP');
             },
 
             async createTeam() {

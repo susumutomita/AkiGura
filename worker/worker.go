@@ -71,11 +71,38 @@ func (w *Worker) RunScraper(ctx context.Context, facilityType string) (*ScraperR
 	return &result, nil
 }
 
+// excludedFacilityPatterns contains patterns for facilities to exclude
+// (not adult softball/baseball: youth fields, soccer, tennis, etc.)
+var excludedFacilityPatterns = []string{
+	"少年",    // Youth/junior fields
+	"サッカー",  // Soccer
+	"テニス",   // Tennis
+	"ラグビー",  // Rugby
+	"フットサル", // Futsal
+	"体育館",   // Gymnasium
+	"プール",   // Pool
+	"投球練習場", // Pitching practice
+	"会議室",   // Meeting room
+}
+
+// shouldExcludeFacility checks if a facility should be excluded
+// based on the court name (not adult baseball/softball)
+func shouldExcludeFacility(courtName string) bool {
+	for _, pattern := range excludedFacilityPatterns {
+		if strings.Contains(courtName, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
 // SaveSlots saves scraped slots to the database
 // municipalityID is used to match slots to grounds via court_pattern
 // If no matching ground exists, creates one automatically from court_name
+// Excludes non-baseball facilities (soccer, tennis, youth fields, etc.)
 func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []Slot) (int, error) {
 	saved := 0
+	skipped := 0
 	for _, slot := range slots {
 		if slot.Date == nil {
 			continue // Skip slots without parseable dates
@@ -93,6 +120,12 @@ func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []S
 		}
 		if slot.CourtName != nil {
 			courtName = *slot.CourtName
+		}
+
+		// Skip non-baseball facilities (soccer, tennis, youth fields, etc.)
+		if shouldExcludeFacility(courtName) {
+			skipped++
+			continue
 		}
 
 		// Match slot to ground by court_pattern
@@ -127,6 +160,9 @@ func (w *Worker) SaveSlots(ctx context.Context, municipalityID string, slots []S
 			continue
 		}
 		saved++
+	}
+	if skipped > 0 {
+		slog.Info("skipped non-baseball facilities", "count", skipped)
 	}
 	return saved, nil
 }

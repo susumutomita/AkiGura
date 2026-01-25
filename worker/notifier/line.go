@@ -10,7 +10,8 @@ import (
 	"strings"
 )
 
-// LINENotifier sends notifications via LINE Notify
+// LINENotifier sends notifications via LINE Notify API.
+// LINE Notify allows sending messages to LINE groups or individual users.
 type LINENotifier struct {
 	AccessToken string
 }
@@ -74,7 +75,9 @@ func (l *LINENotifier) Send(ctx context.Context, n *Notification) error {
 	return nil
 }
 
-// LINEMessagingNotifier uses LINE Messaging API for individual users
+// LINEMessagingNotifier sends rich messages using the LINE Messaging API.
+// Unlike LINE Notify, this provides Flex Message support for better formatting.
+// Note: Requires users to have linked their LINE account with the bot.
 type LINEMessagingNotifier struct {
 	ChannelAccessToken string
 }
@@ -161,10 +164,14 @@ func (l *LINEMessagingNotifier) Send(ctx context.Context, n *Notification) error
 		},
 	}
 
-	body, _ := json.Marshal(message)
+	body, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("marshal LINE message: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.line.me/v2/bot/message/push", bytes.NewReader(body))
 	if err != nil {
-		return err
+		return fmt.Errorf("create LINE request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+l.ChannelAccessToken)

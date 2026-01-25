@@ -12,7 +12,8 @@ import (
 	"strings"
 )
 
-// EmailNotifier sends notifications via email
+// EmailNotifier sends notifications via SMTP email.
+// It falls back to console logging when SMTP credentials are not configured.
 type EmailNotifier struct {
 	SMTPHost     string
 	SMTPPort     string
@@ -114,7 +115,8 @@ func (e *EmailNotifier) renderTemplate(n *Notification) (string, error) {
 	return buf.String(), nil
 }
 
-// SendGridNotifier uses SendGrid API for email
+// SendGridNotifier sends notifications using the SendGrid API.
+// This is a more scalable alternative to SMTP for production environments.
 type SendGridNotifier struct {
 	APIKey      string
 	FromAddress string
@@ -178,10 +180,14 @@ func (s *SendGridNotifier) Send(ctx context.Context, n *Notification) error {
 		},
 	}
 
-	body, _ := json.Marshal(payload)
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshal sendgrid payload: %w", err)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.sendgrid.com/v3/mail/send", bytes.NewReader(body))
 	if err != nil {
-		return err
+		return fmt.Errorf("create sendgrid request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+s.APIKey)
