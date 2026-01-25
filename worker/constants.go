@@ -31,11 +31,11 @@ const (
 	NotificationStatusFailed  = "failed"
 
 	// Facility types
-	FacilityTypeBaseball   = "baseball"
-	FacilityTypeMultiPose  = "multi_purpose"
-	FacilityTypeTennis     = "tennis"
-	FacilityTypeGymnasium  = "gymnasium"
-	FacilityTypeSwimPool   = "swimming_pool"
-	FacilityTypeMeetingRm  = "meeting_room"
-	FacilityTypeOther      = "other"
+	FacilityTypeBaseball  = "baseball"
+	FacilityTypeMultiPose = "multi_purpose"
+	FacilityTypeTennis    = "tennis"
+	FacilityTypeGymnasium = "gymnasium"
+	FacilityTypeSwimPool  = "swimming_pool"
+	FacilityTypeMeetingRm = "meeting_room"
+	FacilityTypeOther     = "other"
 )
