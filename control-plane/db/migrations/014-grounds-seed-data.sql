@@ -63,6 +63,11 @@ INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled
 INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
 ('e5f6a7b8-5555-8666-2777-888899990000', 'e0f1a2b3-4567-6890-1cde-f01234567890', '綾瀬ノーブルスタジアム', 'ノーブル', 1, CURRENT_TIMESTAMP);
 
+-- 不要なデータを削除（ラバーボール球場は存在しない）
+DELETE FROM grounds WHERE name LIKE '%ラバーボール%';
+DELETE FROM grounds WHERE name = '保土ヶ谷公園硬式野球場';
+DELETE FROM grounds WHERE name = '大神スポーツ広場野球場';
+DELETE FROM grounds WHERE name = 'テスト球場';
 -- 不要なデータを削除
 DELETE FROM grounds WHERE name LIKE '%サッカー%';
 DELETE FROM grounds WHERE name LIKE '%テニス%';
