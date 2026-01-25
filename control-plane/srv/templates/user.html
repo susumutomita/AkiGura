@@ -221,6 +221,37 @@
                 </div>
             </div>
 
+            <!-- Availability Summary -->
+            <div class="bg-white rounded border border-sumi-200 p-4 mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-6">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-wakakusa-600" x-text="filteredSlots.length"></p>
+                            <p class="text-xs text-sumi-500">空き枠総数</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-ai-600" x-text="Object.keys(filteredSlots.reduce((acc, s) => { acc[s.slot_date.split('T')[0]] = true; return acc; }, {})).length"></p>
+                            <p class="text-xs text-sumi-500">空きのある日数</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="text-sumi-500">凡例:</span>
+                        <div class="flex items-center gap-1">
+                            <span class="w-3 h-3 rounded bg-wakakusa-50 border border-wakakusa-200"></span>
+                            <span class="text-sumi-600">1-5件</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="w-3 h-3 rounded bg-wakakusa-100 border border-wakakusa-300"></span>
+                            <span class="text-sumi-600">6-15件</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="w-3 h-3 rounded bg-wakakusa-200 border border-wakakusa-400"></span>
+                            <span class="text-sumi-600">16件以上</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Calendar Navigation -->
             <div class="flex justify-between items-center mb-4 py-3">
                 <button @click="prevMonth()" class="px-4 py-2 text-sm text-sumi-600 hover:text-sumi-800 transition-colors">
@@ -246,34 +277,46 @@
                 <div class="grid grid-cols-7">
                     <template x-for="(day, idx) in calendarDays" :key="idx">
                         <div
-                            class="min-h-[80px] border-b border-r border-sumi-100 p-1.5 cursor-pointer transition-colors"
+                            class="min-h-[80px] border-b border-r border-sumi-100 p-1.5 cursor-pointer transition-colors relative"
                             :class="{
                                 'bg-sumi-50': !day.currentMonth,
-                                'hover:bg-ai-50': day.currentMonth,
+                                'hover:bg-ai-50': day.currentMonth && getSlotsForDate(day.dateStr).length === 0,
                                 'bg-ai-50': selectedDate === day.dateStr,
-                                'border-l border-sumi-100': idx % 7 === 0
+                                'border-l border-sumi-100': idx % 7 === 0,
+                                'bg-wakakusa-50': day.currentMonth && getSlotsForDate(day.dateStr).length > 0 && getSlotsForDate(day.dateStr).length <= 5 && selectedDate !== day.dateStr,
+                                'bg-wakakusa-100': day.currentMonth && getSlotsForDate(day.dateStr).length > 5 && getSlotsForDate(day.dateStr).length <= 15 && selectedDate !== day.dateStr,
+                                'bg-wakakusa-200': day.currentMonth && getSlotsForDate(day.dateStr).length > 15 && selectedDate !== day.dateStr
                             }"
                             @click="day.currentMonth && selectDate(day.dateStr)"
                         >
                             <div class="flex justify-between items-start">
                                 <span
-                                    class="text-sm"
+                                    class="text-sm font-medium"
                                     :class="{
                                         'text-sumi-300': !day.currentMonth,
-                                        'text-sango-500': day.currentMonth && day.dayOfWeek === 0,
-                                        'text-ai-500': day.currentMonth && day.dayOfWeek === 6,
+                                        'text-sango-600': day.currentMonth && day.dayOfWeek === 0,
+                                        'text-ai-600': day.currentMonth && day.dayOfWeek === 6,
                                         'text-sumi-700': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
                                     }"
                                     x-text="day.day"
                                 ></span>
                                 <template x-if="day.currentMonth && getSlotsForDate(day.dateStr).length > 0">
-                                    <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-wakakusa-100 text-wakakusa-700" x-text="getSlotsForDate(day.dateStr).length"></span>
+                                    <span class="px-1.5 py-0.5 text-xs font-bold rounded-full bg-wakakusa-500 text-white shadow-sm" x-text="getSlotsForDate(day.dateStr).length"></span>
                                 </template>
                             </div>
+                            <!-- Availability bar indicator -->
+                            <template x-if="day.currentMonth && getSlotsForDate(day.dateStr).length > 0">
+                                <div class="absolute bottom-0 left-0 right-0 h-1"
+                                     :class="{
+                                         'bg-wakakusa-300': getSlotsForDate(day.dateStr).length <= 5,
+                                         'bg-wakakusa-400': getSlotsForDate(day.dateStr).length > 5 && getSlotsForDate(day.dateStr).length <= 15,
+                                         'bg-wakakusa-500': getSlotsForDate(day.dateStr).length > 15
+                                     }"></div>
+                            </template>
                             <!-- Slot preview for large screens -->
                             <div class="hidden sm:block mt-1 space-y-0.5 overflow-hidden max-h-[50px]">
                                 <template x-for="slot in getSlotsForDate(day.dateStr).slice(0, 2)" :key="slot.id">
-                                    <div class="text-xs px-1 py-0.5 bg-wakakusa-50 text-wakakusa-700 rounded truncate" x-text="slot.time_from + ' ' + (slot.court_name || '').substring(0, 6)"></div>
+                                    <div class="text-xs px-1 py-0.5 bg-white/70 text-wakakusa-800 rounded truncate" x-text="slot.time_from + ' ' + (slot.court_name || '').substring(0, 6)"></div>
                                 </template>
                             </div>
                         </div>
