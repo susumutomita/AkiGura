@@ -4,3 +4,7 @@
 
 ALTER TABLE scrape_jobs ADD COLUMN scrape_status TEXT;
 ALTER TABLE scrape_jobs ADD COLUMN diagnostics TEXT;
+
+-- Record execution of this migration
+INSERT OR IGNORE INTO migrations (migration_number, migration_name)
+VALUES (10, '010-scrape-diagnostics');
