@@ -35,11 +35,19 @@ type DashboardData struct {
 	OpenTicketCount     int64
 	TeamsByPlan         []PlanCount
 	RecentJobs          []dbgen.ListRecentScrapeJobsRow
+	FailedJobCount      int64
+	RecentActivity      []ActivityItem
 }
 
 type PlanCount struct {
 	Plan  string `json:"plan"`
 	Count int64  `json:"count"`
+}
+
+type ActivityItem struct {
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	Timestamp string `json:"timestamp"`
 }
 
 func New(dbPath, hostname string) (*Server, error) {

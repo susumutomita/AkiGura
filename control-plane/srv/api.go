@@ -1,6 +1,7 @@
 package srv
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -53,9 +54,72 @@ func (s *Server) HandleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	if jobs, err := s.Queries.ListRecentScrapeJobs(ctx, 10); err == nil {
 		data.RecentJobs = jobs
+		// Count failed jobs from recent jobs
+		for _, job := range jobs {
+			if job.Status == "failed" {
+				data.FailedJobCount++
+			}
+		}
 	}
 
+	// Build recent activity from recent jobs and teams
+	data.RecentActivity = s.buildRecentActivity(ctx)
+
 	s.jsonResponse(w, data)
+}
+
+// buildRecentActivity creates a list of recent activities from various sources
+func (s *Server) buildRecentActivity(ctx context.Context) []ActivityItem {
+	var activities []ActivityItem
+
+	// Get recent scrape jobs for activity
+	if jobs, err := s.Queries.ListRecentScrapeJobs(ctx, 5); err == nil {
+		for _, job := range jobs {
+			var msg string
+			var timestamp string
+			if job.Status == "completed" && job.CompletedAt.Valid {
+				msg = "スクレイピング完了"
+				timestamp = job.CompletedAt.Time.Format("2006-01-02T15:04:05Z07:00")
+			} else if job.Status == "failed" && job.CompletedAt.Valid {
+				msg = "スクレイピング失敗"
+				timestamp = job.CompletedAt.Time.Format("2006-01-02T15:04:05Z07:00")
+			} else {
+				continue
+			}
+			activities = append(activities, ActivityItem{
+				Type:      "scrape",
+				Message:   msg,
+				Timestamp: timestamp,
+			})
+		}
+	}
+
+	// Get recent teams for activity
+	if teams, err := s.Queries.ListTeams(ctx, dbgen.ListTeamsParams{Limit: 3, Offset: 0}); err == nil {
+		for _, team := range teams {
+			activities = append(activities, ActivityItem{
+				Type:      "team",
+				Message:   "チーム登録: " + team.Name,
+				Timestamp: team.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			})
+		}
+	}
+
+	// Sort by timestamp descending (simple bubble sort for small list)
+	for i := 0; i < len(activities)-1; i++ {
+		for j := i + 1; j < len(activities); j++ {
+			if activities[i].Timestamp < activities[j].Timestamp {
+				activities[i], activities[j] = activities[j], activities[i]
+			}
+		}
+	}
+
+	// Limit to 5 items
+	if len(activities) > 5 {
+		activities = activities[:5]
+	}
+
+	return activities
 }
 
 // Teams API
