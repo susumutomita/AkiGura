@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log/slog"
+	"slices"
 	"strconv"
 	"time"
 
@@ -121,14 +122,7 @@ func (m *Matcher) MatchSlot(slot MatchedSlot, cond WatchCondition) bool {
 
 	// Check day of week
 	slotDOW := int(slotDate.Weekday())
-	dayMatch := false
-	for _, d := range cond.DaysOfWeek {
-		if d == slotDOW {
-			dayMatch = true
-			break
-		}
-	}
-	if !dayMatch && len(cond.DaysOfWeek) > 0 {
+	if len(cond.DaysOfWeek) > 0 && !slices.Contains(cond.DaysOfWeek, slotDOW) {
 		return false
 	}
 
