@@ -278,16 +278,50 @@
                     <h2 class="text-xl font-semibold text-sumi-800">自治体別空き状況</h2>
                     <button @click="loadSlots(); loadGrounds()" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">更新</button>
                 </div>
+
+                <!-- 空き状況サマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-6">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">総空き枠数</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="slots.length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある自治体</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="municipalities.filter(m => getSlotsForMunicipality(m.id).length > 0).length + '/' + municipalities.length"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 items-center text-xs">
+                            <span class="text-sumi-500">凡例:</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-50 text-wakakusa-700">1-10件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-100 text-wakakusa-700">11-50件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-200 text-wakakusa-800">51件以上</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="m in municipalities" :key="m.id">
                         <div @click="selectMunicipality(m)"
-                             class="bg-white border border-sumi-100 rounded p-4 cursor-pointer hover:border-ai-300 transition-colors">
+                             class="border rounded p-4 cursor-pointer hover:border-ai-300 transition-colors relative overflow-hidden"
+                             :class="{
+                                 'bg-wakakusa-200 border-wakakusa-300': getSlotsForMunicipality(m.id).length > 50,
+                                 'bg-wakakusa-100 border-wakakusa-200': getSlotsForMunicipality(m.id).length > 10 && getSlotsForMunicipality(m.id).length <= 50,
+                                 'bg-wakakusa-50 border-wakakusa-100': getSlotsForMunicipality(m.id).length > 0 && getSlotsForMunicipality(m.id).length <= 10,
+                                 'bg-white border-sumi-100': getSlotsForMunicipality(m.id).length === 0
+                             }">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-medium text-sumi-800" x-text="m.name"></h3>
-                                <span class="px-2 py-0.5 text-xs rounded bg-wakakusa-50 text-wakakusa-700"
+                                <span class="px-2 py-0.5 text-xs rounded font-medium"
+                                      :class="getSlotsForMunicipality(m.id).length > 0 ? 'bg-wakakusa-500 text-white' : 'bg-sumi-100 text-sumi-500'"
                                       x-text="getSlotsForMunicipality(m.id).length + '件'"></span>
                             </div>
                             <p class="text-sm text-sumi-500 mt-1" x-text="getGroundsForMunicipality(m.id).length + '施設'"></p>
+                            <!-- プログレスバー -->
+                            <div x-show="getSlotsForMunicipality(m.id).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-200">
+                                <div class="h-full bg-wakakusa-500" :style="'width: ' + Math.min(100, getSlotsForMunicipality(m.id).length / 2) + '%'"></div>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -298,16 +332,44 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-sumi-800" x-text="selectedMunicipality?.name + ' の施設'"></h2>
                 </div>
+
+                <!-- グラウンドサマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-6">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">この自治体の空き枠</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="getSlotsForMunicipality(selectedMunicipality?.id).length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある施設</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="getGroundsForMunicipality(selectedMunicipality?.id).filter(g => getSlotsForGround(g.id).length > 0).length + '/' + getGroundsForMunicipality(selectedMunicipality?.id).length"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="g in getGroundsForMunicipality(selectedMunicipality?.id)" :key="g.id">
                         <div @click="selectGround(g)"
-                             class="bg-white border border-sumi-100 rounded p-4 cursor-pointer hover:border-ai-300 transition-colors">
+                             class="border rounded p-4 cursor-pointer hover:border-ai-300 transition-colors relative overflow-hidden"
+                             :class="{
+                                 'bg-wakakusa-200 border-wakakusa-300': getSlotsForGround(g.id).length > 20,
+                                 'bg-wakakusa-100 border-wakakusa-200': getSlotsForGround(g.id).length > 5 && getSlotsForGround(g.id).length <= 20,
+                                 'bg-wakakusa-50 border-wakakusa-100': getSlotsForGround(g.id).length > 0 && getSlotsForGround(g.id).length <= 5,
+                                 'bg-white border-sumi-100': getSlotsForGround(g.id).length === 0
+                             }">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-medium text-sumi-800" x-text="g.name"></h3>
-                                <span class="px-2 py-0.5 text-xs rounded bg-wakakusa-50 text-wakakusa-700"
+                                <span class="px-2 py-0.5 text-xs rounded font-medium"
+                                      :class="getSlotsForGround(g.id).length > 0 ? 'bg-wakakusa-500 text-white' : 'bg-sumi-100 text-sumi-500'"
                                       x-text="getSlotsForGround(g.id).length + '件'"></span>
                             </div>
                             <p class="text-sm text-sumi-500 mt-1" x-text="g.court_pattern || ''"></p>
+                            <!-- プログレスバー -->
+                            <div x-show="getSlotsForGround(g.id).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-200">
+                                <div class="h-full bg-wakakusa-500" :style="'width: ' + Math.min(100, getSlotsForGround(g.id).length * 5) + '%'"></div>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -317,6 +379,28 @@
             <div x-show="slotView === 'calendar' && selectedGround">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-sumi-800" x-text="selectedGround?.name + ' の空き状況'"></h2>
+                </div>
+
+                <!-- カレンダーサマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-4">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">この施設の空き枠</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="getSlotsForGround(selectedGround?.id).length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある日数</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="getUniqueDatesForGround(selectedGround?.id)"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 items-center text-xs">
+                            <span class="text-sumi-500">凡例:</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-50 text-wakakusa-700">1-2件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-100 text-wakakusa-700">3-5件</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-200 text-wakakusa-800">6件以上</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Calendar Navigation -->
@@ -336,34 +420,41 @@
                     <div class="grid grid-cols-7">
                         <template x-for="(day, idx) in calendarDays" :key="idx">
                             <div
-                                class="min-h-[80px] border-b border-r border-sumi-50 p-1 cursor-pointer transition-colors"
+                                class="min-h-[80px] border-b border-r border-sumi-50 p-1 cursor-pointer transition-colors relative"
                                 :class="{
                                     'bg-sumi-50': !day.currentMonth,
-                                    'hover:bg-ai-50': day.currentMonth,
-                                    'bg-ai-50 border-ai-200': selectedDate === day.dateStr,
+                                    'bg-wakakusa-200': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length >= 6,
+                                    'bg-wakakusa-100': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length >= 3 && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length < 6,
+                                    'bg-wakakusa-50': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length > 0 && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length < 3,
+                                    'bg-white hover:bg-ai-50': day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length === 0,
+                                    'ring-2 ring-ai-400 ring-inset': selectedDate === day.dateStr,
                                     'border-l border-sumi-50': idx % 7 === 0
                                 }"
                                 @click="day.currentMonth && selectDate(day.dateStr)"
                             >
                                 <div class="flex justify-between items-start">
-                                    <span class="text-sm"
+                                    <span class="text-sm font-medium"
                                         :class="{
                                             'text-sumi-300': !day.currentMonth,
-                                            'text-sango-500': day.currentMonth && day.dayOfWeek === 0,
-                                            'text-ai-500': day.currentMonth && day.dayOfWeek === 6,
-                                            'text-sumi-700': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
+                                            'text-sango-600': day.currentMonth && day.dayOfWeek === 0,
+                                            'text-ai-600': day.currentMonth && day.dayOfWeek === 6,
+                                            'text-sumi-800': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
                                         }"
                                         x-text="day.day"
                                     ></span>
                                     <template x-if="day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length > 0">
-                                        <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-wakakusa-500 text-white"
+                                        <span class="px-1.5 py-0.5 text-xs font-bold rounded bg-wakakusa-500 text-white"
                                               x-text="getSlotsForGroundDate(selectedGround?.id, day.dateStr).length"></span>
                                     </template>
                                 </div>
                                 <div class="mt-1 space-y-0.5 overflow-hidden max-h-[40px]">
                                     <template x-for="slot in getSlotsForGroundDate(selectedGround?.id, day.dateStr).slice(0, 2)" :key="slot.id">
-                                        <div class="text-xs px-1 py-0.5 bg-wakakusa-50 text-wakakusa-700 rounded truncate" x-text="slot.time_from + '-' + slot.time_to"></div>
+                                        <div class="text-xs px-1 py-0.5 bg-wakakusa-500/20 text-wakakusa-800 rounded truncate font-medium" x-text="slot.time_from + '-' + slot.time_to"></div>
                                     </template>
+                                </div>
+                                <!-- 空き枠インジケーターバー -->
+                                <div x-show="day.currentMonth && getSlotsForGroundDate(selectedGround?.id, day.dateStr).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-300">
+                                    <div class="h-full bg-wakakusa-600" :style="'width: ' + Math.min(100, getSlotsForGroundDate(selectedGround?.id, day.dateStr).length * 15) + '%'"></div>
                                 </div>
                             </div>
                         </template>
@@ -824,6 +915,15 @@
                     const slotDate = s.slot_date.split('T')[0];
                     return s.ground_id === groundId && slotDate === dateStr;
                 }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
+            getUniqueDatesForGround(groundId) {
+                if (!groundId) return 0;
+                const dates = new Set();
+                this.slots.filter(s => s.ground_id === groundId).forEach(s => {
+                    dates.add(s.slot_date.split('T')[0]);
+                });
+                return dates.size;
             },
 
             selectMunicipality(m) {
