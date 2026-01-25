@@ -1,18 +1,22 @@
 package srv
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 	"srv.exe.dev/db/dbgen"
 )
+
+const timeFormatISO = "2006-01-02T15:04:05Z07:00"
 
 func (s *Server) jsonResponse(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -63,35 +67,35 @@ func (s *Server) HandleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build recent activity from recent jobs and teams
-	data.RecentActivity = s.buildRecentActivity(ctx)
+	data.RecentActivity = s.buildRecentActivity(ctx, data.RecentJobs)
 
 	s.jsonResponse(w, data)
 }
 
-// buildRecentActivity creates a list of recent activities from various sources
-func (s *Server) buildRecentActivity(ctx context.Context) []ActivityItem {
+// buildRecentActivity creates a list of recent activities from various sources.
+// It reuses the already-fetched jobs to avoid duplicate database queries.
+func (s *Server) buildRecentActivity(ctx context.Context, jobs []dbgen.ListRecentScrapeJobsRow) []ActivityItem {
 	var activities []ActivityItem
 
-	// Get recent scrape jobs for activity
-	if jobs, err := s.Queries.ListRecentScrapeJobs(ctx, 5); err == nil {
-		for _, job := range jobs {
-			var msg string
-			var timestamp string
-			if job.Status == "completed" && job.CompletedAt.Valid {
-				msg = "スクレイピング完了"
-				timestamp = job.CompletedAt.Time.Format("2006-01-02T15:04:05Z07:00")
-			} else if job.Status == "failed" && job.CompletedAt.Valid {
-				msg = "スクレイピング失敗"
-				timestamp = job.CompletedAt.Time.Format("2006-01-02T15:04:05Z07:00")
-			} else {
-				continue
-			}
-			activities = append(activities, ActivityItem{
-				Type:      "scrape",
-				Message:   msg,
-				Timestamp: timestamp,
-			})
+	// Build activity items from jobs (limit to 5)
+	for _, job := range jobs[:min(len(jobs), 5)] {
+		if !job.CompletedAt.Valid {
+			continue
 		}
+		var msg string
+		switch job.Status {
+		case "completed":
+			msg = "スクレイピング完了"
+		case "failed":
+			msg = "スクレイピング失敗"
+		default:
+			continue
+		}
+		activities = append(activities, ActivityItem{
+			Type:      "scrape",
+			Message:   msg,
+			Timestamp: job.CompletedAt.Time.Format(timeFormatISO),
+		})
 	}
 
 	// Get recent teams for activity
@@ -100,26 +104,18 @@ func (s *Server) buildRecentActivity(ctx context.Context) []ActivityItem {
 			activities = append(activities, ActivityItem{
 				Type:      "team",
 				Message:   "チーム登録: " + team.Name,
-				Timestamp: team.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+				Timestamp: team.CreatedAt.Format(timeFormatISO),
 			})
 		}
 	}
 
-	// Sort by timestamp descending (simple bubble sort for small list)
-	for i := 0; i < len(activities)-1; i++ {
-		for j := i + 1; j < len(activities); j++ {
-			if activities[i].Timestamp < activities[j].Timestamp {
-				activities[i], activities[j] = activities[j], activities[i]
-			}
-		}
-	}
+	// Sort by timestamp descending
+	slices.SortFunc(activities, func(a, b ActivityItem) int {
+		return cmp.Compare(b.Timestamp, a.Timestamp)
+	})
 
 	// Limit to 5 items
-	if len(activities) > 5 {
-		activities = activities[:5]
-	}
-
-	return activities
+	return activities[:min(len(activities), 5)]
 }
 
 // Teams API
