@@ -510,6 +510,7 @@ func (s *Server) HandleUpdateFacility(w http.ResponseWriter, r *http.Request) {
 		Name         string `json:"name"`
 		Municipality string `json:"municipality"`
 		ScraperType  string `json:"scraper_type"`
+		URL          string `json:"url"`
 		Enabled      bool   `json:"enabled"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -517,10 +518,20 @@ func (s *Server) HandleUpdateFacility(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	enabled := int64(0)
+	if input.Enabled {
+		enabled = 1
+	}
+
 	ctx := r.Context()
-	_, err := s.DB.ExecContext(ctx,
-		"UPDATE facilities SET name = ?, municipality = ?, scraper_type = ?, enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-		input.Name, input.Municipality, input.ScraperType, input.Enabled, id)
+	err := s.Queries.UpdateFacility(ctx, dbgen.UpdateFacilityParams{
+		ID:           id,
+		Name:         input.Name,
+		Municipality: input.Municipality,
+		ScraperType:  input.ScraperType,
+		Url:          input.URL,
+		Enabled:      enabled,
+	})
 	if err != nil {
 		slog.Error("update facility", "error", err)
 		s.jsonError(w, "failed to update facility", http.StatusInternalServerError)
