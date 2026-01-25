@@ -67,10 +67,13 @@ func (m *Matcher) GetActiveConditions(ctx context.Context, groundID string) ([]W
 		var daysJSON string
 		if err := rows.Scan(&c.ID, &c.TeamID, &c.TeamEmail, &c.TeamName, &c.GroundID,
 			&daysJSON, &c.TimeFrom, &c.TimeTo, &c.DateFrom, &c.DateTo); err != nil {
+			slog.Warn("failed to scan watch condition row", "error", err)
 			continue
 		}
-		// Parse days_of_week JSON array
-		json.Unmarshal([]byte(daysJSON), &c.DaysOfWeek)
+		// Parse days_of_week JSON array (defaults to empty if malformed)
+		if err := json.Unmarshal([]byte(daysJSON), &c.DaysOfWeek); err != nil {
+			slog.Debug("failed to parse days_of_week, defaulting to empty", "condition_id", c.ID, "error", err)
+		}
 		conditions = append(conditions, c)
 	}
 	return conditions, nil
@@ -94,6 +97,7 @@ func (m *Matcher) GetNewSlots(ctx context.Context, groundID string, since time.T
 	for rows.Next() {
 		var s MatchedSlot
 		if err := rows.Scan(&s.SlotID, &s.GroundID, &s.Date, &s.TimeFrom, &s.TimeTo, &s.CourtName); err != nil {
+			slog.Warn("failed to scan slot row", "error", err)
 			continue
 		}
 		slots = append(slots, s)
@@ -247,6 +251,7 @@ func (m *Matcher) ProcessMatchesForMunicipality(ctx context.Context, municipalit
 	for rows.Next() {
 		var groundID string
 		if err := rows.Scan(&groundID); err != nil {
+			slog.Warn("failed to scan ground ID row", "error", err)
 			continue
 		}
 		groundIDs = append(groundIDs, groundID)
