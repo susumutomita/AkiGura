@@ -76,7 +76,50 @@
         }
     </script>
     <style>
+        /* デザイントークン */
+        :root {
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --radius-sm: 0.25rem;
+            --radius-md: 0.375rem;
+            --radius-lg: 0.5rem;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --transition-fast: 150ms ease;
+            --transition-normal: 200ms ease;
+        }
+
         [x-cloak] { display: none !important; }
+
+        /* アニメーション */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-8px); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn var(--transition-normal) ease forwards;
+        }
+        .animate-slideInRight {
+            animation: slideInRight var(--transition-normal) ease forwards;
+        }
+        .animate-slideOutRight {
+            animation: slideOutRight var(--transition-normal) ease forwards;
+        }
 
         /* 落ち着いたスクロールバー */
         ::-webkit-scrollbar {
@@ -142,34 +185,203 @@
         <!-- Dashboard -->
         <div x-show="currentTab === 'dashboard'" x-cloak>
             <h2 class="text-xl font-semibold text-sumi-800 mb-6">ダッシュボード</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">登録チーム数</div>
-                    <div class="text-2xl font-semibold text-ai-600" x-text="dashboard.TeamCount">0</div>
-                </div>
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">対応施設数</div>
-                    <div class="text-2xl font-semibold text-wakakusa-600" x-text="dashboard.FacilityCount">0</div>
-                </div>
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">監視条件数</div>
-                    <div class="text-2xl font-semibold text-ai-500" x-text="dashboard.WatchConditionCount">0</div>
-                </div>
-                <div class="bg-white border border-sumi-100 rounded p-5">
-                    <div class="text-sumi-500 text-xs mb-1">未対応チケット</div>
-                    <div class="text-2xl font-semibold text-sango-500" x-text="dashboard.OpenTicketCount">0</div>
+
+            <!-- エラーサマリー -->
+            <div x-show="dashboard.FailedJobCount > 0" x-cloak
+                 class="bg-sango-50 border border-sango-200 rounded-lg p-4 mb-6 animate-fadeIn">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-sango-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-sango-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="text-sango-800 font-medium">
+                                <span x-text="dashboard.FailedJobCount"></span> 件のスクレイピングが失敗しています
+                            </span>
+                            <p class="text-sm text-sango-600 mt-0.5">ワーカー管理ページで詳細を確認してください</p>
+                        </div>
+                    </div>
+                    <button @click="currentTab = 'worker'"
+                            class="px-4 py-2 bg-sango-600 text-white text-sm font-medium rounded hover:bg-sango-700 transition-colors">
+                        詳細を確認
+                    </button>
                 </div>
             </div>
-            <!-- Plan Distribution -->
-            <div class="bg-white border border-sumi-100 rounded p-6 mb-8">
-                <h3 class="text-sm font-medium text-sumi-700 mb-4">プラン別チーム数</h3>
-                <div class="flex flex-wrap gap-3">
-                    <template x-for="plan in dashboard.TeamsByPlan" :key="plan.plan">
-                        <div class="flex-1 min-w-[100px] bg-kinari-100 rounded p-4 text-center">
-                            <div class="text-xs text-sumi-500 mb-1" x-text="plan.plan"></div>
-                            <div class="text-xl font-semibold text-sumi-800" x-text="plan.count"></div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- 登録チーム数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'teams'">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">登録チーム数</span>
+                        <div class="w-10 h-10 bg-ai-50 rounded-lg flex items-center justify-center group-hover:bg-ai-100 transition-colors">
+                            <svg class="w-5 h-5 text-ai-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
                         </div>
-                    </template>
+                    </div>
+                    <div class="text-3xl font-bold text-ai-600" x-text="dashboard.TeamCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">チームを管理 →</div>
+                </div>
+
+                <!-- 対応施設数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'facilities'">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">対応施設数</span>
+                        <div class="w-10 h-10 bg-wakakusa-50 rounded-lg flex items-center justify-center group-hover:bg-wakakusa-100 transition-colors">
+                            <svg class="w-5 h-5 text-wakakusa-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-wakakusa-600" x-text="dashboard.FacilityCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">施設を管理 →</div>
+                </div>
+
+                <!-- 監視条件数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'slots'">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">監視条件数</span>
+                        <div class="w-10 h-10 bg-ai-50 rounded-lg flex items-center justify-center group-hover:bg-ai-100 transition-colors">
+                            <svg class="w-5 h-5 text-ai-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-ai-500" x-text="dashboard.WatchConditionCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">空き状況を確認 →</div>
+                </div>
+
+                <!-- 未対応チケット -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
+                     @click="currentTab = 'support'"
+                     :class="dashboard.OpenTicketCount > 0 ? 'border-sango-200' : ''">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-medium text-sumi-500 uppercase tracking-wide">未対応チケット</span>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                             :class="dashboard.OpenTicketCount > 0 ? 'bg-sango-100 group-hover:bg-sango-200' : 'bg-sumi-50 group-hover:bg-sumi-100'">
+                            <svg class="w-5 h-5" :class="dashboard.OpenTicketCount > 0 ? 'text-sango-600' : 'text-sumi-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold" :class="dashboard.OpenTicketCount > 0 ? 'text-sango-600' : 'text-sumi-400'" x-text="dashboard.OpenTicketCount">0</div>
+                    <div class="text-xs text-sumi-400 mt-1">サポートを確認 →</div>
+                </div>
+            </div>
+
+            <!-- 2列レイアウト: プラン分布 + アクティビティ -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- プラン別チーム数 -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-6">
+                    <h3 class="text-sm font-medium text-sumi-700 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                        </svg>
+                        プラン別チーム数
+                    </h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <template x-for="plan in dashboard.TeamsByPlan" :key="plan.plan">
+                            <div class="bg-kinari-50 rounded-lg p-4 text-center hover:bg-kinari-100 transition-colors">
+                                <div class="text-xs font-medium text-sumi-500 mb-1 uppercase" x-text="plan.plan"></div>
+                                <div class="text-2xl font-bold text-sumi-800" x-text="plan.count"></div>
+                            </div>
+                        </template>
+                    </div>
+                    <!-- プランバー -->
+                    <div class="mt-4" x-show="dashboard.TeamsByPlan && dashboard.TeamsByPlan.length > 0">
+                        <div class="flex h-3 rounded-full overflow-hidden bg-sumi-100">
+                            <template x-for="(plan, index) in dashboard.TeamsByPlan" :key="plan.plan">
+                                <div class="h-full transition-all"
+                                     :class="[
+                                         plan.plan === 'free' ? 'bg-sumi-400' :
+                                         plan.plan === 'personal' ? 'bg-ai-400' :
+                                         plan.plan === 'pro' ? 'bg-ai-600' : 'bg-wakakusa-500'
+                                     ]"
+                                     :style="'width: ' + (plan.count / dashboard.TeamCount * 100) + '%'"></div>
+                            </template>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-sumi-500">
+                            <template x-for="plan in dashboard.TeamsByPlan" :key="plan.plan">
+                                <div class="flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full"
+                                          :class="plan.plan === 'free' ? 'bg-sumi-400' :
+                                                  plan.plan === 'personal' ? 'bg-ai-400' :
+                                                  plan.plan === 'pro' ? 'bg-ai-600' : 'bg-wakakusa-500'"></span>
+                                    <span x-text="plan.plan"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 最近のアクティビティ -->
+                <div class="bg-white border border-sumi-100 rounded-lg p-6">
+                    <h3 class="text-sm font-medium text-sumi-700 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        最近のアクティビティ
+                    </h3>
+                    <div class="space-y-3" x-show="dashboard.RecentActivity && dashboard.RecentActivity.length > 0">
+                        <template x-for="activity in dashboard.RecentActivity" :key="activity.timestamp">
+                            <div class="flex items-start gap-3 text-sm">
+                                <div class="w-2 h-2 mt-1.5 rounded-full flex-shrink-0"
+                                     :class="activity.type === 'scrape' ? 'bg-ai-500' :
+                                             activity.type === 'team' ? 'bg-wakakusa-500' :
+                                             activity.type === 'notification' ? 'bg-yellow-500' : 'bg-sumi-400'"></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sumi-700 truncate" x-text="activity.message"></div>
+                                    <div class="text-xs text-sumi-400" x-text="formatRelativeTime(activity.timestamp)"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="!dashboard.RecentActivity || dashboard.RecentActivity.length === 0" class="text-center py-8 text-sumi-400">
+                        <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-sm">最近のアクティビティはありません</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- クイックアクション -->
+            <div class="bg-white border border-sumi-100 rounded-lg p-6">
+                <h3 class="text-sm font-medium text-sumi-700 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    クイックアクション
+                </h3>
+                <div class="flex flex-wrap gap-3">
+                    <button @click="showTeamModal = true"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-ai-50 text-ai-700 rounded-lg hover:bg-ai-100 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        チーム追加
+                    </button>
+                    <button @click="showFacilityModal = true"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-wakakusa-50 text-wakakusa-700 rounded-lg hover:bg-wakakusa-100 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        施設追加
+                    </button>
+                    <button @click="currentTab = 'worker'; triggerScrape()"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-sumi-100 text-sumi-700 rounded-lg hover:bg-sumi-200 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        スクレイピング実行
+                    </button>
                 </div>
             </div>
         </div>
@@ -1127,6 +1339,41 @@
         </div>
     </div>
 
+    <!-- Toast Notifications -->
+    <div class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div class="pointer-events-auto px-4 py-3 rounded-lg shadow-lg text-white text-sm flex items-center gap-2 min-w-[280px] max-w-md"
+                 :class="[
+                     toast.type === 'error' ? 'bg-sango-600' :
+                     toast.type === 'success' ? 'bg-wakakusa-600' :
+                     toast.type === 'warning' ? 'bg-yellow-500' : 'bg-ai-600',
+                     toast.removing ? 'animate-slideOutRight' : 'animate-slideInRight'
+                 ]"
+                 style="animation-fill-mode: forwards;">
+                <!-- アイコン -->
+                <svg x-show="toast.type === 'success'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <svg x-show="toast.type === 'error'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <svg x-show="toast.type === 'warning'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <svg x-show="toast.type === 'info' || !['success', 'error', 'warning'].includes(toast.type)" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span x-text="toast.message" class="flex-1"></span>
+                <!-- 閉じるボタン -->
+                <button @click="removeToast(toast.id)" class="ml-2 hover:opacity-80 transition-opacity flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </div>
+
     <script>
     const NAV_TABS = [
         { id: 'dashboard', label: 'ダッシュボード' },
@@ -1155,7 +1402,7 @@
             navTabs: NAV_TABS,
             currentTab: 'dashboard',
             mobileMenuOpen: false,
-            dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [] },
+            dashboard: { TeamCount: 0, FacilityCount: 0, WatchConditionCount: 0, NotificationCount: 0, OpenTicketCount: 0, TeamsByPlan: [], FailedJobCount: 0, RecentActivity: [] },
             teams: [],
             facilities: [],
             grounds: [],
@@ -1185,6 +1432,53 @@
             newTeam: { name: '', email: '', plan: 'free' },
             newFacility: { name: '', municipality: '', scraper_type: '', url: '' },
             facilityFilter: { search: '', municipality: '', status: '' },
+
+            // トースト通知システム
+            toasts: [],
+            toastIdCounter: 0,
+
+            addToast(type, message, duration = 5000) {
+                const id = ++this.toastIdCounter;
+                this.toasts.push({ id, type, message, removing: false });
+                if (duration > 0) {
+                    setTimeout(() => this.removeToast(id), duration);
+                }
+                return id;
+            },
+
+            removeToast(id) {
+                const toast = this.toasts.find(t => t.id === id);
+                if (toast) {
+                    toast.removing = true;
+                    setTimeout(() => {
+                        this.toasts = this.toasts.filter(t => t.id !== id);
+                    }, 200);
+                }
+            },
+
+            // API呼び出しラッパー
+            async apiCall(url, options = {}) {
+                try {
+                    const res = await fetch(url, options);
+                    if (!res.ok) {
+                        let errorMsg = '操作に失敗しました';
+                        try {
+                            const error = await res.json();
+                            errorMsg = error.message || error.error || errorMsg;
+                        } catch (e) {
+                            errorMsg = res.statusText || errorMsg;
+                        }
+                        this.addToast('error', errorMsg);
+                        throw new Error(errorMsg);
+                    }
+                    return await res.json();
+                } catch (e) {
+                    if (e.name === 'TypeError') {
+                        this.addToast('error', 'ネットワークエラーが発生しました');
+                    }
+                    throw e;
+                }
+            },
 
             async init() {
                 await this.loadDashboard();
@@ -1621,6 +1915,24 @@
             async loadTickets() {
                 const res = await fetch('/admin/api/tickets');
                 this.tickets = await res.json();
+            },
+
+            // 相対時間フォーマット
+            formatRelativeTime(timestamp) {
+                if (!timestamp) return '';
+                const now = new Date();
+                const date = new Date(timestamp);
+                const diffMs = now - date;
+                const diffSec = Math.floor(diffMs / 1000);
+                const diffMin = Math.floor(diffSec / 60);
+                const diffHour = Math.floor(diffMin / 60);
+                const diffDay = Math.floor(diffHour / 24);
+
+                if (diffSec < 60) return 'たった今';
+                if (diffMin < 60) return `${diffMin}分前`;
+                if (diffHour < 24) return `${diffHour}時間前`;
+                if (diffDay < 7) return `${diffDay}日前`;
+                return date.toLocaleDateString('ja-JP');
             },
 
             async createTeam() {
