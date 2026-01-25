@@ -1,44 +1,59 @@
--- 施設マスターデータ（実データから生成）
--- 各自治体の予約システムを確認して作成
+-- 施設マスターデータ（大人の軟式野球向け）
+-- 各自治体の施設予約システムで確認した正確なリスト
 
--- 神奈川県（保土ケ谷公園）
--- サーティーフォー保土ケ谷球場（硬式野球場）
--- 軟式野球場（全面/半面A/半面B）
-INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
-('b2c3d4e5-2222-5333-9444-555566667777', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', 'サーティーフォー保土ケ谷球場', 'サーティーフォー保土ケ谷', 1, CURRENT_TIMESTAMP),
-('c3d4e5f6-3333-6444-0555-666677778888', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '軟式野球場', '軟式野球場', 1, CURRENT_TIMESTAMP);
+-- 神奈川県（5施設）
+DELETE FROM grounds WHERE municipality_id = 'd9e5f0b2-3456-5789-0bcd-ef0123456789';
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
+('d0000001-0001-4000-8000-000000000001', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', 'サーティーフォー保土ケ谷球場', 'サーティーフォー保土ケ谷', 1, CURRENT_TIMESTAMP),
+('d0000001-0002-4000-8000-000000000002', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '保土ケ谷公園軟式野球場A面', '軟式野球場.*A', 1, CURRENT_TIMESTAMP),
+('d0000001-0003-4000-8000-000000000003', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '保土ケ谷公園軟式野球場B面', '軟式野球場.*B', 1, CURRENT_TIMESTAMP),
+('d0000001-0004-4000-8000-000000000004', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '保土ケ谷公園軟式野球場両面', '軟式野球場.*両面', 1, CURRENT_TIMESTAMP),
+('d0000001-0005-4000-8000-000000000005', 'd9e5f0b2-3456-5789-0bcd-ef0123456789', '三ツ池公園', '三ツ池公園', 1, CURRENT_TIMESTAMP);
 
--- 平塚市
--- 大神グラウンド野球場（A-K面）
--- 平塚球場
--- 総合公園野球場
--- 馬入ふれあい公園サッカー場
-INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
-('ef58b68c-8992-402f-9092-bf469d9b891f', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '大神グラウンド野球場', '大神グラウンド野球場', 1, CURRENT_TIMESTAMP),
-('b0ddfeca-20c7-45d4-84c5-a70843ca8070', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '平塚球場', '平塚球場', 1, CURRENT_TIMESTAMP),
-('56849576-908b-4bfb-bc30-ac537fd1cb5c', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '総合公園野球場', '総合公園', 1, CURRENT_TIMESTAMP),
-('bb06ac2a-9a63-4e08-95a4-43c887a54bd0', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '馬入ふれあい公園サッカー場', '馬入', 1, CURRENT_TIMESTAMP);
+-- 平塚市（3施設）
+DELETE FROM grounds WHERE municipality_id = '1438eb89-e0d1-4b49-b9a2-135718c207e2';
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
+('b0000001-0001-4000-8000-000000000001', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '土沢野球場', '土沢野球場', 1, CURRENT_TIMESTAMP),
+('b0000001-0002-4000-8000-000000000002', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '平塚球場', '平塚球場', 1, CURRENT_TIMESTAMP),
+('b0000001-0003-4000-8000-000000000003', '1438eb89-e0d1-4b49-b9a2-135718c207e2', '大神グラウンド', '大神グラウンド', 1, CURRENT_TIMESTAMP);
 
--- 藤沢市
-INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
-('842ab6ef-e69e-4c61-a584-9b582285a1fa', 'af168e03-6f16-455b-8319-000f6d2e32bf', '八部球場', '八部', 1, CURRENT_TIMESTAMP),
-('cc39fe86-c23a-4fa2-9a86-697127ac8da3', 'af168e03-6f16-455b-8319-000f6d2e32bf', '秋葉台球場', '秋葉台', 1, CURRENT_TIMESTAMP),
-('14f9cc81-ae8f-4cc4-b199-98f28d272c18', 'af168e03-6f16-455b-8319-000f6d2e32bf', '引地台球場', '引地台', 1, CURRENT_TIMESTAMP),
-('b20b1635-37a2-464e-934c-c06eb948ed7b', 'af168e03-6f16-455b-8319-000f6d2e32bf', '辻堂南部公園野球場', '辻堂', 1, CURRENT_TIMESTAMP),
-('6cfb534f-363a-4c6a-b5ae-ab181b9375ee', 'af168e03-6f16-455b-8319-000f6d2e32bf', '長久保公園野球場', '長久保', 1, CURRENT_TIMESTAMP);
+-- 藤沢市（5施設）
+DELETE FROM grounds WHERE municipality_id = 'af168e03-6f16-455b-8319-000f6d2e32bf';
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
+('c0000001-0001-4000-8000-000000000001', 'af168e03-6f16-455b-8319-000f6d2e32bf', '桐原公園野球場', '桐原公園', 1, CURRENT_TIMESTAMP),
+('c0000001-0002-4000-8000-000000000002', 'af168e03-6f16-455b-8319-000f6d2e32bf', '八部公園', '八部公園', 1, CURRENT_TIMESTAMP),
+('c0000001-0003-4000-8000-000000000003', 'af168e03-6f16-455b-8319-000f6d2e32bf', '辻堂南部公園野球場', '辻堂南部公園', 1, CURRENT_TIMESTAMP),
+('c0000001-0004-4000-8000-000000000004', 'af168e03-6f16-455b-8319-000f6d2e32bf', '葛原スポーツ広場', '葛原スポーツ広場', 1, CURRENT_TIMESTAMP),
+('c0000001-0005-4000-8000-000000000005', 'af168e03-6f16-455b-8319-000f6d2e32bf', '女坂スポーツ広場', '女坂スポーツ広場', 1, CURRENT_TIMESTAMP);
 
--- 横浜市（主な野球場）
-INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
-('7b18fcbf-944e-45bf-9ba9-3e8cf8593a0c', 'e7f6a658-4549-4761-8b77-b316576b22d6', 'こども自然公園野球場', 'こども自然公園', 1, CURRENT_TIMESTAMP),
-('7057dad4-e53a-46b8-9e4c-74697a53480d', 'e7f6a658-4549-4761-8b77-b316576b22d6', '今川公園野球場', '今川公園', 1, CURRENT_TIMESTAMP),
-('462461c0-7c15-43c4-8783-83b953619510', 'e7f6a658-4549-4761-8b77-b316576b22d6', '岡村公園野球場', '岡村公園', 1, CURRENT_TIMESTAMP),
-('5a6f0ebf-0f90-4e6a-b067-b7a4fd13bebc', 'e7f6a658-4549-4761-8b77-b316576b22d6', '俣野公園野球場', '俣野公園', 1, CURRENT_TIMESTAMP),
-('9299d1c0-8ffd-4660-85e8-1dc0467e7ce9', 'e7f6a658-4549-4761-8b77-b316576b22d6', '金井公園野球場', '金井公園', 1, CURRENT_TIMESTAMP),
-('a1234567-1111-2222-3333-444455556666', 'e7f6a658-4549-4761-8b77-b316576b22d6', '三ツ沢公園野球場', '三ツ沢公園', 1, CURRENT_TIMESTAMP),
-('b2345678-2222-3333-4444-555566667777', 'e7f6a658-4549-4761-8b77-b316576b22d6', '日野公園野球場', '日野公園', 1, CURRENT_TIMESTAMP),
-('c3456789-3333-4444-5555-666677778888', 'e7f6a658-4549-4761-8b77-b316576b22d6', '九沢江野球場', '九沢江', 1, CURRENT_TIMESTAMP),
-('d4567890-4444-5555-6666-777788889999', 'e7f6a658-4549-4761-8b77-b316576b22d6', '塩浜公園野球場', '塩浜公園', 1, CURRENT_TIMESTAMP),
-('e5678901-5555-6666-7777-888899990000', 'e7f6a658-4549-4761-8b77-b316576b22d6', '新横浜公園野球場', '新横浜公園', 1, CURRENT_TIMESTAMP);
+-- 横浜市（施設予約システムで軟式野球として検索できる全25施設）
+DELETE FROM grounds WHERE municipality_id = 'e7f6a658-4549-4761-8b77-b316576b22d6';
+INSERT INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
+('a0000001-0001-4000-8000-000000000001', 'e7f6a658-4549-4761-8b77-b316576b22d6', '潮田公園', '潮田公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0002-4000-8000-000000000002', 'e7f6a658-4549-4761-8b77-b316576b22d6', '入船公園', '入船公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0003-4000-8000-000000000003', 'e7f6a658-4549-4761-8b77-b316576b22d6', '三ツ沢公園', '三ツ沢公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0004-4000-8000-000000000004', 'e7f6a658-4549-4761-8b77-b316576b22d6', '岡野公園', '岡野公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0005-4000-8000-000000000005', 'e7f6a658-4549-4761-8b77-b316576b22d6', '本牧市民公園', '本牧市民公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0006-4000-8000-000000000006', 'e7f6a658-4549-4761-8b77-b316576b22d6', '横浜スタジアム', '横浜スタジアム', 1, CURRENT_TIMESTAMP),
+('a0000001-0007-4000-8000-000000000007', 'e7f6a658-4549-4761-8b77-b316576b22d6', '清水ケ丘公園', '清水ケ丘公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0008-4000-8000-000000000008', 'e7f6a658-4549-4761-8b77-b316576b22d6', '日野中央公園', '日野中央公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0009-4000-8000-000000000009', 'e7f6a658-4549-4761-8b77-b316576b22d6', 'こども自然公園', 'こども自然公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0010-4000-8000-000000000010', 'e7f6a658-4549-4761-8b77-b316576b22d6', '今川公園', '今川公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0011-4000-8000-000000000011', 'e7f6a658-4549-4761-8b77-b316576b22d6', '岡村公園', '岡村公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0012-4000-8000-000000000012', 'e7f6a658-4549-4761-8b77-b316576b22d6', '新杉田公園', '新杉田公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0013-4000-8000-000000000013', 'e7f6a658-4549-4761-8b77-b316576b22d6', '野島公園', '野島公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0014-4000-8000-000000000014', 'e7f6a658-4549-4761-8b77-b316576b22d6', '富岡西公園', '富岡西公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0015-4000-8000-000000000015', 'e7f6a658-4549-4761-8b77-b316576b22d6', '長浜公園', '長浜公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0016-4000-8000-000000000016', 'e7f6a658-4549-4761-8b77-b316576b22d6', '岸根公園', '岸根公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0017-4000-8000-000000000017', 'e7f6a658-4549-4761-8b77-b316576b22d6', '新横浜公園', '新横浜公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0018-4000-8000-000000000018', 'e7f6a658-4549-4761-8b77-b316576b22d6', '長坂谷公園第一', '長坂谷公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0019-4000-8000-000000000019', 'e7f6a658-4549-4761-8b77-b316576b22d6', '玄海田公園', '玄海田公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0020-4000-8000-000000000020', 'e7f6a658-4549-4761-8b77-b316576b22d6', '都田公園', '都田公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0021-4000-8000-000000000021', 'e7f6a658-4549-4761-8b77-b316576b22d6', '俣野公園', '俣野公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0022-4000-8000-000000000022', 'e7f6a658-4549-4761-8b77-b316576b22d6', '東俣野中央公園', '東俣野中央公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0023-4000-8000-000000000023', 'e7f6a658-4549-4761-8b77-b316576b22d6', '金井公園', '金井公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0024-4000-8000-000000000024', 'e7f6a658-4549-4761-8b77-b316576b22d6', '中田中央公園', '中田中央公園', 1, CURRENT_TIMESTAMP),
+('a0000001-0025-4000-8000-000000000025', 'e7f6a658-4549-4761-8b77-b316576b22d6', '瀬谷本郷公園', '瀬谷本郷公園', 1, CURRENT_TIMESTAMP);
 
 -- 鎌倉市
 INSERT OR IGNORE INTO grounds (id, municipality_id, name, court_pattern, enabled, created_at) VALUES
@@ -53,6 +68,10 @@ DELETE FROM grounds WHERE name LIKE '%ラバーボール%';
 DELETE FROM grounds WHERE name = '保土ヶ谷公園硬式野球場';
 DELETE FROM grounds WHERE name = '大神スポーツ広場野球場';
 DELETE FROM grounds WHERE name = 'テスト球場';
+-- 不要なデータを削除
+DELETE FROM grounds WHERE name LIKE '%サッカー%';
+DELETE FROM grounds WHERE name LIKE '%テニス%';
+DELETE FROM grounds WHERE name LIKE '%少年%';
 
 -- Record execution of this migration
 INSERT OR IGNORE INTO migrations (migration_number, migration_name)
