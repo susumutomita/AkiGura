@@ -208,6 +208,39 @@ func (s *Server) HandleDeleteTeam(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// HandleUpdateTeam updates an existing team
+func (s *Server) HandleUpdateTeam(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		s.jsonError(w, "team id required", http.StatusBadRequest)
+		return
+	}
+
+	var input struct {
+		Name   string `json:"name"`
+		Email  string `json:"email"`
+		Plan   string `json:"plan"`
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		s.jsonError(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	_, err := s.DB.ExecContext(ctx,
+		"UPDATE teams SET name = ?, email = ?, plan = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+		input.Name, input.Email, input.Plan, input.Status, id)
+	if err != nil {
+		slog.Error("update team", "error", err)
+		s.jsonError(w, "failed to update team", http.StatusInternalServerError)
+		return
+	}
+
+	slog.Info("team updated", "team_id", id)
+	s.jsonResponse(w, map[string]interface{}{"success": true})
+}
+
 // Slots API
 func (s *Server) HandleListSlots(w http.ResponseWriter, r *http.Request) {
 	groundID := r.URL.Query().Get("ground_id")
@@ -463,6 +496,59 @@ func (s *Server) HandleCreateFacility(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.jsonResponse(w, facility)
+}
+
+// HandleUpdateFacility updates an existing facility
+func (s *Server) HandleUpdateFacility(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		s.jsonError(w, "facility id required", http.StatusBadRequest)
+		return
+	}
+
+	var input struct {
+		Name         string `json:"name"`
+		Municipality string `json:"municipality"`
+		ScraperType  string `json:"scraper_type"`
+		Enabled      bool   `json:"enabled"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		s.jsonError(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	_, err := s.DB.ExecContext(ctx,
+		"UPDATE facilities SET name = ?, municipality = ?, scraper_type = ?, enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+		input.Name, input.Municipality, input.ScraperType, input.Enabled, id)
+	if err != nil {
+		slog.Error("update facility", "error", err)
+		s.jsonError(w, "failed to update facility", http.StatusInternalServerError)
+		return
+	}
+
+	slog.Info("facility updated", "facility_id", id)
+	s.jsonResponse(w, map[string]interface{}{"success": true})
+}
+
+// HandleDeleteFacility deletes a facility
+func (s *Server) HandleDeleteFacility(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		s.jsonError(w, "facility id required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	_, err := s.DB.ExecContext(ctx, "DELETE FROM facilities WHERE id = ?", id)
+	if err != nil {
+		slog.Error("delete facility", "error", err)
+		s.jsonError(w, "failed to delete facility", http.StatusInternalServerError)
+		return
+	}
+
+	slog.Info("facility deleted", "facility_id", id)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // Watch Conditions API
