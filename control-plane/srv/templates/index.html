@@ -298,8 +298,18 @@
 
         <!-- Slots (空き状況) - Calendar View -->
         <div x-show="currentTab === 'slots'" x-cloak>
-            <!-- Breadcrumb -->
-            <div class="flex items-center gap-2 mb-4 text-sm">
+            <!-- View Toggle Tabs -->
+            <div class="flex items-center gap-1 mb-4 border-b border-sumi-200">
+                <button @click="slotView = 'all-calendar'; selectedMunicipality = null; selectedGround = null"
+                        class="px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px"
+                        :class="slotView === 'all-calendar' ? 'text-ai-600 border-ai-600' : 'text-sumi-500 border-transparent hover:text-sumi-700'">📅 全施設カレンダー</button>
+                <button @click="slotView = 'municipalities'; selectedMunicipality = null; selectedGround = null"
+                        class="px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px"
+                        :class="slotView === 'municipalities' || slotView === 'grounds' || slotView === 'calendar' ? 'text-ai-600 border-ai-600' : 'text-sumi-500 border-transparent hover:text-sumi-700'">🏢 自治体別</button>
+            </div>
+
+            <!-- Breadcrumb (自治体別ビュー用) -->
+            <div x-show="slotView === 'municipalities' || slotView === 'grounds' || slotView === 'calendar'" class="flex items-center gap-2 mb-4 text-sm">
                 <button @click="slotView = 'municipalities'; selectedMunicipality = null; selectedGround = null"
                         class="hover:text-ai-600 transition-colors" :class="slotView === 'municipalities' ? 'text-sumi-800 font-medium' : 'text-sumi-500'">自治体一覧</button>
                 <template x-if="selectedMunicipality">
@@ -315,6 +325,129 @@
                         <span class="text-sumi-800 font-medium" x-text="selectedGround?.name"></span>
                     </span>
                 </template>
+            </div>
+
+            <!-- 全施設カレンダービュー -->
+            <div x-show="slotView === 'all-calendar'">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-sumi-800">全施設カレンダー</h2>
+                    <button @click="loadSlots(); loadGrounds()" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">更新</button>
+                </div>
+
+                <!-- サマリー -->
+                <div class="bg-white border border-sumi-100 rounded p-4 mb-4">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex gap-6">
+                            <div>
+                                <span class="text-sumi-500 text-xs">総空き枠数</span>
+                                <div class="text-2xl font-semibold text-wakakusa-600" x-text="slots.length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある自治体</span>
+                                <div class="text-2xl font-semibold text-ai-600" x-text="getGroundsWithSlots().length + '/' + municipalities.length"></div>
+                            </div>
+                            <div>
+                                <span class="text-sumi-500 text-xs">空きのある日数</span>
+                                <div class="text-2xl font-semibold text-wakakusa-500" x-text="getUniqueDatesAll()"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 items-center text-xs">
+                            <span class="text-sumi-500">凡例:</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-50 text-wakakusa-700">1-2自治体</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-100 text-wakakusa-700">3-5自治体</span>
+                            <span class="px-2 py-0.5 rounded bg-wakakusa-200 text-wakakusa-800">6自治体以上</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Navigation -->
+                <div class="flex justify-between items-center mb-4">
+                    <button @click="prevMonth()" class="px-4 py-2 text-sumi-600 hover:text-sumi-800 hover:bg-kinari-200 rounded transition-colors text-sm">前月</button>
+                    <h3 class="font-medium text-sumi-800" x-text="calendarYear + '年' + (calendarMonth + 1) + '月'"></h3>
+                    <button @click="nextMonth()" class="px-4 py-2 text-sumi-600 hover:text-sumi-800 hover:bg-kinari-200 rounded transition-colors text-sm">翌月</button>
+                </div>
+
+                <!-- All-Facilities Calendar Grid -->
+                <div class="bg-white border border-sumi-100 rounded overflow-hidden">
+                    <div class="grid grid-cols-7 border-b border-sumi-100">
+                        <template x-for="day in ['日', '月', '火', '水', '木', '金', '土']" :key="day">
+                            <div class="py-2 text-center text-xs font-medium" :class="day === '日' ? 'text-sango-500' : day === '土' ? 'text-ai-500' : 'text-sumi-600'" x-text="day"></div>
+                        </template>
+                    </div>
+                    <div class="grid grid-cols-7">
+                        <template x-for="(day, idx) in calendarDays" :key="idx">
+                            <div
+                                class="min-h-[90px] border-b border-r border-sumi-50 p-1 cursor-pointer transition-colors relative"
+                                :class="{
+                                    'bg-sumi-50': !day.currentMonth,
+                                    'bg-wakakusa-200': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length >= 6,
+                                    'bg-wakakusa-100': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length >= 3 && getGroundsWithSlotsForDate(day.dateStr).length < 6,
+                                    'bg-wakakusa-50': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length > 0 && getGroundsWithSlotsForDate(day.dateStr).length < 3,
+                                    'bg-white hover:bg-ai-50': day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length === 0,
+                                    'ring-2 ring-ai-400 ring-inset': allCalendarSelectedDate === day.dateStr,
+                                    'border-l border-sumi-50': idx % 7 === 0
+                                }"
+                                @click="day.currentMonth && selectAllCalendarDate(day.dateStr)"
+                            >
+                                <div class="flex justify-between items-start">
+                                    <span class="text-sm font-medium"
+                                        :class="{
+                                            'text-sumi-300': !day.currentMonth,
+                                            'text-sango-600': day.currentMonth && day.dayOfWeek === 0,
+                                            'text-ai-600': day.currentMonth && day.dayOfWeek === 6,
+                                            'text-sumi-800': day.currentMonth && day.dayOfWeek > 0 && day.dayOfWeek < 6
+                                        }"
+                                        x-text="day.day"
+                                    ></span>
+                                    <template x-if="day.currentMonth && getSlotsForDate(day.dateStr).length > 0">
+                                        <span class="px-1.5 py-0.5 text-xs font-bold rounded bg-wakakusa-500 text-white"
+                                              x-text="getSlotsForDate(day.dateStr).length + '枠'"></span>
+                                    </template>
+                                </div>
+                                <!-- 自治体数表示 -->
+                                <template x-if="day.currentMonth && getGroundsWithSlotsForDate(day.dateStr).length > 0">
+                                    <div class="mt-1 text-xs text-wakakusa-700 font-medium" x-text="getGroundsWithSlotsForDate(day.dateStr).length + '自治体'"></div>
+                                </template>
+                                <!-- 自治体名プレビュー (最大3つ) -->
+                                <div class="mt-1 space-y-0.5 overflow-hidden max-h-[36px]">
+                                    <template x-for="municipality in getGroundsWithSlotsForDate(day.dateStr).slice(0, 3)" :key="municipality.id">
+                                        <div class="text-xs px-1 py-0.5 bg-wakakusa-500/20 text-wakakusa-800 rounded truncate" x-text="municipality.name"></div>
+                                    </template>
+                                </div>
+                                <!-- 空き枠インジケーターバー -->
+                                <div x-show="day.currentMonth && getSlotsForDate(day.dateStr).length > 0" class="absolute bottom-0 left-0 right-0 h-1 bg-wakakusa-300">
+                                    <div class="h-full bg-wakakusa-600" :style="'width: ' + Math.min(100, getSlotsForDate(day.dateStr).length * 2) + '%'"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Selected Date Detail (全施設) -->
+                <div x-show="allCalendarSelectedDate" class="mt-6 bg-white border border-sumi-100 rounded p-5">
+                    <h3 class="font-medium text-sumi-800 mb-4" x-text="formatDateFull(allCalendarSelectedDate) + ' の空き状況'"></h3>
+                    <div x-show="getSlotsForDate(allCalendarSelectedDate).length === 0" class="text-sumi-500 text-center py-4 text-sm">
+                        この日の空き枠はありません
+                    </div>
+                    <!-- 自治体別にグループ化して表示 -->
+                    <div class="space-y-4">
+                        <template x-for="municipality in getGroundsWithSlotsForDate(allCalendarSelectedDate)" :key="municipality.id">
+                            <div class="border border-sumi-100 rounded p-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium text-sumi-800 text-sm" x-text="municipality.name"></h4>
+                                    <span class="px-2 py-0.5 text-xs rounded bg-wakakusa-100 text-wakakusa-700"
+                                          x-text="getSlotsForMunicipalityDate(municipality.id, allCalendarSelectedDate).length + '枠'"></span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="slot in getSlotsForMunicipalityDate(municipality.id, allCalendarSelectedDate)" :key="slot.id">
+                                        <span class="px-2 py-1 bg-wakakusa-50 text-wakakusa-800 text-xs rounded"
+                                              x-text="slot.time_from + '-' + slot.time_to + (slot.court_name ? ' (' + slot.court_name + ')' : '')"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
 
             <!-- 自治体一覧 -->
@@ -816,13 +949,14 @@
             grounds: [],
             slots: [],
             municipalities: [],
-            slotView: 'municipalities',
+            slotView: 'all-calendar',
             selectedMunicipality: null,
             selectedGround: null,
             slotFilter: { municipalityId: '' },
             calendarYear: new Date().getFullYear(),
             calendarMonth: new Date().getMonth(),
             selectedDate: null,
+            allCalendarSelectedDate: null,
             showLogs: window.innerWidth >= 768,
             jobs: [],
             workerLogs: [],
@@ -934,10 +1068,59 @@
                 this.selectedDate = this.selectedDate === dateStr ? null : dateStr;
             },
 
+            selectAllCalendarDate(dateStr) {
+                this.allCalendarSelectedDate = this.allCalendarSelectedDate === dateStr ? null : dateStr;
+            },
+
             getSlotsForDate(dateStr) {
                 return this.slots.filter(s => {
                     const slotDate = s.slot_date.split('T')[0];
                     return slotDate === dateStr;
+                }).sort((a, b) => a.time_from.localeCompare(b.time_from));
+            },
+
+            // 全施設カレンダー用: 空きのある自治体一覧を取得
+            getGroundsWithSlots() {
+                const municipalityIds = new Set(this.slots.map(s => s.municipality_id));
+                return this.municipalities.filter(m => municipalityIds.has(m.id));
+            },
+
+            // 全施設カレンダー用: 全体の空きのある日数を取得
+            getUniqueDatesAll() {
+                const dates = new Set();
+                this.slots.forEach(s => {
+                    dates.add(s.slot_date.split('T')[0]);
+                });
+                return dates.size;
+            },
+
+            // 全施設カレンダー用: 指定日に空きのある自治体一覧（ユニークな court_name でカウント）
+            getGroundsWithSlotsForDate(dateStr) {
+                const municipalities = {};
+                this.slots.forEach(s => {
+                    if (s.slot_date.split('T')[0] === dateStr) {
+                        if (!municipalities[s.municipality_id]) {
+                            municipalities[s.municipality_id] = {
+                                id: s.municipality_id,
+                                name: s.municipality_name || '不明',
+                                municipality_name: s.municipality_name || '不明',
+                                courtNames: new Set()
+                            };
+                        }
+                        municipalities[s.municipality_id].courtNames.add(s.court_name);
+                    }
+                });
+                return Object.values(municipalities).map(m => ({
+                    ...m,
+                    slotCount: m.courtNames.size
+                }));
+            },
+
+            // 全施設カレンダー用: 指定日・自治体のスロット一覧
+            getSlotsForMunicipalityDate(municipalityId, dateStr) {
+                return this.slots.filter(s => {
+                    const slotDate = s.slot_date.split('T')[0];
+                    return s.municipality_id === municipalityId && slotDate === dateStr;
                 }).sort((a, b) => a.time_from.localeCompare(b.time_from));
             },
 
