@@ -87,6 +87,15 @@ func (s *Server) HandleUserPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleAdminLogout clears Basic Auth credentials by returning 401
+func (s *Server) HandleAdminLogout(w http.ResponseWriter, r *http.Request) {
+	// Set WWW-Authenticate header to force browser to clear cached credentials
+	w.Header().Set("WWW-Authenticate", `Basic realm="AkiGura Admin"`)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	w.Write([]byte(`{"status":"logged_out"}`))
+}
+
 func (s *Server) renderTemplate(w http.ResponseWriter, name string, data any) error {
 	path := filepath.Join(s.TemplatesDir, name)
 	tmpl, err := template.ParseFiles(path)
@@ -139,6 +148,7 @@ func (s *Server) Serve(addr string) error {
 	adminMux.HandleFunc("GET /api/tickets", s.HandleListTickets)
 	adminMux.HandleFunc("POST /api/tickets", s.HandleCreateTicket)
 	adminMux.HandleFunc("POST /api/chat", s.HandleAIChat)
+	adminMux.HandleFunc("POST /api/logout", s.HandleAdminLogout)
 
 	// Mount admin routes with Basic Auth at /admin prefix
 	mux.Handle("/admin/", http.StripPrefix("/admin", basicAuthMiddleware(adminMux)))
