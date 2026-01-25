@@ -153,8 +153,8 @@
             <!-- Mobile Header -->
             <div class="flex justify-between items-center">
                 <h1 class="text-lg md:text-xl font-semibold tracking-tight">AkiGura</h1>
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 hover:bg-sumi-700 rounded transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2.5 hover:bg-sumi-700 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+                    <svg class="w-6 h-6 transition-transform duration-200" :class="mobileMenuOpen ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
                         <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -170,11 +170,19 @@
                 </nav>
             </div>
             <!-- Mobile Nav -->
-            <nav x-show="mobileMenuOpen" x-cloak class="md:hidden mt-3 pb-2 grid grid-cols-3 gap-2">
+            <nav x-show="mobileMenuOpen" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-2"
+                 x-cloak 
+                 class="md:hidden mt-3 pb-2 grid grid-cols-3 gap-2">
                 <template x-for="tab in navTabs" :key="tab.id">
                     <button @click="currentTab = tab.id; mobileMenuOpen = false"
                             :class="currentTab === tab.id ? 'bg-sumi-700 text-kinari-50' : 'text-sumi-300 hover:bg-sumi-700'"
-                            class="px-2 py-2 rounded text-sm text-center transition-colors"
+                            class="px-2 py-3 rounded text-sm text-center transition-colors min-h-[44px]"
                             x-text="tab.label"></button>
                 </template>
             </nav>
@@ -390,9 +398,84 @@
         <div x-show="currentTab === 'teams'" x-cloak>
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold text-sumi-800">チーム管理</h2>
-                <button @click="showTeamModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">新規チーム追加</button>
+                <button @click="showTeamModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors min-h-[44px]">新規チーム追加</button>
             </div>
-            <div class="bg-white border border-sumi-100 rounded overflow-hidden">
+
+            <!-- Mobile: Card View -->
+            <div class="md:hidden space-y-3">
+                <template x-for="team in paginatedTeams" :key="team.id">
+                    <div class="bg-white rounded-lg p-4 border border-sumi-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-medium text-sumi-800" x-text="team.name"></span>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
+                                'bg-wakakusa-50 text-wakakusa-700': team.status === 'active',
+                                'bg-sango-50 text-sango-700': team.status === 'failed',
+                                'bg-sumi-100 text-sumi-600': team.status !== 'active' && team.status !== 'failed'
+                            }">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                    'bg-wakakusa-500': team.status === 'active',
+                                    'bg-sango-500': team.status === 'failed',
+                                    'bg-sumi-400': team.status !== 'active' && team.status !== 'failed'
+                                }"></span>
+                                <span x-text="team.status"></span>
+                            </span>
+                        </div>
+                        <div class="text-sm text-sumi-500 space-y-1">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                <span x-text="team.email"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                                </svg>
+                                <span class="px-2 py-0.5 text-xs rounded border" :class="{
+                                    'border-sumi-200 text-sumi-600': team.plan === 'free',
+                                    'border-ai-200 text-ai-600': team.plan === 'personal',
+                                    'border-ai-300 text-ai-700': team.plan === 'pro',
+                                    'border-wakakusa-200 text-wakakusa-600': team.plan === 'org'
+                                }" x-text="team.plan"></span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-sumi-100">
+                            <button @click="openEditTeamModal(team)" class="flex-1 py-2.5 text-sm text-ai-600 hover:bg-ai-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                編集
+                            </button>
+                            <button @click="confirmDeleteTeam(team)" class="flex-1 py-2.5 text-sm text-sango-600 hover:bg-sango-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <!-- Mobile Empty State -->
+                <div x-show="sortedTeams.length === 0" class="py-12 text-center text-sumi-500 bg-white rounded-lg border border-sumi-100">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <p class="text-sm">チームが登録されていません</p>
+                </div>
+                <!-- Mobile Pagination -->
+                <div x-show="sortedTeams.length > 0" class="flex items-center justify-between py-3">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(teamPage - 1) * teamPageSize + 1"></span>-<span x-text="Math.min(teamPage * teamPageSize, sortedTeams.length)"></span> / <span x-text="sortedTeams.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="teamPage--" :disabled="teamPage <= 1" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">前へ</button>
+                        <button @click="teamPage++" :disabled="teamPage >= teamTotalPages" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">次へ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop: Table View -->
+            <div class="hidden md:block bg-white border border-sumi-100 rounded overflow-hidden">
                 <table class="min-w-full">
                     <thead>
                         <tr class="border-b border-sumi-200">
@@ -494,22 +577,22 @@
         <div x-show="currentTab === 'facilities'" x-cloak>
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold text-sumi-800">施設管理</h2>
-                <button @click="showFacilityModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">新規施設追加</button>
+                <button @click="showFacilityModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors min-h-[44px]">新規施設追加</button>
             </div>
             <!-- Filter Controls -->
             <div class="bg-white border border-sumi-100 rounded p-4 mb-4">
-                <div class="flex flex-wrap gap-4 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-4 items-end">
                     <!-- Search -->
-                    <div class="flex-1 min-w-[200px]">
+                    <div class="sm:col-span-2 lg:flex-1 lg:min-w-[200px]">
                         <label class="block text-xs font-medium text-sumi-500 mb-1">検索</label>
                         <input type="text" x-model="facilityFilter.search" placeholder="施設名・自治体で検索..."
-                               class="w-full px-3 py-2 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500">
+                               class="w-full px-3 py-2.5 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500 min-h-[44px]">
                     </div>
                     <!-- Municipality Filter -->
-                    <div class="min-w-[180px]">
+                    <div class="lg:min-w-[180px]">
                         <label class="block text-xs font-medium text-sumi-500 mb-1">自治体</label>
                         <select x-model="facilityFilter.municipality"
-                                class="w-full px-3 py-2 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500">
+                                class="w-full px-3 py-2.5 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500 min-h-[44px]">
                             <option value="">すべて</option>
                             <template x-for="m in uniqueFacilityMunicipalities" :key="m">
                                 <option :value="m" x-text="m"></option>
@@ -517,10 +600,10 @@
                         </select>
                     </div>
                     <!-- Status Filter -->
-                    <div class="min-w-[140px]">
+                    <div class="lg:min-w-[140px]">
                         <label class="block text-xs font-medium text-sumi-500 mb-1">ステータス</label>
                         <select x-model="facilityFilter.status"
-                                class="w-full px-3 py-2 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500">
+                                class="w-full px-3 py-2.5 border border-sumi-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ai-500 focus:border-ai-500 min-h-[44px]">
                             <option value="">すべて</option>
                             <option value="enabled">有効</option>
                             <option value="disabled">無効</option>
@@ -529,7 +612,7 @@
                     <!-- Clear Filters -->
                     <button @click="clearFacilityFilters()" 
                             x-show="facilityFilter.search || facilityFilter.municipality || facilityFilter.status"
-                            class="px-3 py-2 text-sm text-sumi-600 hover:text-sumi-800 hover:bg-sumi-100 rounded transition-colors">
+                            class="px-4 py-2.5 text-sm text-sumi-600 hover:text-sumi-800 hover:bg-sumi-100 rounded transition-colors min-h-[44px]">
                         クリア
                     </button>
                 </div>
@@ -541,7 +624,77 @@
                     </span>
                 </div>
             </div>
-            <div class="bg-white border border-sumi-100 rounded overflow-hidden">
+
+            <!-- Mobile: Card View -->
+            <div class="md:hidden space-y-3">
+                <template x-for="f in paginatedFacilities" :key="f.id">
+                    <div class="bg-white rounded-lg p-4 border border-sumi-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-medium text-sumi-800" x-text="f.name"></span>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
+                                'bg-wakakusa-50 text-wakakusa-700': f.enabled,
+                                'bg-sumi-100 text-sumi-600': !f.enabled
+                            }">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                    'bg-wakakusa-500': f.enabled,
+                                    'bg-sumi-400': !f.enabled
+                                }"></span>
+                                <span x-text="f.enabled ? '有効' : '無効'"></span>
+                            </span>
+                        </div>
+                        <div class="text-sm text-sumi-500 space-y-1">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span x-text="f.municipality"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sumi-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <span class="text-xs text-sumi-500" x-text="f.scraper_type"></span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-sumi-100">
+                            <button @click="openEditFacilityModal(f)" class="flex-1 py-2.5 text-sm text-ai-600 hover:bg-ai-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                編集
+                            </button>
+                            <button @click="confirmDeleteFacility(f)" class="flex-1 py-2.5 text-sm text-sango-600 hover:bg-sango-50 rounded transition-colors min-h-[44px] flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <!-- Mobile Empty State -->
+                <div x-show="sortedFilteredFacilities.length === 0" class="py-12 text-center text-sumi-500 bg-white rounded-lg border border-sumi-100">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <p class="text-sm">施設が見つかりません</p>
+                </div>
+                <!-- Mobile Pagination -->
+                <div x-show="sortedFilteredFacilities.length > 0" class="flex items-center justify-between py-3">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(facilityPage - 1) * facilityPageSize + 1"></span>-<span x-text="Math.min(facilityPage * facilityPageSize, sortedFilteredFacilities.length)"></span> / <span x-text="sortedFilteredFacilities.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="facilityPage--" :disabled="facilityPage <= 1" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">前へ</button>
+                        <button @click="facilityPage++" :disabled="facilityPage >= facilityTotalPages" class="px-3 py-2 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]">次へ</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop: Table View -->
+            <div class="hidden md:block bg-white border border-sumi-100 rounded overflow-hidden">
                 <table class="min-w-full">
                     <thead>
                         <tr class="border-b border-sumi-200">
@@ -582,11 +735,11 @@
                                 <td class="px-5 py-4">
                                     <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
                                         'bg-wakakusa-50 text-wakakusa-700': f.enabled,
-                                        'bg-sango-50 text-sango-700': !f.enabled
+                                        'bg-sumi-100 text-sumi-600': !f.enabled
                                     }">
                                         <span class="w-1.5 h-1.5 rounded-full" :class="{
                                             'bg-wakakusa-500': f.enabled,
-                                            'bg-sango-500': !f.enabled
+                                            'bg-sumi-400': !f.enabled
                                         }"></span>
                                         <span x-text="f.enabled ? '有効' : '無効'"></span>
                                     </span>
@@ -1517,6 +1670,10 @@
                     <input type="text" x-model="editFacility.scraper_type" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
                 </div>
                 <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">URL</label>
+                    <input type="url" x-model="editFacility.url" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
                     <label class="flex items-center gap-2 text-sm font-medium text-sumi-700">
                         <input type="checkbox" x-model="editFacility.enabled" class="rounded border-sumi-300 text-ai-600 focus:ring-ai-500">
                         有効
@@ -1658,7 +1815,7 @@
             facilityPage: 1,
             facilityPageSize: 20,
             showEditFacilityModal: false,
-            editFacility: { id: null, name: '', municipality: '', scraper_type: '', enabled: true },
+            editFacility: { id: null, name: '', municipality: '', scraper_type: '', url: '', enabled: true },
 
             // Delete confirmation state
             showDeleteConfirmModal: false,
@@ -1703,7 +1860,13 @@
                         this.addToast('error', errorMsg);
                         throw new Error(errorMsg);
                     }
-                    return await res.json();
+                    const text = await res.text();
+                    if (!text) return null;
+                    try {
+                        return JSON.parse(text);
+                    } catch {
+                        return text;
+                    }
                 } catch (e) {
                     if (e.name === 'TypeError') {
                         this.addToast('error', 'ネットワークエラーが発生しました');
@@ -1734,16 +1897,17 @@
             },
 
             async loadFacilities() {
-                const res = await fetch('/admin/api/grounds');
-                const grounds = await res.json();
-                // Map grounds to facilities format
-                this.facilities = (grounds || []).map(g => ({
-                    id: g.id,
-                    name: g.name,
-                    municipality: g.municipality_name,
-                    scraper_type: g.court_pattern,
-                    enabled: g.enabled
+                const res = await fetch('/admin/api/facilities');
+                const facilities = await res.json();
+                this.facilities = (facilities || []).map(f => ({
+                    id: f.id,
+                    name: f.name,
+                    municipality: f.municipality,
+                    scraper_type: f.scraper_type,
+                    url: f.url,
+                    enabled: f.enabled === 1 || f.enabled === true
                 }));
+                this.facilityPage = 1;
             },
 
             async loadMunicipalities() {
