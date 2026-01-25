@@ -507,10 +507,10 @@ func (s *Server) HandleUpdateFacility(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var input struct {
-		Name        string `json:"name"`
+		Name         string `json:"name"`
 		Municipality string `json:"municipality"`
-		ScraperType string `json:"scraper_type"`
-		Enabled     bool   `json:"enabled"`
+		ScraperType  string `json:"scraper_type"`
+		Enabled      bool   `json:"enabled"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		s.jsonError(w, "invalid request body", http.StatusBadRequest)
