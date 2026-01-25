@@ -395,16 +395,38 @@
             <div class="bg-white border border-sumi-100 rounded overflow-hidden">
                 <table class="min-w-full">
                     <thead>
-                        <tr class="border-b border-sumi-100">
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">チーム名</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">メール</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">プラン</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">ステータス</th>
+                        <tr class="border-b border-sumi-200">
+                            <th @click="sortTeamsBy('name')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    チーム名
+                                    <span x-show="teamSort.field === 'name'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortTeamsBy('email')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    メール
+                                    <span x-show="teamSort.field === 'email'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortTeamsBy('plan')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    プラン
+                                    <span x-show="teamSort.field === 'plan'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortTeamsBy('status')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    ステータス
+                                    <span x-show="teamSort.field === 'status'" x-text="teamSort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider">アクション</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-sumi-50">
-                        <template x-for="team in teams" :key="team.id">
-                            <tr class="hover:bg-kinari-50 transition-colors">
+                    <tbody>
+                        <template x-for="(team, idx) in paginatedTeams" :key="team.id">
+                            <tr class="border-b border-sumi-100 hover:bg-ai-50 transition-colors"
+                                :class="idx % 2 === 0 ? 'bg-white' : 'bg-kinari-50'">
                                 <td class="px-5 py-4 text-sm text-sumi-800" x-text="team.name"></td>
                                 <td class="px-5 py-4 text-sm text-sumi-600" x-text="team.email"></td>
                                 <td class="px-5 py-4">
@@ -416,15 +438,55 @@
                                     }" x-text="team.plan"></span>
                                 </td>
                                 <td class="px-5 py-4">
-                                    <span class="px-2 py-0.5 text-xs rounded" :class="{
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
                                         'bg-wakakusa-50 text-wakakusa-700': team.status === 'active',
-                                        'bg-sango-50 text-sango-700': team.status !== 'active'
-                                    }" x-text="team.status"></span>
+                                        'bg-sango-50 text-sango-700': team.status === 'failed',
+                                        'bg-sumi-100 text-sumi-600': team.status !== 'active' && team.status !== 'failed'
+                                    }">
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                            'bg-wakakusa-500': team.status === 'active',
+                                            'bg-sango-500': team.status === 'failed',
+                                            'bg-sumi-400': team.status !== 'active' && team.status !== 'failed'
+                                        }"></span>
+                                        <span x-text="team.status"></span>
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <button @click="openEditTeamModal(team)" class="p-1.5 text-ai-600 hover:bg-ai-100 rounded transition-colors" title="編集">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                        <button @click="confirmDeleteTeam(team)" class="p-1.5 text-sango-600 hover:bg-sango-100 rounded transition-colors" title="削除">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
+                <!-- Empty State -->
+                <div x-show="sortedTeams.length === 0" class="py-12 text-center text-sumi-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <p class="text-sm">チームが登録されていません</p>
+                </div>
+                <!-- Pagination -->
+                <div x-show="sortedTeams.length > 0" class="px-5 py-3 border-t border-sumi-100 flex items-center justify-between bg-kinari-50">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(teamPage - 1) * teamPageSize + 1"></span>-<span x-text="Math.min(teamPage * teamPageSize, sortedTeams.length)"></span> / <span x-text="sortedTeams.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="teamPage--" :disabled="teamPage <= 1" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">前へ</button>
+                        <span class="text-sm text-sumi-600"><span x-text="teamPage"></span> / <span x-text="teamTotalPages"></span></span>
+                        <button @click="teamPage++" :disabled="teamPage >= teamTotalPages" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">次へ</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -482,29 +544,89 @@
             <div class="bg-white border border-sumi-100 rounded overflow-hidden">
                 <table class="min-w-full">
                     <thead>
-                        <tr class="border-b border-sumi-100">
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">施設名</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">自治体</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">スクレイパー</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wide">ステータス</th>
+                        <tr class="border-b border-sumi-200">
+                            <th @click="sortFacilitiesBy('name')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    施設名
+                                    <span x-show="facilitySort.field === 'name'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortFacilitiesBy('municipality')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    自治体
+                                    <span x-show="facilitySort.field === 'municipality'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortFacilitiesBy('scraper_type')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    スクレイパー
+                                    <span x-show="facilitySort.field === 'scraper_type'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th @click="sortFacilitiesBy('enabled')" class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider cursor-pointer hover:text-sumi-700 transition-colors select-none">
+                                <span class="flex items-center gap-1">
+                                    ステータス
+                                    <span x-show="facilitySort.field === 'enabled'" x-text="facilitySort.dir === 'asc' ? '↑' : '↓'" class="text-ai-600"></span>
+                                </span>
+                            </th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-sumi-500 uppercase tracking-wider">アクション</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-sumi-50">
-                        <template x-for="f in filteredFacilities" :key="f.id">
-                            <tr class="hover:bg-kinari-50 transition-colors">
+                    <tbody>
+                        <template x-for="(f, idx) in paginatedFacilities" :key="f.id">
+                            <tr class="border-b border-sumi-100 hover:bg-ai-50 transition-colors"
+                                :class="idx % 2 === 0 ? 'bg-white' : 'bg-kinari-50'">
                                 <td class="px-5 py-4 text-sm text-sumi-800" x-text="f.name"></td>
                                 <td class="px-5 py-4 text-sm text-sumi-600" x-text="f.municipality"></td>
                                 <td class="px-5 py-4 text-sm text-sumi-600" x-text="f.scraper_type"></td>
                                 <td class="px-5 py-4">
-                                    <span class="px-2 py-0.5 text-xs rounded" :class="{
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded" :class="{
                                         'bg-wakakusa-50 text-wakakusa-700': f.enabled,
                                         'bg-sango-50 text-sango-700': !f.enabled
-                                    }" x-text="f.enabled ? '有効' : '無効'"></span>
+                                    }">
+                                        <span class="w-1.5 h-1.5 rounded-full" :class="{
+                                            'bg-wakakusa-500': f.enabled,
+                                            'bg-sango-500': !f.enabled
+                                        }"></span>
+                                        <span x-text="f.enabled ? '有効' : '無効'"></span>
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <button @click="openEditFacilityModal(f)" class="p-1.5 text-ai-600 hover:bg-ai-100 rounded transition-colors" title="編集">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                        </button>
+                                        <button @click="confirmDeleteFacility(f)" class="p-1.5 text-sango-600 hover:bg-sango-100 rounded transition-colors" title="削除">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
+                <!-- Empty State -->
+                <div x-show="sortedFilteredFacilities.length === 0" class="py-12 text-center text-sumi-500">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-sumi-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <p class="text-sm">施設が見つかりません</p>
+                </div>
+                <!-- Pagination -->
+                <div x-show="sortedFilteredFacilities.length > 0" class="px-5 py-3 border-t border-sumi-100 flex items-center justify-between bg-kinari-50">
+                    <div class="text-sm text-sumi-500">
+                        <span x-text="(facilityPage - 1) * facilityPageSize + 1"></span>-<span x-text="Math.min(facilityPage * facilityPageSize, sortedFilteredFacilities.length)"></span> / <span x-text="sortedFilteredFacilities.length"></span> 件
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button @click="facilityPage--" :disabled="facilityPage <= 1" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">前へ</button>
+                        <span class="text-sm text-sumi-600"><span x-text="facilityPage"></span> / <span x-text="facilityTotalPages"></span></span>
+                        <button @click="facilityPage++" :disabled="facilityPage >= facilityTotalPages" class="px-3 py-1.5 text-sm border border-sumi-200 rounded hover:bg-sumi-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">次へ</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1339,6 +1461,97 @@
         </div>
     </div>
 
+    <!-- Edit Team Modal -->
+    <div x-show="showEditTeamModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded p-6 w-full max-w-md" @click.away="showEditTeamModal = false">
+            <h3 class="font-semibold text-sumi-800 mb-4">チーム編集</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">チーム名</label>
+                    <input type="text" x-model="editTeam.name" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">メールアドレス</label>
+                    <input type="email" x-model="editTeam.email" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">プラン</label>
+                    <select x-model="editTeam.plan" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400 bg-white">
+                        <option value="free">Free</option>
+                        <option value="personal">Personal</option>
+                        <option value="pro">Pro</option>
+                        <option value="org">Org</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">ステータス</label>
+                    <select x-model="editTeam.status" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400 bg-white">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showEditTeamModal = false" class="px-4 py-2 border border-sumi-200 rounded text-sm text-sumi-600 hover:bg-kinari-100 transition-colors">キャンセル</button>
+                <button @click="updateTeam()" class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Facility Modal -->
+    <div x-show="showEditFacilityModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded p-6 w-full max-w-md" @click.away="showEditFacilityModal = false">
+            <h3 class="font-semibold text-sumi-800 mb-4">施設編集</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">施設名</label>
+                    <input type="text" x-model="editFacility.name" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">自治体</label>
+                    <input type="text" x-model="editFacility.municipality" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-sumi-700 mb-1">スクレイパータイプ</label>
+                    <input type="text" x-model="editFacility.scraper_type" class="block w-full border border-sumi-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-ai-400">
+                </div>
+                <div>
+                    <label class="flex items-center gap-2 text-sm font-medium text-sumi-700">
+                        <input type="checkbox" x-model="editFacility.enabled" class="rounded border-sumi-300 text-ai-600 focus:ring-ai-500">
+                        有効
+                    </label>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button @click="showEditFacilityModal = false" class="px-4 py-2 border border-sumi-200 rounded text-sm text-sumi-600 hover:bg-kinari-100 transition-colors">キャンセル</button>
+                <button @click="updateFacility()" class="px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="showDeleteConfirmModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm" @click.away="showDeleteConfirmModal = false">
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto mb-4 bg-sango-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-sango-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-semibold text-sumi-800 mb-2">削除の確認</h3>
+                <p class="text-sm text-sumi-600 mb-6">
+                    <span class="font-medium text-sumi-800" x-text="deleteTarget?.name"></span> を削除しますか？<br>
+                    <span class="text-sango-600">この操作は取り消せません。</span>
+                </p>
+                <div class="flex gap-3">
+                    <button @click="showDeleteConfirmModal = false" class="flex-1 px-4 py-2 border border-sumi-200 rounded text-sm text-sumi-600 hover:bg-kinari-100 transition-colors">キャンセル</button>
+                    <button @click="executeDelete()" class="flex-1 px-4 py-2 bg-sango-600 text-white rounded text-sm font-medium hover:bg-sango-700 transition-colors">削除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
         <template x-for="toast in toasts" :key="toast.id">
@@ -1432,6 +1645,25 @@
             newTeam: { name: '', email: '', plan: 'free' },
             newFacility: { name: '', municipality: '', scraper_type: '', url: '' },
             facilityFilter: { search: '', municipality: '', status: '' },
+
+            // Team table state
+            teamSort: { field: 'name', dir: 'asc' },
+            teamPage: 1,
+            teamPageSize: 20,
+            showEditTeamModal: false,
+            editTeam: { id: null, name: '', email: '', plan: 'free', status: 'active' },
+
+            // Facility table state
+            facilitySort: { field: 'name', dir: 'asc' },
+            facilityPage: 1,
+            facilityPageSize: 20,
+            showEditFacilityModal: false,
+            editFacility: { id: null, name: '', municipality: '', scraper_type: '', enabled: true },
+
+            // Delete confirmation state
+            showDeleteConfirmModal: false,
+            deleteTarget: null,
+            deleteType: null, // 'team' or 'facility'
 
             // トースト通知システム
             toasts: [],
@@ -1771,6 +2003,154 @@
 
             clearFacilityFilters() {
                 this.facilityFilter = { search: '', municipality: '', status: '' };
+                this.facilityPage = 1;
+            },
+
+            // Team sorting and pagination
+            sortTeamsBy(field) {
+                if (this.teamSort.field === field) {
+                    this.teamSort.dir = this.teamSort.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.teamSort.field = field;
+                    this.teamSort.dir = 'asc';
+                }
+                this.teamPage = 1;
+            },
+
+            get sortedTeams() {
+                return [...this.teams].sort((a, b) => {
+                    const modifier = this.teamSort.dir === 'asc' ? 1 : -1;
+                    const aVal = a[this.teamSort.field] || '';
+                    const bVal = b[this.teamSort.field] || '';
+                    if (aVal < bVal) return -1 * modifier;
+                    if (aVal > bVal) return 1 * modifier;
+                    return 0;
+                });
+            },
+
+            get paginatedTeams() {
+                const start = (this.teamPage - 1) * this.teamPageSize;
+                return this.sortedTeams.slice(start, start + this.teamPageSize);
+            },
+
+            get teamTotalPages() {
+                return Math.max(1, Math.ceil(this.sortedTeams.length / this.teamPageSize));
+            },
+
+            // Facility sorting and pagination
+            sortFacilitiesBy(field) {
+                if (this.facilitySort.field === field) {
+                    this.facilitySort.dir = this.facilitySort.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.facilitySort.field = field;
+                    this.facilitySort.dir = 'asc';
+                }
+                this.facilityPage = 1;
+            },
+
+            get sortedFilteredFacilities() {
+                return [...this.filteredFacilities].sort((a, b) => {
+                    const modifier = this.facilitySort.dir === 'asc' ? 1 : -1;
+                    let aVal = a[this.facilitySort.field];
+                    let bVal = b[this.facilitySort.field];
+                    // Handle boolean (enabled)
+                    if (typeof aVal === 'boolean') {
+                        aVal = aVal ? 1 : 0;
+                        bVal = bVal ? 1 : 0;
+                    }
+                    aVal = aVal || '';
+                    bVal = bVal || '';
+                    if (aVal < bVal) return -1 * modifier;
+                    if (aVal > bVal) return 1 * modifier;
+                    return 0;
+                });
+            },
+
+            get paginatedFacilities() {
+                const start = (this.facilityPage - 1) * this.facilityPageSize;
+                return this.sortedFilteredFacilities.slice(start, start + this.facilityPageSize);
+            },
+
+            get facilityTotalPages() {
+                return Math.max(1, Math.ceil(this.sortedFilteredFacilities.length / this.facilityPageSize));
+            },
+
+            // Team edit/delete methods
+            openEditTeamModal(team) {
+                this.editTeam = { ...team };
+                this.showEditTeamModal = true;
+            },
+
+            async updateTeam() {
+                try {
+                    await this.apiCall(`/admin/api/teams/${this.editTeam.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.editTeam)
+                    });
+                    this.showEditTeamModal = false;
+                    this.addToast('success', 'チームを更新しました');
+                    await this.loadTeams();
+                    await this.loadDashboard();
+                } catch (e) {
+                    // Error already handled by apiCall
+                }
+            },
+
+            confirmDeleteTeam(team) {
+                this.deleteTarget = team;
+                this.deleteType = 'team';
+                this.showDeleteConfirmModal = true;
+            },
+
+            // Facility edit/delete methods
+            openEditFacilityModal(facility) {
+                this.editFacility = { ...facility };
+                this.showEditFacilityModal = true;
+            },
+
+            async updateFacility() {
+                try {
+                    await this.apiCall(`/admin/api/facilities/${this.editFacility.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.editFacility)
+                    });
+                    this.showEditFacilityModal = false;
+                    this.addToast('success', '施設を更新しました');
+                    await this.loadFacilities();
+                    await this.loadDashboard();
+                } catch (e) {
+                    // Error already handled by apiCall
+                }
+            },
+
+            confirmDeleteFacility(facility) {
+                this.deleteTarget = facility;
+                this.deleteType = 'facility';
+                this.showDeleteConfirmModal = true;
+            },
+
+            async executeDelete() {
+                if (!this.deleteTarget || !this.deleteType) return;
+                try {
+                    const endpoint = this.deleteType === 'team'
+                        ? `/admin/api/teams/${this.deleteTarget.id}`
+                        : `/admin/api/facilities/${this.deleteTarget.id}`;
+                    await this.apiCall(endpoint, { method: 'DELETE' });
+                    this.showDeleteConfirmModal = false;
+                    this.addToast('success', `${this.deleteType === 'team' ? 'チーム' : '施設'}を削除しました`);
+                    if (this.deleteType === 'team') {
+                        await this.loadTeams();
+                    } else {
+                        await this.loadFacilities();
+                    }
+                    await this.loadDashboard();
+                    this.deleteTarget = null;
+                    this.deleteType = null;
+                } catch (e) {
+                    // Error already handled by apiCall
+                }
             },
 
             // Drilldown methods
