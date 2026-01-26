@@ -22,7 +22,7 @@ import (
 var (
 	flagDBPath         = flag.String("db", "../control-plane/db.sqlite3", "database path (for local SQLite)")
 	flagScraperPath    = flag.String("scraper", "./scraper_wrapper.py", "scraper wrapper path (legacy)")
-	flagPythonPath     = flag.String("python", "python3", "python interpreter path (legacy)")
+	flagPythonPath     = flag.String("python", "./.venv/bin/python", "python interpreter path (legacy)")
 	flagInterval       = flag.Duration("interval", 15*time.Minute, "scrape interval")
 	flagJobInterval    = flag.Duration("job-interval", 30*time.Second, "pending job check interval")
 	flagNotifyInterval = flag.Duration("notify-interval", 1*time.Minute, "notification check interval")

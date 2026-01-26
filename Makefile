@@ -23,12 +23,16 @@ install:
 	bun install
 	cd control-plane && go mod download
 	cd worker && go mod download
+	@if [ ! -d worker/.venv ]; then python3 -m venv worker/.venv; fi
+	worker/.venv/bin/pip install -q -r worker/requirements.txt
 
 .PHONY: install_ci
 install_ci:
 	bun install --frozen-lockfile
 	cd control-plane && go mod download
 	cd worker && go mod download
+	@if [ ! -d worker/.venv ]; then python3 -m venv worker/.venv; fi
+	worker/.venv/bin/pip install -q -r worker/requirements.txt
 
 .PHONY: build
 build:
@@ -73,7 +77,7 @@ format_check:
 before-commit: lint_text format_check test build
 
 .PHONY: start
-start:
+start: check-python-deps
 	@echo "Starting AkiGura..."
 	@echo ""
 	@echo "  API Server:  http://localhost:8000"
@@ -81,6 +85,11 @@ start:
 	@echo ""
 	@cd control-plane && go run ./cmd/srv &
 	@cd worker && go run ./cmd/worker
+
+.PHONY: check-python-deps
+check-python-deps:
+	@if [ ! -d worker/.venv ]; then echo "Creating Python venv..."; python3 -m venv worker/.venv; fi
+	@worker/.venv/bin/python -c "import bs4" 2>/dev/null || (echo "Installing Python dependencies..." && worker/.venv/bin/pip install -q -r worker/requirements.txt)
 
 .PHONY: run_control_plane
 run_control_plane:
