@@ -2418,7 +2418,11 @@
 
             async triggerScrape() {
                 this.scrapeRunning = true;
-                this.addLog('info', 'スクレイピングを開始します...');
+                const targetName = this.selectedMunicipalityForScrape
+                    ? this.municipalities.find(m => m.id === this.selectedMunicipalityForScrape)?.name || '選択した自治体'
+                    : '全自治体';
+                this.addToast('info', `スクレイピングを開始しました（${targetName}）`);
+                this.addLog('info', `スクレイピングを開始します（${targetName}）...`);
                 try {
                     const url = this.selectedMunicipalityForScrape
                         ? `/api/scrape?municipality_id=${this.selectedMunicipalityForScrape}`
@@ -2426,11 +2430,14 @@
                     const res = await fetch(url, { method: 'POST' });
                     const data = await res.json();
                     if (data.success) {
+                        this.addToast('success', `スクレイピングジョブを作成しました（${data.jobs}件）`);
                         this.addLog('info', `スクレイピング完了: ${data.message}`);
                     } else {
+                        this.addToast('error', `エラー: ${data.error}`);
                         this.addLog('error', `エラー: ${data.error}`);
                     }
                 } catch (e) {
+                    this.addToast('error', `リクエスト失敗: ${e.message}`);
                     this.addLog('error', `リクエスト失敗: ${e.message}`);
                 } finally {
                     this.scrapeRunning = false;
@@ -2441,7 +2448,12 @@
 
             addLog(level, message) {
                 const now = new Date();
-                const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const time = `${month}/${day} ${hours}:${minutes}:${seconds}`;
                 this.workerLogs.push({ level, message, time });
                 if (this.workerLogs.length > 500) this.workerLogs.shift();
                 if (this.autoScrollLogs) {
