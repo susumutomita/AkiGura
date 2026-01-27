@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=exedev
 WorkingDirectory=/home/exedev/AkiGura/worker
-Environment="PATH=/home/exedev/ground-reservation/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PATH=/home/exedev/AkiGura/worker/.venv/bin:/home/exedev/ground-reservation/venv/bin:/usr/local/bin:/usr/bin:/bin"
 ExecStart=/home/exedev/AkiGura/worker/akigura-worker -job-mode -db /home/exedev/AkiGura/control-plane/db.sqlite3 -scraper /home/exedev/AkiGura/worker/scraper_wrapper.py -job-interval 30s -notify-interval 1m
 Restart=always
 RestartSec=10
