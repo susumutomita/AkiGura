@@ -23,7 +23,7 @@ akigura/
 │   ├── cmd/srv/           … メインエントリポイント
 │   ├── srv/               … HTTP ハンドラ、テンプレート
 │   ├── db/                … マイグレーション
-│   ├── ent/               … ORM (entgo.io)
+│   ├── ent/               … O/Rマッパ (entgo.io)
 │   └── billing/           … Stripe 課金統合
 ├── worker/                … Python スクレイパーラッパー + Go ワーカー
 │   ├── scraper_wrapper.py … 各自治体スクレイパー呼び出し
@@ -67,7 +67,7 @@ akigura/
 
 ### Phase 2: バックエンド API の MVP - 完了
 
-- Go + ent ORM で構築
+- Go + ent O/R マッパで構築
 - Turso (libSQL) をデータベースとして使用
 - 認証 (Google OAuth + Basic Auth)
 - 主要エンドポイント実装済み
