@@ -1416,8 +1416,7 @@
                                     <td class="px-4 py-3 text-sm text-sumi-700" x-text="job.slots_found || 0"></td>
                                     <td class="px-4 py-3 text-sm text-sumi-500" x-text="formatDateTime(job.completed_at) || formatDateTime(job.started_at)"></td>
                                     <td class="px-4 py-3">
-                                        <button @click="showJobDetails(job)" class="text-ai-600 hover:text-ai-700 text-sm transition-colors" x-show="job.error_message || job.diagnostics">詳細</button>
-                                        <span x-show="!job.error_message && !job.diagnostics" class="text-sumi-300">-</span>
+                                        <button @click="showJobDetails(job)" class="text-ai-600 hover:text-ai-700 text-sm transition-colors hover:underline">詳細</button>
                                     </td>
                                 </tr>
                             </template>
@@ -1709,6 +1708,188 @@
         </div>
     </div>
 
+    <!-- Job Detail Modal -->
+    <div x-show="showJobDetailModal" x-cloak class="fixed inset-0 bg-sumi-900/50 flex items-center justify-center z-50 p-4" @click.self="showJobDetailModal = false">
+        <div class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-sumi-100">
+                <h3 class="text-lg font-semibold text-sumi-800">ジョブ詳細</h3>
+                <button @click="showJobDetailModal = false" class="text-sumi-400 hover:text-sumi-600 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Content -->
+            <div class="overflow-y-auto p-4 space-y-4" x-show="selectedJob">
+                <!-- 基本情報 -->
+                <div class="bg-kinari-50 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-sumi-700 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        基本情報
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <span class="text-sumi-500">自治体:</span>
+                            <span class="ml-2 font-medium text-sumi-800" x-text="selectedJob?.municipality_name"></span>
+                        </div>
+                        <div>
+                            <span class="text-sumi-500">ステータス:</span>
+                            <span class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
+                                  :class="selectedJob?.status === 'completed' ? 'bg-wakakusa-100 text-wakakusa-700' : selectedJob?.status === 'failed' ? 'bg-sango-100 text-sango-700' : 'bg-yellow-100 text-yellow-700'"
+                                  x-text="selectedJob?.status === 'completed' ? '完了' : selectedJob?.status === 'failed' ? '失敗' : '実行中'"></span>
+                        </div>
+                        <div>
+                            <span class="text-sumi-500">結果:</span>
+                            <span class="ml-2 font-medium text-sumi-800" x-text="formatScrapeStatus(selectedJob?.scrape_status)"></span>
+                        </div>
+                        <div>
+                            <span class="text-sumi-500">取得スロット数:</span>
+                            <span class="ml-2 font-medium" :class="selectedJob?.slots_found > 0 ? 'text-wakakusa-600' : 'text-sumi-600'" x-text="selectedJob?.slots_found || 0"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 時間情報 -->
+                <div class="bg-kinari-50 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-sumi-700 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        実行時間
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-sumi-500">ジョブ作成:</span>
+                            <span class="font-mono text-sumi-800" x-text="formatDateTime(selectedJob?.created_at)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sumi-500">開始:</span>
+                            <span class="font-mono text-sumi-800" x-text="formatDateTime(selectedJob?.started_at)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sumi-500">完了:</span>
+                            <span class="font-mono text-sumi-800" x-text="formatDateTime(selectedJob?.completed_at)"></span>
+                        </div>
+                        <div class="flex justify-between border-t border-sumi-200 pt-2 mt-2">
+                            <span class="text-sumi-500">実行時間:</span>
+                            <span class="font-medium text-ai-600" x-text="calculateDuration(selectedJob?.started_at, selectedJob?.completed_at)"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- エラー情報 -->
+                <div x-show="selectedJob?.error_message" class="bg-sango-50 border border-sango-200 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-sango-700 mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        エラー
+                    </h4>
+                    <p class="text-sm text-sango-800 font-mono bg-white p-2 rounded border border-sango-100" x-text="selectedJob?.error_message"></p>
+                </div>
+
+                <!-- 診断情報 -->
+                <div x-show="selectedJob?.diagnostics && selectedJob?.diagnostics !== '{}'" class="bg-kinari-50 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-sumi-700 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        診断情報
+                    </h4>
+                    <div class="space-y-3">
+                        <!-- 検索時間 -->
+                        <template x-if="parsedDiagnostics.search_started || parsedDiagnostics.search_completed">
+                            <div class="bg-white rounded p-3 border border-sumi-100">
+                                <h5 class="text-xs font-semibold text-sumi-600 mb-2">スクレイピング時間</h5>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div x-show="parsedDiagnostics.search_started">
+                                        <span class="text-sumi-500">開始:</span>
+                                        <span class="ml-1 font-mono" x-text="parsedDiagnostics.search_started"></span>
+                                    </div>
+                                    <div x-show="parsedDiagnostics.search_completed">
+                                        <span class="text-sumi-500">完了:</span>
+                                        <span class="ml-1 font-mono" x-text="parsedDiagnostics.search_completed"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- 結果サマリー -->
+                        <template x-if="parsedDiagnostics.raw_results_count !== undefined || parsedDiagnostics.parsed_slots_count !== undefined">
+                            <div class="bg-white rounded p-3 border border-sumi-100">
+                                <h5 class="text-xs font-semibold text-sumi-600 mb-2">結果サマリー</h5>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div class="bg-ai-50 rounded p-2">
+                                        <div class="text-lg font-bold text-ai-600" x-text="parsedDiagnostics.raw_results_count ?? '-'"></div>
+                                        <div class="text-xs text-sumi-500">生結果数</div>
+                                    </div>
+                                    <div class="bg-wakakusa-50 rounded p-2">
+                                        <div class="text-lg font-bold text-wakakusa-600" x-text="parsedDiagnostics.parsed_slots_count ?? '-'"></div>
+                                        <div class="text-xs text-sumi-500">解析済み</div>
+                                    </div>
+                                    <div class="bg-sango-50 rounded p-2">
+                                        <div class="text-lg font-bold" :class="parsedDiagnostics.parse_errors > 0 ? 'text-sango-600' : 'text-sumi-400'" x-text="parsedDiagnostics.parse_errors ?? 0"></div>
+                                        <div class="text-xs text-sumi-500">解析エラー</div>
+                                    </div>
+                                </div>
+                                <div x-show="parsedDiagnostics.excluded_non_baseball !== undefined" class="mt-2 text-xs text-sumi-500">
+                                    除外された非野球施設: <span class="font-medium text-sumi-700" x-text="parsedDiagnostics.excluded_non_baseball"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- メモ・確認情報 -->
+                        <template x-if="parsedDiagnostics.note || parsedDiagnostics.html_verification">
+                            <div class="bg-white rounded p-3 border border-sumi-100">
+                                <h5 class="text-xs font-semibold text-sumi-600 mb-2">詳細メモ</h5>
+                                <div class="space-y-1 text-sm">
+                                    <p x-show="parsedDiagnostics.note" class="text-sumi-700" x-text="parsedDiagnostics.note"></p>
+                                    <template x-if="parsedDiagnostics.html_verification">
+                                        <div class="mt-2 pt-2 border-t border-sumi-100">
+                                            <p x-show="parsedDiagnostics.html_verification?.server_message" class="text-sumi-600">
+                                                <span class="font-medium">サーバー応答:</span> 
+                                                <span x-text="parsedDiagnostics.html_verification?.server_message"></span>
+                                            </p>
+                                            <p x-show="parsedDiagnostics.html_verification?.confirmation" class="text-sumi-600 mt-1">
+                                                <span class="font-medium">確認:</span> 
+                                                <span x-text="parsedDiagnostics.html_verification?.confirmation"></span>
+                                            </p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- 例外情報 -->
+                        <template x-if="parsedDiagnostics.exception_type">
+                            <div class="bg-sango-50 rounded p-3 border border-sango-100">
+                                <h5 class="text-xs font-semibold text-sango-600 mb-1">例外タイプ</h5>
+                                <p class="font-mono text-sm text-sango-800" x-text="parsedDiagnostics.exception_type"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- 生JSON（折りたたみ） -->
+                <details class="bg-sumi-50 rounded-lg">
+                    <summary class="p-3 cursor-pointer text-sm font-medium text-sumi-600 hover:text-sumi-800">生データ (JSON)</summary>
+                    <div class="p-3 pt-0">
+                        <pre class="text-xs font-mono bg-sumi-800 text-kinari-100 p-3 rounded overflow-x-auto whitespace-pre-wrap" x-text="JSON.stringify(selectedJob, null, 2)"></pre>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-sumi-100">
+                <button @click="showJobDetailModal = false" class="w-full px-4 py-2 bg-ai-600 text-white rounded text-sm font-medium hover:bg-ai-700 transition-colors">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
         <template x-for="toast in toasts" :key="toast.id">
@@ -1821,6 +2002,19 @@
             showDeleteConfirmModal: false,
             deleteTarget: null,
             deleteType: null, // 'team' or 'facility'
+
+            // Job detail modal state
+            showJobDetailModal: false,
+            selectedJob: null,
+
+            get parsedDiagnostics() {
+                if (!this.selectedJob?.diagnostics) return {};
+                try {
+                    return JSON.parse(this.selectedJob.diagnostics);
+                } catch (e) {
+                    return {};
+                }
+            },
 
             // トースト通知システム
             toasts: [],
@@ -2383,30 +2577,36 @@
             },
 
             showJobDetails(job) {
-                let details = '';
-                if (job.error_message) {
-                    details += `エラー: ${job.error_message}\n\n`;
+                this.selectedJob = job;
+                this.showJobDetailModal = true;
+            },
+
+            formatDateTime(dateStr) {
+                if (!dateStr) return '-';
+                const d = new Date(dateStr);
+                return d.toLocaleString('ja-JP', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            },
+
+            calculateDuration(startStr, endStr) {
+                if (!startStr || !endStr) return '-';
+                const start = new Date(startStr);
+                const end = new Date(endStr);
+                const diffMs = end - start;
+                if (diffMs < 0) return '-';
+                const seconds = Math.floor(diffMs / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                if (minutes > 0) {
+                    return `${minutes}分${remainingSeconds}秒`;
                 }
-                if (job.diagnostics) {
-                    try {
-                        const diag = JSON.parse(job.diagnostics);
-                        details += '診断情報:\n';
-                        if (diag.note) details += `  メモ: ${diag.note}\n`;
-                        if (diag.html_verification) {
-                            const v = diag.html_verification;
-                            if (v.server_message) details += `  サーバー回答: ${v.server_message}\n`;
-                            if (v.confirmation) details += `  確認: ${v.confirmation}\n`;
-                        }
-                        if (diag.raw_results_count !== undefined) details += `  生結果数: ${diag.raw_results_count}\n`;
-                        if (diag.parsed_slots_count !== undefined) details += `  解析済み: ${diag.parsed_slots_count}\n`;
-                        if (diag.parse_errors) details += `  解析エラー: ${diag.parse_errors}\n`;
-                    } catch (e) {
-                        details += `診断情報: ${job.diagnostics}`;
-                    }
-                }
-                if (details) {
-                    alert(details);
-                }
+                return `${seconds}秒`;
             },
 
             // Worker methods
