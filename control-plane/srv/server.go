@@ -149,6 +149,7 @@ func (s *Server) Serve(addr string) error {
 	adminMux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
 	adminMux.HandleFunc("GET /api/slots", s.HandleListSlots)
 	adminMux.HandleFunc("GET /api/jobs", s.HandleListJobs)
+	adminMux.HandleFunc("GET /api/jobs/{id}", s.HandleGetJobDetail)
 	adminMux.HandleFunc("POST /api/scrape", s.HandleTriggerScrape)
 	adminMux.HandleFunc("GET /api/municipalities", s.HandleListMunicipalities)
 	adminMux.HandleFunc("GET /api/grounds", s.HandleListGrounds)

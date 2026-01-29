@@ -345,6 +345,132 @@ func (s *Server) HandleListJobs(w http.ResponseWriter, r *http.Request) {
 	s.jsonResponse(w, jobs)
 }
 
+// Job Detail API - スロット詳細情報を含む
+func (s *Server) HandleGetJobDetail(w http.ResponseWriter, r *http.Request) {
+	jobID := r.PathValue("id")
+	if jobID == "" {
+		s.jsonError(w, "job id is required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+
+	// ジョブ基本情報を取得
+	var job struct {
+		ID               string  `json:"id"`
+		MunicipalityID   string  `json:"municipality_id"`
+		MunicipalityName *string `json:"municipality_name"`
+		Status           string  `json:"status"`
+		ScrapeStatus     *string `json:"scrape_status"`
+		SlotsFound       int     `json:"slots_found"`
+		ErrorMessage     *string `json:"error_message"`
+		Diagnostics      *string `json:"diagnostics"`
+		StartedAt        *string `json:"started_at"`
+		CompletedAt      *string `json:"completed_at"`
+		CreatedAt        string  `json:"created_at"`
+	}
+
+	err := s.DB.QueryRowContext(ctx, `
+		SELECT j.id, j.municipality_id, m.name as municipality_name, j.status, 
+		       j.scrape_status, j.slots_found, j.error_message, j.diagnostics,
+		       j.started_at, j.completed_at, j.created_at
+		FROM scrape_jobs j
+		LEFT JOIN municipalities m ON j.municipality_id = m.id
+		WHERE j.id = ?
+	`, jobID).Scan(&job.ID, &job.MunicipalityID, &job.MunicipalityName, &job.Status,
+		&job.ScrapeStatus, &job.SlotsFound, &job.ErrorMessage, &job.Diagnostics,
+		&job.StartedAt, &job.CompletedAt, &job.CreatedAt)
+
+	if err == sql.ErrNoRows {
+		s.jsonError(w, "job not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		s.jsonError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// このジョブで見つかったスロット情報を取得
+	// started_at から completed_at の間に scraped_at されたスロットを取得
+	type SlotInfo struct {
+		ID        string `json:"id"`
+		GroundID  *string `json:"ground_id"`
+		SlotDate  string `json:"slot_date"`
+		TimeFrom  string `json:"time_from"`
+		TimeTo    string `json:"time_to"`
+		CourtName *string `json:"court_name"`
+		RawText   *string `json:"raw_text"`
+	}
+
+	var slots []SlotInfo
+
+	if job.StartedAt != nil {
+		// ジョブの実行期間中に作成されたスロットを取得
+		// ISO8601形式とSQLiteのdatetime形式の比較のためdatetime()を使用
+		query := `
+			SELECT id, ground_id, slot_date, time_from, time_to, court_name, raw_text
+			FROM slots
+			WHERE municipality_id = ?
+			  AND scraped_at >= datetime(?)
+			  AND scraped_at <= datetime(COALESCE(?, datetime('now')))
+			ORDER BY slot_date, time_from, court_name
+			LIMIT 500
+		`
+		rows, err := s.DB.QueryContext(ctx, query, job.MunicipalityID, job.StartedAt, job.CompletedAt)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var slot SlotInfo
+				if err := rows.Scan(&slot.ID, &slot.GroundID, &slot.SlotDate, &slot.TimeFrom, &slot.TimeTo, &slot.CourtName, &slot.RawText); err == nil {
+					slots = append(slots, slot)
+				}
+			}
+		}
+	}
+
+	// グラウンドごとにスロットをグループ化
+	type GroundSlots struct {
+		CourtName string     `json:"court_name"`
+		Slots     []SlotInfo `json:"slots"`
+	}
+
+	groundMap := make(map[string][]SlotInfo)
+	for _, slot := range slots {
+		courtName := ""
+		if slot.CourtName != nil {
+			courtName = *slot.CourtName
+		}
+		groundMap[courtName] = append(groundMap[courtName], slot)
+	}
+
+	var groupedSlots []GroundSlots
+	for courtName, courtSlots := range groundMap {
+		groupedSlots = append(groupedSlots, GroundSlots{
+			CourtName: courtName,
+			Slots:     courtSlots,
+		})
+	}
+
+	// court_nameでソート
+	slices.SortFunc(groupedSlots, func(a, b GroundSlots) int {
+		return cmp.Compare(a.CourtName, b.CourtName)
+	})
+
+	response := struct {
+		Job          any           `json:"job"`
+		Slots        []SlotInfo    `json:"slots"`
+		GroupedSlots []GroundSlots `json:"grouped_slots"`
+		TotalSlots   int           `json:"total_slots"`
+	}{
+		Job:          job,
+		Slots:        slots,
+		GroupedSlots: groupedSlots,
+		TotalSlots:   len(slots),
+	}
+
+	s.jsonResponse(w, response)
+}
+
 // Municipalities API
 func (s *Server) HandleListMunicipalities(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.DB.QueryContext(r.Context(), `
