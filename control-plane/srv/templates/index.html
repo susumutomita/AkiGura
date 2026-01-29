@@ -1874,6 +1874,51 @@
                     </div>
                 </div>
 
+                <!-- スロット詳細 -->
+                <div x-show="groupedSlots.length > 0" class="bg-kinari-50 rounded-lg p-4">
+                    <h4 class="text-sm font-semibold text-sumi-700 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        取得したスロット詳細
+                        <span class="ml-auto text-xs font-normal text-sumi-500" x-text="`${jobSlots.length}件`"></span>
+                    </h4>
+                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                        <template x-for="group in groupedSlots" :key="group.court_name">
+                            <details class="bg-white rounded border border-sumi-100">
+                                <summary class="p-3 cursor-pointer hover:bg-sumi-50 flex items-center justify-between">
+                                    <span class="font-medium text-sm text-sumi-800" x-text="group.court_name || '(名称なし)'"></span>
+                                    <span class="text-xs text-sumi-500 bg-sumi-100 px-2 py-0.5 rounded" x-text="`${group.slots.length}枠`"></span>
+                                </summary>
+                                <div class="p-3 pt-0 border-t border-sumi-100">
+                                    <div class="grid gap-1 text-xs">
+                                        <template x-for="slot in group.slots" :key="slot.id">
+                                            <div class="flex items-center gap-2 py-1 border-b border-sumi-50 last:border-0">
+                                                <span class="font-mono text-ai-600 min-w-[80px]" x-text="slot.slot_date.split('T')[0]"></span>
+                                                <span class="font-mono text-sumi-700" x-text="`${slot.time_from} - ${slot.time_to}`"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </details>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- ローディング -->
+                <div x-show="jobDetailLoading" class="text-center py-4">
+                    <svg class="animate-spin h-6 w-6 mx-auto text-ai-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-xs text-sumi-500 mt-2">スロット情報を読み込み中...</p>
+                </div>
+
+                <!-- スロットなしメッセージ -->
+                <div x-show="!jobDetailLoading && groupedSlots.length === 0 && selectedJob?.status === 'completed'" class="bg-sumi-50 rounded-lg p-4 text-center">
+                    <p class="text-sm text-sumi-500">このジョブで取得されたスロットはありません</p>
+                </div>
+
                 <!-- 生JSON（折りたたみ） -->
                 <details class="bg-sumi-50 rounded-lg">
                     <summary class="p-3 cursor-pointer text-sm font-medium text-sumi-600 hover:text-sumi-800">生データ (JSON)</summary>
@@ -2006,6 +2051,9 @@
             // Job detail modal state
             showJobDetailModal: false,
             selectedJob: null,
+            jobDetailLoading: false,
+            jobSlots: [],
+            groupedSlots: [],
 
             get parsedDiagnostics() {
                 if (!this.selectedJob?.diagnostics) return {};
@@ -2576,9 +2624,25 @@
                 return SCRAPE_STATUS_MAP[status] || status || '-';
             },
 
-            showJobDetails(job) {
+            async showJobDetails(job) {
                 this.selectedJob = job;
+                this.jobSlots = [];
+                this.groupedSlots = [];
                 this.showJobDetailModal = true;
+                this.jobDetailLoading = true;
+                
+                try {
+                    const res = await fetch(`/admin/api/jobs/${job.id}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.jobSlots = data.slots || [];
+                        this.groupedSlots = data.grouped_slots || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to load job details:', e);
+                } finally {
+                    this.jobDetailLoading = false;
+                }
             },
 
             formatDateTime(dateStr) {
