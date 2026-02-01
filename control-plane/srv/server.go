@@ -87,6 +87,13 @@ func (s *Server) HandleUserPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) HandleLandingPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := s.renderTemplate(w, "landing.html", nil); err != nil {
+		slog.Warn("render template", "url", r.URL.Path, "error", err)
+	}
+}
+
 // HandleAdminLogout clears Basic Auth credentials by returning 401
 func (s *Server) HandleAdminLogout(w http.ResponseWriter, r *http.Request) {
 	// Set WWW-Authenticate header to force browser to clear cached credentials
@@ -184,9 +191,7 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("GET /auth/google/callback", s.HandleGoogleCallback)
 
 	// Redirect root to admin for convenience
-	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/admin/", http.StatusFound)
-	})
+	mux.HandleFunc("GET /{$}", s.HandleLandingPage)
 
 	slog.Info("starting server", "addr", addr)
 	return http.ListenAndServe(addr, mux)
