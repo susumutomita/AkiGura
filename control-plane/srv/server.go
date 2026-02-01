@@ -162,6 +162,13 @@ func (s *Server) Serve(addr string) error {
 	mux.HandleFunc("POST /api/conditions", s.HandleCreateCondition)
 	mux.HandleFunc("GET /api/plan-limits", s.HandleGetPlanLimits)
 
+	// Public data endpoints (for user dashboard)
+	mux.HandleFunc("GET /api/municipalities", s.HandleListMunicipalities)
+	mux.HandleFunc("GET /api/grounds", s.HandleListGrounds)
+	mux.HandleFunc("GET /api/slots", s.HandleListSlots)
+	mux.HandleFunc("GET /api/conditions", s.HandleListConditions)
+	mux.HandleFunc("GET /api/notifications", s.HandleListNotifications)
+
 	// Billing API (user-facing)
 	mux.HandleFunc("GET /api/plans", s.HandlePlans)
 	mux.HandleFunc("POST /api/billing/checkout", s.HandleCreateCheckout)
