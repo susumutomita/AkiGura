@@ -890,7 +890,7 @@
                 const [munRes, groundRes, slotRes, planRes, plansRes] = await Promise.all([
                     fetch('/api/municipalities'),
                     fetch('/api/grounds'),
-                    fetch('/api/slots'),
+                    fetch('/api/slots?limit=2000'),
                     fetch('/api/plan-limits'),
                     fetch('/api/plans')
                 ]);
@@ -903,10 +903,10 @@
 
             async loadSlots() {
                 let url = '/api/slots';
-                const params = [];
+                const params = ['limit=2000'];
                 if (this.selectedMunicipality) params.push('municipality_id=' + this.selectedMunicipality);
                 if (this.selectedGround) params.push('ground_id=' + this.selectedGround);
-                if (params.length) url += '?' + params.join('&');
+                url += '?' + params.join('&');
                 const res = await fetch(url);
                 this.slots = await res.json() || [];
             },
