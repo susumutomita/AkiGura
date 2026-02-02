@@ -1,0 +1,15 @@
+[Unit]
+Description=AkiGura SaaS Control Plane
+After=network.target
+
+[Service]
+Type=simple
+User=exedev
+WorkingDirectory=/home/exedev/AkiGura/control-plane
+EnvironmentFile=/home/exedev/AkiGura/.env
+ExecStart=/home/exedev/AkiGura/control-plane/akigura-srv -listen :8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
