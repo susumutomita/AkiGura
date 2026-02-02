@@ -59,8 +59,9 @@ func generateToken() (string, error) {
 // HandleRequestMagicLink sends a magic link to the user's email
 func (s *Server) HandleRequestMagicLink(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email string `json:"email"`
-		Name  string `json:"name"` // for registration
+		Email          string `json:"email"`
+		Name           string `json:"name"`            // for registration
+		IsRegistration bool   `json:"is_registration"` // true if from registration form
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.jsonError(w, "invalid request", http.StatusBadRequest)
@@ -94,6 +95,10 @@ func (s *Server) HandleRequestMagicLink(w http.ResponseWriter, r *http.Request) 
 	} else if err != nil {
 		slog.Error("get team", "error", err)
 		s.jsonError(w, "database error", http.StatusInternalServerError)
+		return
+	} else if req.IsRegistration {
+		// User is trying to register with an existing email
+		s.jsonError(w, "このメールアドレスは既に登録されています。ログインしてください。", http.StatusConflict)
 		return
 	}
 

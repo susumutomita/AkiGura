@@ -166,7 +166,9 @@ func (s *Server) Serve(addr string) error {
 
 	// User API endpoints (authenticated via session/JWT, not Basic Auth)
 	mux.HandleFunc("GET /api/teams/by-email", s.HandleGetTeamByEmail)
+	mux.HandleFunc("DELETE /api/teams/{id}", s.HandleDeleteTeam)
 	mux.HandleFunc("POST /api/conditions", s.HandleCreateCondition)
+	mux.HandleFunc("DELETE /api/conditions/{id}", s.HandleDeleteCondition)
 	mux.HandleFunc("GET /api/plan-limits", s.HandleGetPlanLimits)
 
 	// Public data endpoints (for user dashboard)
