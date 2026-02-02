@@ -393,11 +393,11 @@ func (s *Server) HandleGetJobDetail(w http.ResponseWriter, r *http.Request) {
 	// このジョブで見つかったスロット情報を取得
 	// started_at から completed_at の間に scraped_at されたスロットを取得
 	type SlotInfo struct {
-		ID        string `json:"id"`
+		ID        string  `json:"id"`
 		GroundID  *string `json:"ground_id"`
-		SlotDate  string `json:"slot_date"`
-		TimeFrom  string `json:"time_from"`
-		TimeTo    string `json:"time_to"`
+		SlotDate  string  `json:"slot_date"`
+		TimeFrom  string  `json:"time_from"`
+		TimeTo    string  `json:"time_to"`
 		CourtName *string `json:"court_name"`
 		RawText   *string `json:"raw_text"`
 	}
