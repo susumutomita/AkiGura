@@ -3,307 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AkiGura - スポーツ施設の空き枠を自動で監視</title>
-    <meta name="description" content="神奈川県内のスポーツ施設（テニスコート、野球場、サッカー場）の空き状況を自動監視。希望の時間帯に空きが出たらすぐにメールでお知らせ。">
+    <title>AkiGura - スポーツ施設空き枠監視サービス</title>
+    <meta name="description" content="神奈川県内のスポーツ施設の空き状況を自動監視。空きが出たらメールで通知。">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        kinari: { 50: '#FFFBF5', 100: '#FDF8F0', 200: '#FAF0E1' },
-                        sumi: { 50: '#F7F7F7', 100: '#E8E8E8', 200: '#D4D4D4', 300: '#BEBEBE', 400: '#9E9E9E', 500: '#757575', 600: '#5C5C5C', 700: '#454545', 800: '#2E2E2E', 900: '#1A1A1A' },
-                        ai: { 50: '#EEF2FF', 100: '#E0E7FF', 200: '#C7D2FE', 300: '#A5B4FC', 400: '#818CF8', 500: '#6366F1', 600: '#4F46E5', 700: '#4338CA' },
-                        sango: { 50: '#FEF2F2', 100: '#FEE2E2', 200: '#FECACA', 300: '#FCA5A5', 400: '#F87171', 500: '#EF4444', 600: '#DC2626' },
-                        matcha: { 50: '#F0FDF4', 100: '#DCFCE7', 200: '#BBF7D0', 300: '#86EFAC', 400: '#4ADE80', 500: '#22C55E', 600: '#16A34A' }
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' },
+                        gray: { 50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db', 400: '#9ca3af', 500: '#6b7280', 600: '#4b5563', 700: '#374151', 800: '#1f2937', 900: '#111827' }
                     }
                 }
             }
         }
     </script>
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #818CF8 100%);
-        }
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-        }
-    </style>
 </head>
-<body class="bg-kinari-100 text-sumi-800">
+<body class="bg-white text-gray-900">
     <!-- Header -->
-    <header class="bg-sumi-800 text-white">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold">AkiGura</a>
-            <nav class="flex items-center gap-6">
-                <a href="#features" class="text-sumi-300 hover:text-white transition-colors">機能</a>
-                <a href="#pricing" class="text-sumi-300 hover:text-white transition-colors">料金</a>
-                <a href="#faq" class="text-sumi-300 hover:text-white transition-colors">FAQ</a>
-                <a href="/user" class="bg-ai-600 hover:bg-ai-700 px-4 py-2 rounded font-medium transition-colors">ログイン</a>
+    <header class="border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="text-xl font-semibold text-gray-900">AkiGura</a>
+            <nav class="flex items-center gap-8">
+                <a href="#features" class="text-sm text-gray-600 hover:text-gray-900">機能</a>
+                <a href="#pricing" class="text-sm text-gray-600 hover:text-gray-900">料金</a>
+                <a href="/user" class="text-sm bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800">ログイン</a>
             </nav>
         </div>
     </header>
 
     <!-- Hero -->
-    <section class="gradient-bg text-white py-20">
-        <div class="max-w-6xl mx-auto px-4 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-6">
-                グラウンドの空き、<br class="md:hidden">もう見逃さない
+    <section class="py-24 bg-gray-50">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <h1 class="text-4xl font-semibold text-gray-900 mb-6 leading-tight">
+                スポーツ施設の空き枠を
+                <br>自動で監視
             </h1>
-            <p class="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-                神奈川県内のスポーツ施設の空き状況を自動で監視。<br>
-                希望の時間帯に空きが出たらすぐにお知らせします。
+            <p class="text-lg text-gray-600 mb-10 leading-relaxed">
+                神奈川県内の公共スポーツ施設の予約状況を定期的に確認。<br>
+                条件に合う空きが見つかればメールでお知らせします。
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/user" class="bg-white text-ai-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-kinari-100 transition-colors shadow-lg">
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="/user" class="bg-gray-900 text-white px-6 py-3 rounded text-sm font-medium hover:bg-gray-800">
                     無料で始める
                 </a>
-                <a href="#how-it-works" class="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white/10 transition-colors">
+                <a href="#how-it-works" class="border border-gray-300 text-gray-700 px-6 py-3 rounded text-sm font-medium hover:bg-gray-50">
                     使い方を見る
                 </a>
             </div>
-            <p class="mt-6 text-white/70 text-sm">クレジットカード不要・1分で登録完了</p>
         </div>
     </section>
 
     <!-- Supported Areas -->
-    <section class="py-12 bg-white">
-        <div class="max-w-6xl mx-auto px-4">
-            <p class="text-center text-sumi-500 mb-6">対応エリア</p>
-            <div class="flex flex-wrap justify-center gap-4 md:gap-8">
-                <span class="px-4 py-2 bg-kinari-100 rounded-full text-sumi-700 font-medium">横浜市</span>
-                <span class="px-4 py-2 bg-kinari-100 rounded-full text-sumi-700 font-medium">藤沢市</span>
-                <span class="px-4 py-2 bg-kinari-100 rounded-full text-sumi-700 font-medium">平塚市</span>
-                <span class="px-4 py-2 bg-kinari-100 rounded-full text-sumi-700 font-medium">鎌倉市</span>
-                <span class="px-4 py-2 bg-kinari-100 rounded-full text-sumi-700 font-medium">綾瀬市</span>
-                <span class="px-4 py-2 bg-kinari-100 rounded-full text-sumi-700 font-medium">神奈川県</span>
+    <section class="py-12 border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-4">
+            <p class="text-center text-sm text-gray-500 mb-4">対応エリア</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                <span class="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700">横浜市</span>
+                <span class="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700">藤沢市</span>
+                <span class="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700">平塚市</span>
+                <span class="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700">鎌倉市</span>
+                <span class="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700">綾瀬市</span>
+                <span class="px-3 py-1 bg-gray-100 rounded text-sm text-gray-700">神奈川県</span>
             </div>
-        </div>
-    </section>
-
-    <!-- Problem -->
-    <section class="py-16 bg-kinari-100">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <h2 class="text-2xl md:text-3xl font-bold mb-8">こんな経験ありませんか？</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg border border-sumi-200">
-                    <div class="text-4xl mb-4">😫</div>
-                    <p class="text-sumi-700">毎日予約サイトを<br>チェックするのが面倒</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg border border-sumi-200">
-                    <div class="text-4xl mb-4">😱</div>
-                    <p class="text-sumi-700">キャンセル空きに<br>気づいた時にはもう遅い</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg border border-sumi-200">
-                    <div class="text-4xl mb-4">🤯</div>
-                    <p class="text-sumi-700">複数の自治体サイトを<br>巡回するのが大変</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Solution -->
-    <section class="py-16 bg-ai-600 text-white">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <h2 class="text-2xl md:text-3xl font-bold mb-4">AkiGura が解決します</h2>
-            <p class="text-xl text-white/90">24時間365日、あなたの代わりに空き状況を監視。<br>希望の条件にマッチしたらすぐにお知らせします。</p>
         </div>
     </section>
 
     <!-- How it works -->
-    <section id="how-it-works" class="py-16 bg-white">
-        <div class="max-w-6xl mx-auto px-4">
-            <h2 class="text-2xl md:text-3xl font-bold text-center mb-12">使い方は簡単3ステップ</h2>
-            <div class="grid md:grid-cols-3 gap-8">
+    <section id="how-it-works" class="py-20">
+        <div class="max-w-5xl mx-auto px-4">
+            <h2 class="text-2xl font-semibold text-center mb-16">利用の流れ</h2>
+            <div class="grid md:grid-cols-3 gap-12">
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-ai-100 text-ai-600 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
-                    <h3 class="text-xl font-bold mb-2">アカウント登録</h3>
-                    <p class="text-sumi-600">メールアドレスを入力するだけ。<br>パスワード不要で簡単登録。</p>
+                    <div class="w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center text-sm font-medium mx-auto mb-4">1</div>
+                    <h3 class="font-medium mb-2">アカウント作成</h3>
+                    <p class="text-sm text-gray-600">メールアドレスを入力するだけ。<br>パスワードは不要です。</p>
                 </div>
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-ai-100 text-ai-600 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
-                    <h3 class="text-xl font-bold mb-2">監視条件を設定</h3>
-                    <p class="text-sumi-600">施設・曜日・時間帯を選択。<br>複数の条件を登録可能。</p>
+                    <div class="w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center text-sm font-medium mx-auto mb-4">2</div>
+                    <h3 class="font-medium mb-2">監視条件を設定</h3>
+                    <p class="text-sm text-gray-600">施設・曜日・時間帯を選択。<br>複数の条件を登録できます。</p>
                 </div>
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-ai-100 text-ai-600 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">3</div>
-                    <h3 class="text-xl font-bold mb-2">通知を受け取る</h3>
-                    <p class="text-sumi-600">空きが見つかったら<br>メールですぐにお知らせ。</p>
+                    <div class="w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center text-sm font-medium mx-auto mb-4">3</div>
+                    <h3 class="font-medium mb-2">通知を受け取る</h3>
+                    <p class="text-sm text-gray-600">条件に合う空きが見つかれば<br>メールでお知らせします。</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Features -->
-    <section id="features" class="py-16 bg-kinari-100">
-        <div class="max-w-6xl mx-auto px-4">
-            <h2 class="text-2xl md:text-3xl font-bold text-center mb-12">機能</h2>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="feature-card bg-white p-6 rounded-lg border border-sumi-200 transition-all duration-300">
-                    <div class="text-3xl mb-4">🔍</div>
-                    <h3 class="text-lg font-bold mb-2">自動監視</h3>
-                    <p class="text-sumi-600 text-sm">定期的に予約サイトをチェック。手動確認の手間ゼロ。</p>
+    <section id="features" class="py-20 bg-gray-50">
+        <div class="max-w-5xl mx-auto px-4">
+            <h2 class="text-2xl font-semibold text-center mb-16">機能</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 class="font-medium mb-2">自動監視</h3>
+                    <p class="text-sm text-gray-600">各自治体の予約サイトを定期的に確認。手動でチェックする必要はありません。</p>
                 </div>
-                <div class="feature-card bg-white p-6 rounded-lg border border-sumi-200 transition-all duration-300">
-                    <div class="text-3xl mb-4">⚡</div>
-                    <h3 class="text-lg font-bold mb-2">即時通知</h3>
-                    <p class="text-sumi-600 text-sm">空きを見つけたらすぐにメールで通知。先着順に負けない。</p>
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 class="font-medium mb-2">メール通知</h3>
+                    <p class="text-sm text-gray-600">条件にマッチする空き枠が見つかれば、すぐにメールでお知らせします。</p>
                 </div>
-                <div class="feature-card bg-white p-6 rounded-lg border border-sumi-200 transition-all duration-300">
-                    <div class="text-3xl mb-4">📅</div>
-                    <h3 class="text-lg font-bold mb-2">カレンダー表示</h3>
-                    <p class="text-sumi-600 text-sm">空き状況をカレンダーで一覧表示。視覚的に確認できる。</p>
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 class="font-medium mb-2">柔軟な条件設定</h3>
+                    <p class="text-sm text-gray-600">曜日・時間帯を細かく指定可能。「土曜の午前のみ」などの設定ができます。</p>
                 </div>
-                <div class="feature-card bg-white p-6 rounded-lg border border-sumi-200 transition-all duration-300">
-                    <div class="text-3xl mb-4">🎯</div>
-                    <h3 class="text-lg font-bold mb-2">細かい条件設定</h3>
-                    <p class="text-sumi-600 text-sm">曜日・時間帯を自由に指定。週末の午後だけなど細かく設定。</p>
-                </div>
-                <div class="feature-card bg-white p-6 rounded-lg border border-sumi-200 transition-all duration-300">
-                    <div class="text-3xl mb-4">🏟️</div>
-                    <h3 class="text-lg font-bold mb-2">複数施設対応</h3>
-                    <p class="text-sumi-600 text-sm">テニスコート、野球場、サッカー場など40以上の施設に対応。</p>
-                </div>
-                <div class="feature-card bg-white p-6 rounded-lg border border-sumi-200 transition-all duration-300">
-                    <div class="text-3xl mb-4">🔗</div>
-                    <h3 class="text-lg font-bold mb-2">予約サイトへ直リンク</h3>
-                    <p class="text-sumi-600 text-sm">通知から予約サイトへ直接アクセス。スムーズに予約完了。</p>
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <h3 class="font-medium mb-2">予約サイトへのリンク</h3>
+                    <p class="text-sm text-gray-600">通知メールに予約サイトへのリンクを記載。すぐに予約手続きに進めます。</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Pricing -->
-    <section id="pricing" class="py-16 bg-white">
-        <div class="max-w-6xl mx-auto px-4">
-            <h2 class="text-2xl md:text-3xl font-bold text-center mb-4">料金プラン</h2>
-            <p class="text-center text-sumi-500 mb-12">まずは無料プランでお試しください</p>
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <section id="pricing" class="py-20">
+        <div class="max-w-5xl mx-auto px-4">
+            <h2 class="text-2xl font-semibold text-center mb-4">料金</h2>
+            <p class="text-center text-gray-600 mb-16">まずは無料プランでお試しください</p>
+            <div class="grid md:grid-cols-4 gap-6">
                 <!-- Free -->
-                <div class="bg-kinari-100 p-6 rounded-lg border-2 border-sumi-200">
-                    <h3 class="text-lg font-bold mb-2">Free</h3>
-                    <div class="text-3xl font-bold mb-4">¥0<span class="text-sm font-normal text-sumi-500">/月</span></div>
-                    <ul class="text-sm text-sumi-600 space-y-2 mb-6">
-                        <li>✓ 監視ルール 1件</li>
-                        <li>✓ 週末のみ監視</li>
-                        <li>✓ メール通知</li>
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="font-medium mb-1">Free</h3>
+                    <div class="text-2xl font-semibold mb-4">¥0<span class="text-sm font-normal text-gray-500">/月</span></div>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li>監視ルール 1件</li>
+                        <li>週末のみ</li>
+                        <li>メール通知</li>
                     </ul>
-                    <a href="/user" class="block text-center bg-sumi-800 text-white py-2 rounded font-medium hover:bg-sumi-700 transition-colors">無料で始める</a>
+                    <a href="/user" class="block text-center border border-gray-300 text-gray-700 py-2 rounded text-sm hover:bg-gray-50">始める</a>
                 </div>
                 <!-- Personal -->
-                <div class="bg-kinari-100 p-6 rounded-lg border-2 border-sumi-200">
-                    <h3 class="text-lg font-bold mb-2">Personal</h3>
-                    <div class="text-3xl font-bold mb-4">¥500<span class="text-sm font-normal text-sumi-500">/月</span></div>
-                    <ul class="text-sm text-sumi-600 space-y-2 mb-6">
-                        <li>✓ 監視ルール 5件</li>
-                        <li>✓ 全曜日監視</li>
-                        <li>✓ メール通知</li>
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="font-medium mb-1">Personal</h3>
+                    <div class="text-2xl font-semibold mb-4">¥500<span class="text-sm font-normal text-gray-500">/月</span></div>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li>監視ルール 5件</li>
+                        <li>全曜日</li>
+                        <li>メール通知</li>
                     </ul>
-                    <a href="/user" class="block text-center bg-ai-600 text-white py-2 rounded font-medium hover:bg-ai-700 transition-colors">プランを選択</a>
+                    <a href="/user" class="block text-center border border-gray-300 text-gray-700 py-2 rounded text-sm hover:bg-gray-50">選択</a>
                 </div>
                 <!-- Pro -->
-                <div class="bg-ai-50 p-6 rounded-lg border-2 border-ai-400 relative">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-ai-600 text-white text-xs px-3 py-1 rounded-full">人気</div>
-                    <h3 class="text-lg font-bold mb-2">Pro</h3>
-                    <div class="text-3xl font-bold mb-4">¥2,000<span class="text-sm font-normal text-sumi-500">/月</span></div>
-                    <ul class="text-sm text-sumi-600 space-y-2 mb-6">
-                        <li>✓ 監視ルール 20件</li>
-                        <li>✓ 全曜日監視</li>
-                        <li>✓ 優先通知</li>
+                <div class="border-2 border-gray-900 rounded-lg p-6">
+                    <h3 class="font-medium mb-1">Pro</h3>
+                    <div class="text-2xl font-semibold mb-4">¥2,000<span class="text-sm font-normal text-gray-500">/月</span></div>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li>監視ルール 20件</li>
+                        <li>全曜日</li>
+                        <li>優先通知</li>
                     </ul>
-                    <a href="/user" class="block text-center bg-ai-600 text-white py-2 rounded font-medium hover:bg-ai-700 transition-colors">プランを選択</a>
+                    <a href="/user" class="block text-center bg-gray-900 text-white py-2 rounded text-sm hover:bg-gray-800">選択</a>
                 </div>
                 <!-- Organization -->
-                <div class="bg-kinari-100 p-6 rounded-lg border-2 border-sumi-200">
-                    <h3 class="text-lg font-bold mb-2">Organization</h3>
-                    <div class="text-3xl font-bold mb-4">¥10,000<span class="text-sm font-normal text-sumi-500">/月</span></div>
-                    <ul class="text-sm text-sumi-600 space-y-2 mb-6">
-                        <li>✓ 監視ルール 無制限</li>
-                        <li>✓ 全曜日監視</li>
-                        <li>✓ 優先サポート</li>
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="font-medium mb-1">Organization</h3>
+                    <div class="text-2xl font-semibold mb-4">¥10,000<span class="text-sm font-normal text-gray-500">/月</span></div>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li>監視ルール 無制限</li>
+                        <li>全曜日</li>
+                        <li>優先サポート</li>
                     </ul>
-                    <a href="/user" class="block text-center bg-sumi-800 text-white py-2 rounded font-medium hover:bg-sumi-700 transition-colors">お問い合わせ</a>
+                    <a href="/user" class="block text-center border border-gray-300 text-gray-700 py-2 rounded text-sm hover:bg-gray-50">お問い合わせ</a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- FAQ -->
-    <section id="faq" class="py-16 bg-kinari-100">
+    <section class="py-20 bg-gray-50">
         <div class="max-w-3xl mx-auto px-4">
-            <h2 class="text-2xl md:text-3xl font-bold text-center mb-12">よくある質問</h2>
+            <h2 class="text-2xl font-semibold text-center mb-16">よくある質問</h2>
             <div class="space-y-4">
-                <details class="bg-white rounded-lg border border-sumi-200">
-                    <summary class="p-4 cursor-pointer font-medium hover:bg-kinari-50">本当に無料で使えますか？</summary>
-                    <p class="px-4 pb-4 text-sumi-600">はい、Freeプランは完全無料です。クレジットカードの登録も不要です。まずは無料でお試しください。</p>
+                <details class="bg-white border border-gray-200 rounded-lg">
+                    <summary class="p-4 cursor-pointer text-sm font-medium">無料で使えますか？</summary>
+                    <p class="px-4 pb-4 text-sm text-gray-600">Freeプランは完全無料です。クレジットカードの登録も不要です。</p>
                 </details>
-                <details class="bg-white rounded-lg border border-sumi-200">
-                    <summary class="p-4 cursor-pointer font-medium hover:bg-kinari-50">予約まで自動でできますか？</summary>
-                    <p class="px-4 pb-4 text-sumi-600">いいえ、AkiGuraは空き状況の監視と通知を行うサービスです。予約は各自治体の予約サイトで行っていただく必要があります。通知メールには予約サイトへのリンクが含まれています。</p>
+                <details class="bg-white border border-gray-200 rounded-lg">
+                    <summary class="p-4 cursor-pointer text-sm font-medium">予約まで自動でできますか？</summary>
+                    <p class="px-4 pb-4 text-sm text-gray-600">いいえ、空き状況の監視と通知のみです。予約は各自治体のサイトで行ってください。</p>
                 </details>
-                <details class="bg-white rounded-lg border border-sumi-200">
-                    <summary class="p-4 cursor-pointer font-medium hover:bg-kinari-50">対応していない施設を追加してほしい</summary>
-                    <p class="px-4 pb-4 text-sumi-600">ご要望をお聞かせください。対応可能な施設は順次追加しています。ログイン後の設定画面からリクエストを送信できます。</p>
+                <details class="bg-white border border-gray-200 rounded-lg">
+                    <summary class="p-4 cursor-pointer text-sm font-medium">対応施設を追加してほしい</summary>
+                    <p class="px-4 pb-4 text-sm text-gray-600">ログイン後の設定画面からリクエストを送信できます。</p>
                 </details>
-                <details class="bg-white rounded-lg border border-sumi-200">
-                    <summary class="p-4 cursor-pointer font-medium hover:bg-kinari-50">解約はいつでもできますか？</summary>
-                    <p class="px-4 pb-4 text-sumi-600">はい、いつでも解約できます。設定画面から解約手続きが可能です。解約後も期間終了まではサービスをご利用いただけます。</p>
-                </details>
-                <details class="bg-white rounded-lg border border-sumi-200">
-                    <summary class="p-4 cursor-pointer font-medium hover:bg-kinari-50">パスワードを忘れました</summary>
-                    <p class="px-4 pb-4 text-sumi-600">AkiGuraはパスワード不要のマジックリンク認証を採用しています。ログイン画面でメールアドレスを入力すると、ログイン用のリンクがメールで届きます。</p>
+                <details class="bg-white border border-gray-200 rounded-lg">
+                    <summary class="p-4 cursor-pointer text-sm font-medium">解約はいつでもできますか？</summary>
+                    <p class="px-4 pb-4 text-sm text-gray-600">はい、設定画面からいつでも解約できます。</p>
                 </details>
             </div>
         </div>
     </section>
 
     <!-- CTA -->
-    <section class="py-16 gradient-bg text-white">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <h2 class="text-2xl md:text-3xl font-bold mb-4">今すぐ始めましょう</h2>
-            <p class="text-lg text-white/90 mb-8">無料プランでお試しいただけます</p>
-            <a href="/user" class="inline-block bg-white text-ai-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-kinari-100 transition-colors shadow-lg">
-                無料で登録する
+    <section class="py-20">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <h2 class="text-2xl font-semibold mb-4">無料で始める</h2>
+            <p class="text-gray-600 mb-8">アカウント作成は1分で完了します</p>
+            <a href="/user" class="inline-block bg-gray-900 text-white px-6 py-3 rounded text-sm font-medium hover:bg-gray-800">
+                アカウントを作成
             </a>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-sumi-800 text-white py-12">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <h4 class="text-xl font-bold mb-4">AkiGura</h4>
-                    <p class="text-sumi-400 text-sm">スポーツ施設の空き枠を<br>自動で監視・通知</p>
-                </div>
-                <div>
-                    <h5 class="font-bold mb-4">サービス</h5>
-                    <ul class="text-sumi-400 text-sm space-y-2">
-                        <li><a href="#features" class="hover:text-white">機能</a></li>
-                        <li><a href="#pricing" class="hover:text-white">料金</a></li>
-                        <li><a href="#faq" class="hover:text-white">FAQ</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h5 class="font-bold mb-4">対応エリア</h5>
-                    <ul class="text-sumi-400 text-sm space-y-2">
-                        <li>横浜市</li>
-                        <li>藤沢市・平塚市</li>
-                        <li>鎌倉市・綾瀬市</li>
-                        <li>神奈川県</li>
-                    </ul>
-                </div>
-                <div>
-                    <h5 class="font-bold mb-4">リンク</h5>
-                    <ul class="text-sumi-400 text-sm space-y-2">
-                        <li><a href="/user" class="hover:text-white">ログイン</a></li>
-                        <li><a href="/user" class="hover:text-white">新規登録</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-sumi-700 pt-8 text-center text-sumi-400 text-sm">
-                <p>&copy; 2026 AkiGura. All rights reserved.</p>
+    <footer class="border-t border-gray-200 py-12">
+        <div class="max-w-5xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-500">© 2026 AkiGura</div>
+                <nav class="flex gap-6">
+                    <a href="/user" class="text-sm text-gray-500 hover:text-gray-900">ログイン</a>
+                    <a href="#pricing" class="text-sm text-gray-500 hover:text-gray-900">料金</a>
+                    <a href="#features" class="text-sm text-gray-500 hover:text-gray-900">機能</a>
+                </nav>
             </div>
         </div>
     </footer>
