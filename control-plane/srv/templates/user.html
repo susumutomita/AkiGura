@@ -642,7 +642,16 @@
                     <label class="block text-sm text-sumi-600 mb-1">曜日</label>
                     <div class="flex flex-wrap gap-2 mt-1">
                         <template x-for="(day, i) in ['日', '月', '火', '水', '木', '金', '土']" :key="i">
-                            <button type="button" @click="toggleDay(i)" class="px-3 py-1.5 border rounded text-sm transition-colors" :class="newCondition.days_of_week.includes(i) ? 'bg-ai-600 text-white border-ai-600' : 'border-sumi-200 text-sumi-600 hover:border-sumi-300'" x-text="day"></button>
+                            <button type="button" 
+                                    @click="toggleDay(i)" 
+                                    :disabled="currentPlanLimit?.weekend_only && i >= 1 && i <= 5"
+                                    class="px-3 py-1.5 border rounded text-sm transition-colors" 
+                                    :class="{
+                                        'bg-ai-600 text-white border-ai-600': newCondition.days_of_week.includes(i),
+                                        'border-sumi-200 text-sumi-600 hover:border-sumi-300': !newCondition.days_of_week.includes(i) && !(currentPlanLimit?.weekend_only && i >= 1 && i <= 5),
+                                        'border-sumi-100 text-sumi-300 cursor-not-allowed': currentPlanLimit?.weekend_only && i >= 1 && i <= 5
+                                    }" 
+                                    x-text="day"></button>
                         </template>
                     </div>
                     <p x-show="currentPlanLimit?.weekend_only" class="text-xs text-sango-500 mt-1">無料プラン: 週末のみ</p>
@@ -964,6 +973,15 @@
             },
 
             toggleDay(day) {
+                // weekend_only restriction for free plan
+                if (this.currentPlanLimit?.weekend_only && day !== 0 && day !== 6) {
+                    alert('無料プランでは週末（土日）のみ監視できます');
+                    return;
+                }
+                // Check weekend_only restriction
+                if (this.currentPlanLimit?.weekend_only && day >= 1 && day <= 5) {
+                    return; // Prevent selecting weekdays on free plan
+                }
                 const idx = this.newCondition.days_of_week.indexOf(day);
                 if (idx >= 0) {
                     this.newCondition.days_of_week.splice(idx, 1);
