@@ -131,12 +131,19 @@ func (s *Server) HandleRequestMagicLink(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// If SendGrid not configured, return the link for testing
-	if config.SendGridKey == "" {
-		s.jsonResponse(w, map[string]string{
-			"message":    "認証メールを送信しました。メールをご確認ください。",
-			"debug_link": magicLink,
-		})
+	// If in development mode (no email configured), return the link for testing
+	// In production, never expose the debug link
+	if config.SendGridKey == "" && config.SMTPUser == "" {
+		if os.Getenv("AKIGURA_DEV_MODE") == "true" {
+			s.jsonResponse(w, map[string]string{
+				"message":    "認証メールを送信しました。メールをご確認ください。",
+				"debug_link": magicLink,
+			})
+		} else {
+			s.jsonResponse(w, map[string]string{
+				"message": "認証メールを送信しました。メールをご確認ください。",
+			})
+		}
 		return
 	}
 
