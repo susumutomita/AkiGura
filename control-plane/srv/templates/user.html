@@ -843,7 +843,8 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             email: this.loginEmail,
-                            name: this.isRegister ? this.loginName : ''
+                            name: this.isRegister ? this.loginName : '',
+                            is_registration: this.isRegister
                         })
                     });
                     const data = await res.json();
