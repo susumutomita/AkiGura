@@ -361,6 +361,9 @@
                 <h2 class="text-xl font-semibold text-sumi-800">監視ルール</h2>
                 <button @click="showConditionModal = true" class="bg-ai-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-ai-700 transition-colors">ルールを追加</button>
             </div>
+            <div class="bg-ai-50 border border-ai-200 rounded p-4 mb-6">
+                <p class="text-sm text-ai-700">🕒 監視は毎日朝 6:45（JST）に実行されます。条件にマッチする空き枠が見つかればメールでお知らせします。</p>
+            </div>
             <div class="space-y-3">
                 <template x-for="c in conditions" :key="c.id">
                     <div class="bg-white rounded border border-sumi-200 p-4">
@@ -375,6 +378,7 @@
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="px-2 py-0.5 text-xs rounded" :class="c.enabled ? 'bg-wakakusa-100 text-wakakusa-700' : 'bg-sumi-100 text-sumi-500'" x-text="c.enabled ? '有効' : '無効'"></span>
+                                <button @click="editCondition(c)" class="text-ai-500 hover:text-ai-600 text-sm transition-colors">編集</button>
                                 <button @click="deleteCondition(c.id)" class="text-sango-500 hover:text-sango-600 text-sm transition-colors">削除</button>
                             </div>
                         </div>
