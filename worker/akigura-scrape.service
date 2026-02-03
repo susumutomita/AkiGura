@@ -1,0 +1,11 @@
+[Unit]
+Description=AkiGura Daily Scrape Job
+After=network.target
+
+[Service]
+Type=oneshot
+User=exedev
+WorkingDirectory=/home/exedev/AkiGura/worker
+EnvironmentFile=/home/exedev/AkiGura/.env
+Environment="PATH=/home/exedev/AkiGura/worker/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/exedev/AkiGura/worker/akigura-worker -once -native
