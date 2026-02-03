@@ -1,0 +1,10 @@
+# CODEOWNERS - すべてのコード変更に @susumutomita の承認が必要
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# デフォルト: すべてのファイル
+* @susumutomita
+
+# 特定ディレクトリ（必要に応じて追加）
+# /control-plane/ @susumutomita
+# /worker/ @susumutomita
+# /docs/ @susumutomita
