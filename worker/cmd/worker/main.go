@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"akigura.dev/worker"
+	"akigura.dev/worker/dbmigrate"
 	"akigura.dev/worker/notifier"
 	"akigura.dev/worker/scraper"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
@@ -31,6 +32,7 @@ var (
 	flagJobMode        = flag.Bool("job-mode", false, "process pending jobs from database")
 	flagNative         = flag.Bool("native", false, "use native Go scrapers instead of Python")
 	flagScraperType    = flag.String("scraper-type", "", "specific scraper to run (kanagawa, hiratsuka, yokohama)")
+	flagMigrationsDir  = flag.String("migrations-dir", "../control-plane/db/migrations", "path to SQL migration files (empty to skip)")
 )
 
 func main() {
@@ -48,6 +50,13 @@ func run() error {
 		return fmt.Errorf("open database: %w", err)
 	}
 	defer db.Close()
+
+	// Run migrations before any queries
+	if *flagMigrationsDir != "" {
+		if err := dbmigrate.RunMigrations(db, *flagMigrationsDir); err != nil {
+			return fmt.Errorf("run migrations: %w", err)
+		}
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
